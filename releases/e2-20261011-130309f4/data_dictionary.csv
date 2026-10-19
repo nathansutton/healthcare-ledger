@@ -1,0 +1,147 @@
+table,column,type,cms_header,description
+provider,npi,VARCHAR,,"National Provider Identifier (10 digits, text)"
+provider,effective_date,DATE,,As-of date of the first snapshot in which this version was observed (inclusive)
+provider,end_date,DATE,,As-of date of the first snapshot in which this version was no longer observed (exclusive); NULL while current
+provider,is_current,BOOLEAN,,True if this is the latest version and the NPI was present in the latest snapshot
+provider,first_snapshot_id,INTEGER,,Snapshot id (YYYYMMDD of as-of date) that first showed this version
+provider,last_snapshot_id,INTEGER,,Snapshot id that last showed this version
+provider,close_reason,VARCHAR,,"'changed' if superseded by a new version, 'absent' if the NPI disappeared from the file, NULL while current"
+provider,version_hash,VARCHAR,,MD5 fingerprint of all data columns of this version (set-level for multi-row streams)
+provider,entity_type,VARCHAR,Entity Type Code,
+provider,replacement_npi,VARCHAR,Replacement NPI,
+provider,ein,VARCHAR,Employer Identification Number (EIN),"Suppressed: never published by this project, whatever the CMS file contains (see METHODOLOGY 2a)"
+provider,org_name,VARCHAR,Provider Organization Name (Legal Business Name),
+provider,last_name,VARCHAR,Provider Last Name (Legal Name),
+provider,first_name,VARCHAR,Provider First Name,
+provider,middle_name,VARCHAR,Provider Middle Name,
+provider,name_prefix,VARCHAR,Provider Name Prefix Text,
+provider,name_suffix,VARCHAR,Provider Name Suffix Text,
+provider,credential,VARCHAR,Provider Credential Text,
+provider,other_org_name,VARCHAR,Provider Other Organization Name,
+provider,other_org_name_type,VARCHAR,Provider Other Organization Name Type Code,
+provider,other_last_name,VARCHAR,Provider Other Last Name,
+provider,other_first_name,VARCHAR,Provider Other First Name,
+provider,other_middle_name,VARCHAR,Provider Other Middle Name,
+provider,other_name_prefix,VARCHAR,Provider Other Name Prefix Text,
+provider,other_name_suffix,VARCHAR,Provider Other Name Suffix Text,
+provider,other_credential,VARCHAR,Provider Other Credential Text,
+provider,other_last_name_type,VARCHAR,Provider Other Last Name Type Code,
+provider,mail_address_1,VARCHAR,Provider First Line Business Mailing Address,
+provider,mail_address_2,VARCHAR,Provider Second Line Business Mailing Address,
+provider,mail_city,VARCHAR,Provider Business Mailing Address City Name,
+provider,mail_state,VARCHAR,Provider Business Mailing Address State Name,
+provider,mail_postal_code,VARCHAR,Provider Business Mailing Address Postal Code,
+provider,mail_country,VARCHAR,Provider Business Mailing Address Country Code (If outside U.S.),
+provider,mail_phone,VARCHAR,Provider Business Mailing Address Telephone Number,
+provider,mail_fax,VARCHAR,Provider Business Mailing Address Fax Number,
+provider,practice_address_1,VARCHAR,Provider First Line Business Practice Location Address,
+provider,practice_address_2,VARCHAR,Provider Second Line Business Practice Location Address,
+provider,practice_city,VARCHAR,Provider Business Practice Location Address City Name,
+provider,practice_state,VARCHAR,Provider Business Practice Location Address State Name,
+provider,practice_postal_code,VARCHAR,Provider Business Practice Location Address Postal Code,
+provider,practice_country,VARCHAR,Provider Business Practice Location Address Country Code (If outside U.S.),
+provider,practice_phone,VARCHAR,Provider Business Practice Location Address Telephone Number,
+provider,practice_fax,VARCHAR,Provider Business Practice Location Address Fax Number,
+provider,enumeration_date,DATE,Provider Enumeration Date,
+provider,last_update_date,DATE,Last Update Date,
+provider,deactivation_reason,VARCHAR,NPI Deactivation Reason Code,
+provider,deactivation_date,DATE,NPI Deactivation Date,
+provider,reactivation_date,DATE,NPI Reactivation Date,
+provider,sex,VARCHAR,Provider Sex Code,
+provider,ao_last_name,VARCHAR,Authorized Official Last Name,
+provider,ao_first_name,VARCHAR,Authorized Official First Name,
+provider,ao_middle_name,VARCHAR,Authorized Official Middle Name,
+provider,ao_title,VARCHAR,Authorized Official Title or Position,
+provider,ao_phone,VARCHAR,Authorized Official Telephone Number,
+provider,sole_proprietor,VARCHAR,Is Sole Proprietor,
+provider,org_subpart,VARCHAR,Is Organization Subpart,
+provider,parent_org_name,VARCHAR,Parent Organization LBN,
+provider,parent_org_tin,VARCHAR,Parent Organization TIN,"Suppressed: never published by this project, whatever the CMS file contains (see METHODOLOGY 2a)"
+provider,ao_name_prefix,VARCHAR,Authorized Official Name Prefix Text,
+provider,ao_name_suffix,VARCHAR,Authorized Official Name Suffix Text,
+provider,ao_credential,VARCHAR,Authorized Official Credential Text,
+provider,certification_date,DATE,Certification Date,
+provider_taxonomy,npi,VARCHAR,,"National Provider Identifier (10 digits, text)"
+provider_taxonomy,effective_date,DATE,,As-of date of the first snapshot in which this version was observed (inclusive)
+provider_taxonomy,end_date,DATE,,As-of date of the first snapshot in which this version was no longer observed (exclusive); NULL while current
+provider_taxonomy,is_current,BOOLEAN,,True if this is the latest version and the NPI was present in the latest snapshot
+provider_taxonomy,first_snapshot_id,INTEGER,,Snapshot id (YYYYMMDD of as-of date) that first showed this version
+provider_taxonomy,last_snapshot_id,INTEGER,,Snapshot id that last showed this version
+provider_taxonomy,close_reason,VARCHAR,,"'changed' if superseded by a new version, 'absent' if the NPI disappeared from the file, NULL while current"
+provider_taxonomy,version_hash,VARCHAR,,MD5 fingerprint of all data columns of this version (set-level for multi-row streams)
+provider_taxonomy,slot,INTEGER,,"Canonical position 1..N in the repeating group (empty slots dropped, entries sorted by content, primary taxonomy first; METHODOLOGY 3), not the position in the CMS file"
+provider_taxonomy,taxonomy_code,VARCHAR,Healthcare Provider Taxonomy Code_N,Slot N of 15 unpivoted in canonical order (primary taxonomy first); slots where all five fields are blank are dropped
+provider_taxonomy,license_number,VARCHAR,Provider License Number_N,Slot N of 15 unpivoted in canonical order (primary taxonomy first); slots where all five fields are blank are dropped; NULL when the value is a formatted EIN or SSN (METHODOLOGY 2a)
+provider_taxonomy,license_state,VARCHAR,Provider License Number State Code_N,Slot N of 15 unpivoted in canonical order (primary taxonomy first); slots where all five fields are blank are dropped
+provider_taxonomy,primary_taxonomy,VARCHAR,Healthcare Provider Primary Taxonomy Switch_N,Slot N of 15 unpivoted in canonical order (primary taxonomy first); slots where all five fields are blank are dropped
+provider_taxonomy,taxonomy_group,VARCHAR,Healthcare Provider Taxonomy Group_N,Slot N of 15 unpivoted in canonical order (primary taxonomy first); slots where all five fields are blank are dropped
+provider_other_identifier,npi,VARCHAR,,"National Provider Identifier (10 digits, text)"
+provider_other_identifier,effective_date,DATE,,As-of date of the first snapshot in which this version was observed (inclusive)
+provider_other_identifier,end_date,DATE,,As-of date of the first snapshot in which this version was no longer observed (exclusive); NULL while current
+provider_other_identifier,is_current,BOOLEAN,,True if this is the latest version and the NPI was present in the latest snapshot
+provider_other_identifier,first_snapshot_id,INTEGER,,Snapshot id (YYYYMMDD of as-of date) that first showed this version
+provider_other_identifier,last_snapshot_id,INTEGER,,Snapshot id that last showed this version
+provider_other_identifier,close_reason,VARCHAR,,"'changed' if superseded by a new version, 'absent' if the NPI disappeared from the file, NULL while current"
+provider_other_identifier,version_hash,VARCHAR,,MD5 fingerprint of all data columns of this version (set-level for multi-row streams)
+provider_other_identifier,slot,INTEGER,,"Canonical position 1..N in the repeating group (empty slots dropped, entries sorted by content, primary taxonomy first; METHODOLOGY 3), not the position in the CMS file"
+provider_other_identifier,other_id,VARCHAR,Other Provider Identifier_N,"Slot N of 50 unpivoted in canonical order; slots where all four fields are blank are dropped; NULL when the value is a formatted EIN or SSN, or has nine digits under an issuer that names a tax id or SSN (METHODOLOGY 2a)"
+provider_other_identifier,other_id_type,VARCHAR,Other Provider Identifier Type Code_N,Slot N of 50 unpivoted in canonical order; slots where all four fields are blank are dropped
+provider_other_identifier,other_id_state,VARCHAR,Other Provider Identifier State_N,Slot N of 50 unpivoted in canonical order; slots where all four fields are blank are dropped
+provider_other_identifier,other_id_issuer,VARCHAR,Other Provider Identifier Issuer_N,Slot N of 50 unpivoted in canonical order; slots where all four fields are blank are dropped; Formatted EINs or SSNs embedded in the text are replaced by [REDACTED] (METHODOLOGY 2a)
+practice_location,npi,VARCHAR,,"National Provider Identifier (10 digits, text)"
+practice_location,effective_date,DATE,,As-of date of the first snapshot in which this version was observed (inclusive)
+practice_location,end_date,DATE,,As-of date of the first snapshot in which this version was no longer observed (exclusive); NULL while current
+practice_location,is_current,BOOLEAN,,True if this is the latest version and the NPI was present in the latest snapshot
+practice_location,first_snapshot_id,INTEGER,,Snapshot id (YYYYMMDD of as-of date) that first showed this version
+practice_location,last_snapshot_id,INTEGER,,Snapshot id that last showed this version
+practice_location,close_reason,VARCHAR,,"'changed' if superseded by a new version, 'absent' if the NPI disappeared from the file, NULL while current"
+practice_location,version_hash,VARCHAR,,MD5 fingerprint of all data columns of this version (set-level for multi-row streams)
+practice_location,row_seq,INTEGER,,"Row number within a multi-row version, ordered by row hash (no meaning beyond uniqueness)"
+practice_location,address_1,VARCHAR,Provider Secondary Practice Location Address- Address Line 1,
+practice_location,address_2,VARCHAR,Provider Secondary Practice Location Address-  Address Line 2,
+practice_location,city,VARCHAR,Provider Secondary Practice Location Address - City Name,
+practice_location,state,VARCHAR,Provider Secondary Practice Location Address - State Name,
+practice_location,postal_code,VARCHAR,Provider Secondary Practice Location Address - Postal Code,
+practice_location,country,VARCHAR,Provider Secondary Practice Location Address - Country Code (If outside U.S.),
+practice_location,phone,VARCHAR,Provider Secondary Practice Location Address - Telephone Number,
+practice_location,phone_ext,VARCHAR,Provider Secondary Practice Location Address - Telephone Extension,
+practice_location,fax,VARCHAR,Provider Practice Location Address - Fax Number,
+other_name,npi,VARCHAR,,"National Provider Identifier (10 digits, text)"
+other_name,effective_date,DATE,,As-of date of the first snapshot in which this version was observed (inclusive)
+other_name,end_date,DATE,,As-of date of the first snapshot in which this version was no longer observed (exclusive); NULL while current
+other_name,is_current,BOOLEAN,,True if this is the latest version and the NPI was present in the latest snapshot
+other_name,first_snapshot_id,INTEGER,,Snapshot id (YYYYMMDD of as-of date) that first showed this version
+other_name,last_snapshot_id,INTEGER,,Snapshot id that last showed this version
+other_name,close_reason,VARCHAR,,"'changed' if superseded by a new version, 'absent' if the NPI disappeared from the file, NULL while current"
+other_name,version_hash,VARCHAR,,MD5 fingerprint of all data columns of this version (set-level for multi-row streams)
+other_name,row_seq,INTEGER,,"Row number within a multi-row version, ordered by row hash (no meaning beyond uniqueness)"
+other_name,other_org_name,VARCHAR,Provider Other Organization Name,
+other_name,other_org_name_type,VARCHAR,Provider Other Organization Name Type Code,
+other_name,created_date,DATE,Created Date,
+endpoint,npi,VARCHAR,,"National Provider Identifier (10 digits, text)"
+endpoint,effective_date,DATE,,As-of date of the first snapshot in which this version was observed (inclusive)
+endpoint,end_date,DATE,,As-of date of the first snapshot in which this version was no longer observed (exclusive); NULL while current
+endpoint,is_current,BOOLEAN,,True if this is the latest version and the NPI was present in the latest snapshot
+endpoint,first_snapshot_id,INTEGER,,Snapshot id (YYYYMMDD of as-of date) that first showed this version
+endpoint,last_snapshot_id,INTEGER,,Snapshot id that last showed this version
+endpoint,close_reason,VARCHAR,,"'changed' if superseded by a new version, 'absent' if the NPI disappeared from the file, NULL while current"
+endpoint,version_hash,VARCHAR,,MD5 fingerprint of all data columns of this version (set-level for multi-row streams)
+endpoint,row_seq,INTEGER,,"Row number within a multi-row version, ordered by row hash (no meaning beyond uniqueness)"
+endpoint,endpoint_type,VARCHAR,Endpoint Type,
+endpoint,endpoint_type_desc,VARCHAR,Endpoint Type Description,
+endpoint,endpoint,VARCHAR,Endpoint,
+endpoint,affiliation,VARCHAR,Affiliation,
+endpoint,endpoint_desc,VARCHAR,Endpoint Description,
+endpoint,affiliation_name,VARCHAR,Affiliation Legal Business Name,
+endpoint,use_code,VARCHAR,Use Code,
+endpoint,use_desc,VARCHAR,Use Description,
+endpoint,other_use_desc,VARCHAR,Other Use Description,
+endpoint,content_type,VARCHAR,Content Type,
+endpoint,content_desc,VARCHAR,Content Description,
+endpoint,other_content_desc,VARCHAR,Other Content Description,
+endpoint,affil_address_1,VARCHAR,Affiliation Address Line One,
+endpoint,affil_address_2,VARCHAR,Affiliation Address Line Two,
+endpoint,affil_city,VARCHAR,Affiliation Address City,
+endpoint,affil_state,VARCHAR,Affiliation Address State,
+endpoint,affil_country,VARCHAR,Affiliation Address Country,
+endpoint,affil_postal_code,VARCHAR,Affiliation Address Postal Code,

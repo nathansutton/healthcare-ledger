@@ -1,0 +1,61 @@
+# Convenience targets. All real logic lives in `nppes-over-time` (src/nppes_over_time/cli.py).
+# Paths below are also the CLI defaults, so `uv run nppes-over-time <cmd>` with no flags does the same thing.
+SOURCE   ?= data/raw            # directory of NPPES_Data_Dissemination_*.zip files
+DB       ?= data/nppes.duckdb
+WORK     ?= data/work
+OUT      ?= export
+RELEASES ?= releases
+# DuckDB resource limits. Unset = DuckDB's defaults (all cores, 80% of RAM). Set e.g. THREADS=8 MEMORY=24GB.
+THREADS  ?=
+MEMORY   ?=
+RES = $(if $(THREADS),--threads $(THREADS)) $(if $(MEMORY),--memory $(MEMORY))
+# Base URL holding the 'archive' zips of releases/sources.csv under their recorded names (docs/MAINTAINING.md).
+MIRROR   ?=
+# VERIFY_ALL=1 makes `make verify` check every loaded month, not just the latest.
+VERIFY_ALL ?=
+
+.PHONY: install test discover probe download check-sources load validate verify export status monthly backfill-fingerprints
+
+install:
+	uv sync
+
+test:
+	uv run pytest -q
+
+discover:
+	uv run nppes-over-time discover --source $(SOURCE)
+
+# Report month by month what is local, where each recorded month comes from (releases/sources.csv), and what CMS has since.
+probe:
+	uv run nppes-over-time download --dest $(SOURCE) --releases $(RELEASES) --probe
+
+# Fetch every recorded source zip that $(SOURCE) lacks (sha256-checked), then any newer months CMS serves.
+download:
+	uv run nppes-over-time download --dest $(SOURCE) --releases $(RELEASES) $(if $(MIRROR),--mirror $(MIRROR))
+
+# sha256 every zip in $(SOURCE) against releases/sources.csv.
+check-sources:
+	uv run nppes-over-time download --dest $(SOURCE) --releases $(RELEASES) --check
+
+load:
+	uv run nppes-over-time load --source $(SOURCE) --db $(DB) --work $(WORK) $(RES)
+
+validate:
+	uv run nppes-over-time validate --db $(DB)
+
+verify:
+	uv run nppes-over-time verify --db $(DB) --source $(SOURCE) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)
+
+export:
+	uv run nppes-over-time export --db $(DB) --out $(OUT) --csv --releases $(RELEASES) $(RES)
+
+status:
+	uv run nppes-over-time status --db $(DB)
+
+# The monthly routine for maintainers (docs/MAINTAINING.md): download, load, validate, verify, continuity, export.
+monthly:
+	uv run nppes-over-time monthly --source $(SOURCE) --db $(DB) --work $(WORK) --out $(OUT) --releases $(RELEASES) $(RES)
+
+# One-time, for a warehouse built before content fingerprints existed.
+backfill-fingerprints:
+	uv run nppes-over-time backfill-fingerprints --db $(DB) $(RES)

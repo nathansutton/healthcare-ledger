@@ -1,0 +1,35 @@
+[project]
+name = "nppes-over-time"
+version = "0.1.0"
+description = "A reproducible, file-based SCD Type 2 history of the CMS NPPES provider registry, built with DuckDB."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+authors = [{ name = "Nathan Sutton", email = "nasutton@gmail.com" }]
+keywords = ["NPPES", "NPI", "CMS", "healthcare", "providers", "SCD2", "panel data", "DuckDB"]
+dependencies = [
+    "duckdb>=1.5.6",
+    "pyarrow>=26.0.0",
+]
+
+[project.scripts]
+nppes-over-time = "nppes_over_time.cli:main"
+
+[project.urls]
+Repository = "https://github.com/nathansutton/nppes-over-time"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pandas>=2.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nppes_over_time"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

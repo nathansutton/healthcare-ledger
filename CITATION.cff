@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software or the data it produces, please cite it, and cite CMS NPPES as the underlying source."
+type: software
+title: "nppes-over-time: a reproducible SCD Type 2 history of the CMS NPPES provider registry"
+version: 0.1.0
+date-released: 2026-10-13
+license: Apache-2.0
+repository-code: https://github.com/nathansutton/nppes-over-time
+authors:
+  - family-names: Sutton
+    given-names: Nathan
+    email: nasutton@gmail.com
+keywords:
+  - NPPES
+  - NPI
+  - CMS
+  - healthcare providers
+  - panel data
+  - slowly changing dimension
+  - DuckDB
+references:
+  - type: data
+    title: "NPPES Data Dissemination"
+    authors:
+      - name: "Centers for Medicare & Medicaid Services"
+    url: https://download.cms.gov/nppes/NPI_Files.html
+  - type: data
+    title: "NPI/NPPES Cumulative Collection (preliminary)"
+    authors:
+      - name: "National Bureau of Economic Research"
+    url: https://www.nber.org/research/data/npinppes-cumulative-collection-preliminary
