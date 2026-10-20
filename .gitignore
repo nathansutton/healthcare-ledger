@@ -25,6 +25,5 @@ build/
 docs/designs/
 .kata.toml
 
-# notebook scratch
-notebooks/.ipynb_checkpoints/
-notebooks/cache/
+# research scratch: notebook checkpoints and each study's build/ database (build/ is ignored above)
+.ipynb_checkpoints/

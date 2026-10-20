@@ -55,9 +55,9 @@ con.sql("SELECT count(*) FROM read_parquet('export/parquet/provider/*/*.parquet'
 
 Each export has a `README.md` with a worked example and recipes for DuckDB, Python, R and Stata. It also has `CITATION.cff`, `data_dictionary.csv`, `snapshots.csv`, `SHA256SUMS` and `manifest.json`. The exporter writes `manifest.json` last. If it is missing, the export is not complete.
 
-## Notebooks
+## Research
 
-[`notebooks/`](notebooks/) has two worked examples with committed outputs: `00_getting_started` (reading the export, the as-of query, entry, exit, moves and version churn) and `01_nurse_practitioners_full_practice_authority` (a staggered difference-in-differences study of state nurse practitioner scope-of-practice laws on the universe of NPs, month by month). `uv sync --group notebooks` installs what they need.
+[`research/`](research/) has worked studies with committed outputs, one self-contained directory each: [`getting-started`](research/getting-started/) (reading the export, the as-of query, entry, exit, moves and version churn) and [`np-full-practice-authority`](research/np-full-practice-authority/) (a staggered difference-in-differences study of state nurse practitioner scope-of-practice laws on the universe of NPs, month by month). Each study's data pipeline is DuckDB SQL in its `sql/` directory. `uv sync --group research` installs what the notebooks need.
 
 ## Limits
 
