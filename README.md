@@ -6,7 +6,7 @@ This project does not host the CMS files and does not give you the data. It is a
 
 Each month, CMS publishes a full copy of the NPI registry. CMS keeps only the latest copy. This project reads an archive of the monthly files and makes an SCD Type 2 panel. The panel has one row for each NPI and version, with the first and last dates CMS showed that version. You can make any monthly file again exactly from the panel. It is the successor to the [NBER NPI/NPPES cumulative collection](https://www.nber.org/research/data/npinppes-cumulative-collection-preliminary).
 
-The build uses Python, DuckDB and the CMS zip files only. The output is Parquet, and optionally gzipped CSV. A change in any of the 330 CMS columns makes a new version. When an NPI leaves the file, its last version closes with `close_reason = 'absent'`. Tax ids and SSNs are removed before hashing ([METHODOLOGY.md](docs/METHODOLOGY.md) section 2a).
+The build uses Python, DuckDB and the CMS zip files only. The output is Parquet, and optionally gzipped CSV. A change in any of the 330 CMS columns makes a new version. When an NPI leaves the file, its last version closes with `close_reason = 'absent'`. Tax ids are removed before hashing ([METHODOLOGY.md](docs/METHODOLOGY.md) section 2a).
 
 ## Quick start
 
@@ -61,10 +61,10 @@ The archive has 197 files, from 2007-11-12 to 2026-10-11. The files are monthly 
 
 ## Status
 
-The 2026-10-20 build (edition 2) has 9,852,261 NPIs and 31,548,829 provider versions over 197 snapshots. Validation passed. NBER has not yet decided where to host the downloads.
+The 2026-10-20 build (edition 2) has 9,852,261 NPIs and 31,548,829 provider versions over 197 snapshots.
 
 ## License and citation
 
 The code license is Apache 2.0. The data files are [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). To cite the data, use the release id and the `CITATION.cff` in your download. Also cite CMS NPPES.
 
-To report a data problem, use the [issue form](https://github.com/nathansutton/nppes-over-time/issues/new?template=data-problem.yml). Do not paste a tax id or SSN.
+To report a data problem, use the [issue form](https://github.com/nathansutton/nppes-over-time/issues/new?template=data-problem.yml).
