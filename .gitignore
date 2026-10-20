@@ -26,5 +26,4 @@ docs/designs/
 .kata.toml
 
 # notebook scratch
-notebooks/.ipynb_checkpoints/
-notebooks/cache/
+.ipynb_checkpoints/

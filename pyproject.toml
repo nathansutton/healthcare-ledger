@@ -23,7 +23,7 @@ dev = [
     "pytest>=9.1.1",
     "pandas>=2.2",
 ]
-notebooks = [
+research = [
     "differences>=0.3.0",
     "ipykernel>=7.4.0",
     "jupyterlab>=4.6.4",
