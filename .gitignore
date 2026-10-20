@@ -1,7 +1,7 @@
 # data never belongs in git: raw CMS zips, the DuckDB warehouse, exports, scratch
-data/
-export/
-work/
+/data/
+/export/
+/work/
 *.duckdb
 *.duckdb.wal
 *.parquet
@@ -24,3 +24,7 @@ build/
 # private: planning notes and local tool config
 docs/designs/
 .kata.toml
+
+# notebook scratch
+notebooks/.ipynb_checkpoints/
+notebooks/cache/

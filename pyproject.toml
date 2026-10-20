@@ -23,6 +23,16 @@ dev = [
     "pytest>=9.1.1",
     "pandas>=2.2",
 ]
+notebooks = [
+    "differences>=0.3.0",
+    "ipykernel>=7.4.0",
+    "jupyterlab>=4.6.4",
+    "matplotlib>=3.11.2",
+    "nbconvert>=7.17.2",
+    "nbformat>=5.11.1",
+    "pandas>=3.0.6",
+    "pyfixest>=0.60.0",
+]
 
 [build-system]
 requires = ["hatchling"]

@@ -55,6 +55,10 @@ con.sql("SELECT count(*) FROM read_parquet('export/parquet/provider/*/*.parquet'
 
 Each export has a `README.md` with a worked example and recipes for DuckDB, Python, R and Stata. It also has `CITATION.cff`, `data_dictionary.csv`, `snapshots.csv`, `SHA256SUMS` and `manifest.json`. The exporter writes `manifest.json` last. If it is missing, the export is not complete.
 
+## Notebooks
+
+[`notebooks/`](notebooks/) has two worked examples with committed outputs: `00_getting_started` (reading the export, the as-of query, entry, exit, moves and version churn) and `01_nurse_practitioners_full_practice_authority` (a staggered difference-in-differences study of state nurse practitioner scope-of-practice laws on the universe of NPs, month by month). `uv sync --group notebooks` installs what they need.
+
 ## Limits
 
 The archive has 197 files, from 2007-11-12 to 2026-10-11. The files are monthly from April 2011, except May 2013. Before April 2011 there are 11 files, two to five per year, so a change in those years can be up to a year older than its `effective_date`. CMS made some edits to the full file, for example upper-case names in April 2009. These edits make a new version for almost all providers. Cosmetic edits such as `ST. LOUIS` to `ST LOUIS` also make versions.
