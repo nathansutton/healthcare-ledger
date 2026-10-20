@@ -100,14 +100,17 @@ def fpa_dates() -> pd.DataFrame:
     return df
 
 
-def state_population() -> pd.DataFrame:
-    """State resident population by year, 2010 to 2024, with 2024 carried forward to 2026."""
+def state_population(through: int | None = None) -> pd.DataFrame:
+    """State resident population by year from the Census file, with the last year carried forward.
+
+    ``through`` is the last year to cover; by default the year of the latest snapshot in the export.
+    """
     pop = pd.read_csv(DATA / "state_population.csv")
+    if through is None:
+        through = snapshots().as_of_date.max().year
     last = pop[pop.year == pop.year.max()]
-    extra = pd.concat(
-        [last.assign(year=y, source="carried forward from 2024") for y in range(pop.year.max() + 1, 2027)]
-    )
-    return pd.concat([pop, extra], ignore_index=True)[["state", "year", "population"]]
+    extra = [last.assign(year=y, source=f"carried forward from {pop.year.max()}") for y in range(pop.year.max() + 1, through + 1)]
+    return pd.concat([pop, *extra], ignore_index=True)[["state", "year", "population"]]
 
 
 def np_versions(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
@@ -115,12 +118,15 @@ def np_versions(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 
     One row per (npi, effective_date) with the fields the FPA notebook needs. ``is_np`` says
     whether the primary taxonomy of *that* version is an NP code, so a nurse who was an RN
-    first appears with ``is_np = False`` until the switch.
+    first appears with ``is_np = False`` until the switch. "Individual" is decided per NPI
+    (any version with ``entity_type = '1'``), because a deactivated NPI's final stub version
+    has no entity type and that stub is the version that carries ``deactivation_date``.
     """
     sql = f"""
     WITH ever_np AS (
-        SELECT DISTINCT npi FROM provider_taxonomy
-        WHERE slot = 1 AND taxonomy_code LIKE '{NP_TAXONOMY_PREFIX}%'
+        SELECT DISTINCT t.npi FROM provider_taxonomy t
+        JOIN (SELECT DISTINCT npi FROM provider WHERE entity_type = '1') i USING (npi)
+        WHERE t.slot = 1 AND t.taxonomy_code LIKE '{NP_TAXONOMY_PREFIX}%'
     )
     SELECT p.npi, p.effective_date, p.end_date, p.close_reason,
            p.practice_state, p.practice_postal_code, p.sole_proprietor, p.sex,
@@ -131,7 +137,6 @@ def np_versions(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     JOIN ever_np USING (npi)
     LEFT JOIN provider_taxonomy t
       ON t.npi = p.npi AND t.effective_date = p.effective_date AND t.slot = 1
-    WHERE p.entity_type = '1'
     ORDER BY p.npi, p.effective_date
     """
     df = con.execute(sql).df()
@@ -143,8 +148,12 @@ def np_versions(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
 def np_events(versions: pd.DataFrame) -> pd.DataFrame:
     """Turn NP versions into dated events: entry, state move (in and out), sole-proprietor switch, exit.
 
-    Returns one row per event with ``npi, date, event, state, from_state``.
-    ``date`` is the snapshot that first showed the change.
+    Returns one row per event with ``npi, date, event, state, from_state, detail``.
+    ``date`` is the snapshot that first showed the change. Entry and exit are symmetric:
+    an NPI enters when it first appears with an NP primary taxonomy or switches into one,
+    and exits when it switches away from one, leaves the file (``absent``) or is deactivated.
+    CMS's sole-proprietor code is ``Y``, ``N`` or ``X`` (not answered); a switch is counted
+    when the previous version is ``N`` or ``X`` and the new one is ``Y``, or the reverse.
     """
     v = versions.sort_values(["npi", "effective_date"]).copy()
     g = v.groupby("npi", sort=False)
@@ -161,38 +170,50 @@ def np_events(versions: pd.DataFrame) -> pd.DataFrame:
     moves = v[v.is_np & v.prev_state.notna() & v.practice_state.notna() & (v.prev_state != v.practice_state)]
     out.append(pd.DataFrame({"npi": moves.npi, "date": moves.effective_date, "event": "move",
                              "state": moves.practice_state, "from_state": moves.prev_state, "detail": None}))
-    sp_on = v[v.is_np & (v.prev_sp == "N") & (v.sole_proprietor == "Y")]
+    sp_on = v[v.is_np & v.prev_sp.isin(["N", "X"]) & (v.sole_proprietor == "Y")]
     out.append(pd.DataFrame({"npi": sp_on.npi, "date": sp_on.effective_date, "event": "became_sole_proprietor",
-                             "state": sp_on.practice_state, "from_state": None, "detail": None}))
-    sp_off = v[v.is_np & (v.prev_sp == "Y") & (v.sole_proprietor == "N")]
+                             "state": sp_on.practice_state, "from_state": None, "detail": sp_on.prev_sp}))
+    sp_off = v[v.is_np & (v.prev_sp == "Y") & v.sole_proprietor.isin(["N", "X"])]
     out.append(pd.DataFrame({"npi": sp_off.npi, "date": sp_off.effective_date, "event": "left_sole_proprietor",
-                             "state": sp_off.practice_state, "from_state": None, "detail": None}))
-    # exit: the NP's last version closed because the NPI left the file, or was deactivated
-    last = v[v.close_reason == "absent"]
-    out.append(pd.DataFrame({"npi": last.npi, "date": last.end_date, "event": "exit",
-                             "state": last.practice_state, "from_state": None, "detail": "absent"}))
-    deact = v[v.deactivation_date.notna() & (g.deactivation_date.shift().isna())]
+                             "state": sp_off.practice_state, "from_state": None, "detail": sp_off.sole_proprietor}))
+    # exit, three ways. The state is the one the NP practiced in before leaving.
+    switched_away = v[(v.prev_np == True) & ~v.is_np & v.deactivation_date.isna()]  # noqa: E712
+    out.append(pd.DataFrame({"npi": switched_away.npi, "date": switched_away.effective_date, "event": "exit",
+                             "state": switched_away.prev_state, "from_state": None, "detail": "switched_taxonomy"}))
+    absent = v[v.is_np & (v.close_reason == "absent")]
+    out.append(pd.DataFrame({"npi": absent.npi, "date": absent.end_date, "event": "exit",
+                             "state": absent.practice_state, "from_state": None, "detail": "absent"}))
+    # a deactivation usually arrives as a stub version with no state or taxonomy, so look at the version before it
+    deact = v[v.deactivation_date.notna() & g.deactivation_date.shift().isna() & (v.is_np | (v.prev_np == True))]  # noqa: E712
     out.append(pd.DataFrame({"npi": deact.npi, "date": deact.effective_date, "event": "exit",
-                             "state": deact.practice_state, "from_state": None, "detail": "deactivated"}))
+                             "state": deact.practice_state.fillna(deact.prev_state), "from_state": None, "detail": "deactivated"}))
     ev = pd.concat(out, ignore_index=True)
     ev["date"] = pd.to_datetime(ev.date)
     return ev.sort_values(["date", "npi"]).reset_index(drop=True)
 
 
-def np_stock_by_state_month(versions: pd.DataFrame, dates: list[pd.Timestamp]) -> pd.DataFrame:
-    """NPs by practice state on each snapshot date, and how many were sole proprietors.
+def live_on(versions: pd.DataFrame, date) -> pd.DataFrame:
+    """The versions valid on ``date``: ``effective_date <= date < end_date`` (NULL end = still current)."""
+    d = pd.Timestamp(date).to_datetime64()
+    return versions[(versions.effective_date.values <= d) & (versions.end_date.fillna(pd.Timestamp("2999-12-31")).values > d)]
 
-    Long frame with ``as_of, state, nps, sole_proprietors``.
+
+def np_stock_by_month(versions: pd.DataFrame, dates: list[pd.Timestamp], key: str = "practice_state") -> pd.DataFrame:
+    """NP versions in force on each snapshot date, counted by ``key``, with the sole-proprietor count.
+
+    Long frame with ``as_of, <key>, nps, sole_proprietors``. Rows whose key is NULL are dropped.
     """
-    v = versions[versions.is_np & versions.practice_state.isin(STATES)]
-    start = v.effective_date.values
-    end = v.end_date.fillna(pd.Timestamp("2999-12-31")).values
+    v = versions[versions.is_np & versions[key].notna()]
     rows = []
     for d in dates:
-        d64 = pd.Timestamp(d).to_datetime64()
-        live = v[(start <= d64) & (end > d64)]
-        agg = live.groupby("practice_state").agg(nps=("npi", "size"),
-                                                sole_proprietors=("sole_proprietor", lambda s: (s == "Y").sum()))
+        agg = live_on(v, d).groupby(key).agg(nps=("npi", "size"),
+                                            sole_proprietors=("sole_proprietor", lambda s: (s == "Y").sum()))
         agg["as_of"] = pd.Timestamp(d)
-        rows.append(agg.reset_index().rename(columns={"practice_state": "state"}))
+        rows.append(agg.reset_index())
     return pd.concat(rows, ignore_index=True)
+
+
+def np_stock_by_state_month(versions: pd.DataFrame, dates: list[pd.Timestamp]) -> pd.DataFrame:
+    """NPs by practice state (US states and DC only) on each snapshot date: ``as_of, state, nps, sole_proprietors``."""
+    v = versions[versions.practice_state.isin(STATES)]
+    return np_stock_by_month(v, dates, "practice_state").rename(columns={"practice_state": "state"})

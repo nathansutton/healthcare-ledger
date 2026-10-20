@@ -21,4 +21,4 @@ Each notebook executes end to end in about a minute on the full export with 16 t
 cd notebooks && uv run jupyter nbconvert --to notebook --execute --inplace 01_nurse_practitioners_full_practice_authority.ipynb
 ```
 
-`nppes_nb.py` holds the helpers the notebooks share (`connect`, `as_of`, `np_versions`, `np_events`, `np_stock_by_state_month`). `data/` holds the small reference files (law dates, population, ZIP to county, border counties); `data/SOURCES.md` cites each one. `tests/test_notebooks_data.py` checks them.
+`nppes_nb.py` holds the helpers the notebooks share (`connect`, `as_of`, `live_on`, `np_versions`, `np_events`, `np_stock_by_month`, `np_stock_by_state_month`). `data/` holds the small reference files (law dates, population, ZIP to county, border counties); `data/SOURCES.md` cites each one. `tests/test_notebooks_data.py` checks them.

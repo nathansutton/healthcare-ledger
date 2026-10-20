@@ -60,12 +60,14 @@ def test_population_is_a_balanced_state_year_grid(nb):
 
 
 def test_county_files_use_five_digit_fips():
-    for name, cols in (("zcta_county.csv", ["county_fips"]), ("state_border_county_pairs.csv", ["county_fips", "neighbor_fips"])):
+    for name, cols in (("zcta_county.csv", ["zcta", "county_fips"]), ("state_border_county_pairs.csv", ["county_fips", "neighbor_fips"])):
         rows = _rows(name)
         assert rows
-        for r in rows[:2000]:
+        for r in rows:
             for c in cols:
                 assert re.fullmatch(r"\d{5}", r[c]), (name, r)
+    zctas = [r["zcta"] for r in _rows("zcta_county.csv")]
+    assert len(zctas) == len(set(zctas))
     pairs = _rows("state_border_county_pairs.csv")
     assert all(r["county_fips"][:2] != r["neighbor_fips"][:2] for r in pairs)
 
@@ -81,3 +83,41 @@ def test_helper_fpa_dates_parse(nb):
     assert df.fpa_effective.notna().sum() == (df.coding != "never").sum()
     assert df.aanp_full_practice.sum() == 28
     assert df.loc[df.state == "FL", "partial"].item()
+
+
+def test_np_events_from_synthetic_versions(nb):
+    """Entry, exit, move and sole-proprietor events from a hand-built version history."""
+    import pandas as pd
+
+    D = pd.Timestamp
+    cols = ["npi", "effective_date", "end_date", "close_reason", "practice_state", "sole_proprietor",
+            "deactivation_date", "primary_taxonomy", "is_np"]
+    rows = [
+        # A: RN in 2012, becomes NP in 2013 (entry), moves MD->PA in 2014, sole prop X->Y in 2015, deactivated via stub in 2016
+        ("A", D("2012-01-08"), D("2013-01-13"), "changed", "MD", "X", None, "163W00000X", False),
+        ("A", D("2013-01-13"), D("2014-01-12"), "changed", "MD", "X", None, "363L00000X", True),
+        ("A", D("2014-01-12"), D("2015-01-11"), "changed", "PA", "X", None, "363L00000X", True),
+        ("A", D("2015-01-11"), D("2016-01-10"), "changed", "PA", "Y", None, "363L00000X", True),
+        ("A", D("2016-01-10"), None, None, None, None, D("2016-01-02"), None, False),
+        # B: NP from the start, switches away to a physician assistant code in 2015 (exit), never deactivated
+        ("B", D("2012-01-08"), D("2015-01-11"), "changed", "NY", "N", None, "363L00000X", True),
+        ("B", D("2015-01-11"), None, None, "NY", "N", None, "363A00000X", False),
+        # C: NP who left the file in 2014
+        ("C", D("2012-01-08"), D("2014-01-12"), "absent", "TX", "N", None, "363L00000X", True),
+    ]
+    v = pd.DataFrame(rows, columns=cols)
+    ev = nb.np_events(v)
+    def one(npi, event, col):
+        hits = ev[(ev.npi == npi) & (ev.event == event)]
+        assert len(hits) == 1, (npi, event, hits)
+        return hits[col].iloc[0]
+
+    assert one("A", "entry", "date") == D("2013-01-13")
+    assert one("A", "entry", "detail") == "switched_taxonomy"
+    assert one("A", "move", "from_state") == "MD" and one("A", "move", "state") == "PA"
+    assert one("A", "became_sole_proprietor", "date") == D("2015-01-11")
+    assert one("A", "exit", "detail") == "deactivated" and one("A", "exit", "state") == "PA"  # state from the version before the stub
+    assert one("B", "entry", "detail") == "new_npi"
+    assert one("B", "exit", "detail") == "switched_taxonomy" and one("B", "exit", "state") == "NY"
+    assert one("C", "exit", "detail") == "absent" and one("C", "exit", "date") == D("2014-01-12")
+    assert (ev.event == "exit").sum() == 3 and (ev.event == "entry").sum() == 3
