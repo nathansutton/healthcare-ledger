@@ -1,6 +1,6 @@
 # Research
 
-Worked studies that run against an export directory. Each subdirectory is one self-contained project: its question, its reference data, its pipeline and its notebook. The notebook outputs are committed, so GitHub shows the figures without the data.
+Worked studies that run against an export directory. Each subdirectory is one self-contained project: its question, its reference data and its notebook. The notebook outputs are committed, so GitHub shows the figures without the data.
 
 | Project | What it shows |
 |---|---|
@@ -25,11 +25,9 @@ uv run jupyter nbconvert --to notebook --execute --inplace np_full_practice_auth
 
 ```
 <project>/
-  README.md        the question, the design, and what each file does
+  README.md        the question, and how to run it
   data/            small public inputs, with SOURCES.md citing each one
-  sql/             the data pipeline, one DuckDB SQL file per stage
-  pipeline.py      runs sql/ in order into build/<project>.duckdb (git-ignored)
-  <project>.ipynb  estimation and figures, reading the tables the SQL built
+  <project>.ipynb  the argument, the SQL that builds each table, the estimates and the figures
 ```
 
-The data work lives in SQL, so every derived table can be read, checked and rerun without Python. The notebook does what SQL is bad at: regressions and plots. To start a new project, copy `np-full-practice-authority/`, keep `sql/export_views.sql`, and replace the rest.
+Each table is built in DuckDB SQL in the notebook cell where the argument needs it, with the reasoning in the markdown just above. Python is used only for the regressions and the plots. To start a new project, copy a directory and keep its first code cell, which opens the export.
