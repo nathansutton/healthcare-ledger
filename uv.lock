@@ -1735,7 +1735,7 @@ dev = [
     { name = "pandas" },
     { name = "pytest" },
 ]
-notebooks = [
+research = [
     { name = "differences" },
     { name = "ipykernel" },
     { name = "jupyterlab" },
@@ -1757,7 +1757,7 @@ dev = [
     { name = "pandas", specifier = ">=2.2" },
     { name = "pytest", specifier = ">=9.1.1" },
 ]
-notebooks = [
+research = [
     { name = "differences", specifier = ">=0.3.0" },
     { name = "ipykernel", specifier = ">=7.4.0" },
     { name = "jupyterlab", specifier = ">=4.6.4" },

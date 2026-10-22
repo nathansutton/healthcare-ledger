@@ -57,9 +57,9 @@ Each export has a `README.md` with a worked example and recipes for DuckDB, Pyth
 
 `export --monthly-files` (or `make export MONTHLY_FILES=1`) also writes the data as a monthly panel: `parquet/provider_monthly/provider_YYYY-MM.parquet`, one file per snapshot with every NPI in that month's CMS file, one row each, in the wide 330-column CMS layout. Each file is the as-of query over the version table written out. The files are large (0.3 to 0.8 GB a month, about 100 GB for the full history), so they are opt-in and Parquet only.
 
-## Notebooks
+## Research
 
-[`notebooks/`](notebooks/) has two worked examples with committed outputs: `00_getting_started` (reading the export, the as-of query, entry, exit, moves and version churn) and `01_nurse_practitioners_full_practice_authority` (a staggered difference-in-differences study of state nurse practitioner scope-of-practice laws on the universe of NPs, month by month). `uv sync --group notebooks` installs what they need.
+[`research/`](research/) has worked studies with committed outputs, one self-contained directory each: [`getting-started`](research/getting-started/) (reading the export, the as-of query, entry, exit, moves and version churn) and [`np-full-practice-authority`](research/np-full-practice-authority/) (a staggered difference-in-differences study of state nurse practitioner scope-of-practice laws on the universe of NPs, month by month). Each table a study uses is built in DuckDB SQL in the notebook, next to the reasoning for it. `uv sync --group research` installs what the notebooks need.
 
 ## Limits
 
