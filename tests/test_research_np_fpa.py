@@ -1,10 +1,8 @@
 """The nurse practitioner FPA study in research/np-full-practice-authority: its reference CSVs, and the SQL in its notebook.
 
 The tables are built by the triple-quoted SQL passed to ``con.execute`` in the notebook's code cells. The tests
-pull that SQL out of the notebook and run them, so they check the SQL a reader sees.
+pull that SQL out of the notebook (conftest.notebook_sql) and run them, so they check the SQL a reader sees.
 """
-import csv
-import json
 import re
 from datetime import date
 from pathlib import Path
@@ -12,39 +10,22 @@ from pathlib import Path
 import duckdb
 import pytest
 
-from conftest import main_row, write_zip
+from conftest import main_row, notebook_sql, sql_creating, study_con, study_rows, write_zip
 from nppes_over_time.cli import main
 
 STUDY = Path(__file__).resolve().parent.parent / "research" / "np-full-practice-authority"
-DATA = STUDY / "data"
 NOTEBOOK = STUDY / "np_full_practice_authority.ipynb"
-SQL_BLOCK = re.compile(r'con\.execute\("""(.*?)"""\)', re.DOTALL)
 
 
 def _rows(name):
-    with open(DATA / name, newline="") as f:
-        return list(csv.DictReader(f))
+    return study_rows(STUDY, name)
 
 
 STATES = [r["state"] for r in _rows("state_fips.csv")]
 
 
-def notebook_sql() -> list[str]:
-    """The triple-quoted SQL of every con.execute call in the notebook's code cells, in order."""
-    cells = json.loads(NOTEBOOK.read_text())["cells"]
-    return [m.group(1) for c in cells if c["cell_type"] == "code" for m in SQL_BLOCK.finditer("".join(c["source"]))]
-
-
-def sql_creating(table: str) -> str:
-    [block] = [b for b in notebook_sql() if f"CREATE TABLE {table} AS" in b]
-    return block
-
-
 def _con() -> duckdb.DuckDBPyConnection:
-    """An in-memory DuckDB that resolves data/ paths against the study directory."""
-    con = duckdb.connect()
-    con.execute("SET file_search_path = ?", [str(STUDY)])
-    return con
+    return study_con(STUDY)
 
 
 def test_state_fips_is_the_50_states_and_dc():
@@ -99,7 +80,7 @@ def test_county_files_use_five_digit_fips():
 
 def test_fpa_dates_sql():
     con = _con()
-    con.execute(sql_creating("fpa_dates"))
+    con.execute(sql_creating(NOTEBOOK, "fpa_dates"))
     assert con.execute("SELECT count(*) FROM states").fetchone()[0] == 51
     assert con.execute("SELECT count(*) FROM fpa_dates WHERE fpa_effective IS NOT NULL").fetchone()[0] == \
         sum(r["coding"] != "never" for r in _rows("np_fpa_dates.csv"))
@@ -126,7 +107,7 @@ def test_np_events_from_synthetic_versions():
         ('C', DATE '2012-01-08', DATE '2014-01-12', 'absent', 'TX', 'N', NULL, '363L00000X', true)
     ) v(npi, effective_date, end_date, close_reason, practice_state, sole_proprietor, deactivation_date, primary_taxonomy, is_np)
     """)
-    con.execute(sql_creating("np_events"))
+    con.execute(sql_creating(NOTEBOOK, "np_events"))
 
     def one(npi, event, col):
         hits = con.execute(f"SELECT {col} FROM np_events WHERE npi = ? AND event = ?", [npi, event]).fetchall()
@@ -168,7 +149,7 @@ def fixture_export(tmp_path_factory) -> Path:
 def test_notebook_sql_runs_end_to_end_on_a_fixture_export(fixture_export):
     con = _con()
     con.execute("SET VARIABLE export = ?", [str(fixture_export)])
-    for block in notebook_sql():
+    for block in notebook_sql(NOTEBOOK):
         con.execute(block)
 
     assert con.execute("SELECT count(*), count(DISTINCT npi) FROM np_versions").fetchone() == (3, 2)
