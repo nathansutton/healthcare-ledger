@@ -1,0 +1,23 @@
+code,code_set,name,source
+207V00000X,obgyn,Obstetrics & Gynecology Physician,eTable 1
+207VC0200X,obgyn,Critical Care Medicine (Obstetrics & Gynecology) Physician,eTable 1
+207VF0040X,obgyn,Female Pelvic Medicine and Reconstructive Surgery (Obstetrics & Gynecology) Physician,eTable 1
+207VX0201X,obgyn,Gynecologic Oncology Physician,eTable 1
+207VG0400X,obgyn,Gynecology Physician,eTable 1
+207VH0002X,obgyn,Hospice and Palliative Medicine (Obstetrics & Gynecology) Physician,eTable 1
+207VM0101X,obgyn,Maternal & Fetal Medicine Physician,eTable 1
+207VX0000X,obgyn,Obstetrics Physician,eTable 1
+207VE0102X,obgyn,Reproductive Endocrinology Physician,eTable 1
+176B00000X,obgyn,Midwife,eTable 1
+367A00000X,obgyn,Advanced Practice Midwife,eTable 1
+207Q00000X,family_medicine,Family Medicine Physician (with a secondary obgyn taxonomy),eTable 1
+363LX0001X,np_obstetric,Nurse Practitioner: Obstetrics & Gynecology,NUCC; not listed in eTable 1
+363LP1700X,np_obstetric,Nurse Practitioner: Perinatal,NUCC; not listed in eTable 1
+363LW0102X,np_obstetric,Nurse Practitioner: Women's Health,NUCC; not listed in eTable 1
+207Q00000X,primary_care,Family Medicine Physician,eTable 1
+207QA0505X,primary_care,Adult Medicine Physician,eTable 1
+207QG0300X,primary_care,Geriatric Medicine (Family Medicine) Physician,eTable 1
+207R00000X,primary_care,Internal Medicine Physician,eTable 1
+207RG0300X,primary_care,Geriatric Medicine (Internal Medicine) Physician,eTable 1
+2083P0901X,primary_care,Public Health & General Preventive Medicine Physician,eTable 1
+208D00000X,primary_care,General Practice Physician,eTable 1

@@ -4,12 +4,47 @@ from __future__ import annotations
 
 import csv
 import io
+import json
+import re
 import zipfile
 from pathlib import Path
 
 import pytest
 
 from nppes_over_time.schema import ENDPOINT, OTHER_NAME, PRACTICE_LOCATION, PROVIDER
+
+_SQL = re.compile(r'con\.(execute|sql)\("""(.*?)"""\)', re.DOTALL)
+
+
+def notebook_sql(notebook: Path, *, queries: bool = False) -> list[str]:
+    """The triple-quoted SQL of every con.execute call in a research notebook's code cells, in order.
+
+    With queries=True, also the con.sql calls, which a notebook uses for the result tables it displays.
+    """
+    cells = json.loads(notebook.read_text())["cells"]
+    return [m.group(2) for c in cells if c["cell_type"] == "code" for m in _SQL.finditer("".join(c["source"]))
+            if queries or m.group(1) == "execute"]
+
+
+def sql_creating(notebook: Path, table: str) -> str:
+    """The one con.execute block of a research notebook that creates the table."""
+    [block] = [b for b in notebook_sql(notebook) if f"CREATE TABLE {table} AS" in b]
+    return block
+
+
+def study_con(study: Path):
+    """An in-memory DuckDB that resolves a research notebook's data/ paths against its study directory."""
+    import duckdb
+    con = duckdb.connect()
+    con.execute("SET file_search_path = ?", [str(study)])
+    return con
+
+
+def study_rows(study: Path, name: str) -> list[dict[str, str]]:
+    """The rows of one of a study's data/ CSVs."""
+    with open(study / "data" / name, newline="") as f:
+        return list(csv.DictReader(f))
+
 
 MAIN_HEADERS = ["NPI"] + [c.cms_header for c in PROVIDER.columns]
 
