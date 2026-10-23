@@ -4,12 +4,34 @@ from __future__ import annotations
 
 import csv
 import io
+import json
+import re
 import zipfile
 from pathlib import Path
 
 import pytest
 
 from nppes_over_time.schema import ENDPOINT, OTHER_NAME, PRACTICE_LOCATION, PROVIDER
+
+_SQL_BLOCK = re.compile(r'con\.execute\("""(.*?)"""\)', re.DOTALL)
+_SQL_QUERY = re.compile(r'con\.(?:execute|sql)\("""(.*?)"""\)', re.DOTALL)
+
+
+def notebook_sql(notebook: Path, *, queries: bool = False) -> list[str]:
+    """The triple-quoted SQL of every con.execute call in a research notebook's code cells, in order.
+
+    With queries=True, also the con.sql calls, which a notebook uses for the result tables it displays.
+    """
+    pattern = _SQL_QUERY if queries else _SQL_BLOCK
+    cells = json.loads(notebook.read_text())["cells"]
+    return [m.group(1) for c in cells if c["cell_type"] == "code" for m in pattern.finditer("".join(c["source"]))]
+
+
+def sql_creating(notebook: Path, table: str) -> str:
+    """The one con.execute block of a research notebook that creates the table."""
+    [block] = [b for b in notebook_sql(notebook) if f"CREATE TABLE {table} AS" in b]
+    return block
+
 
 MAIN_HEADERS = ["NPI"] + [c.cms_header for c in PROVIDER.columns]
 

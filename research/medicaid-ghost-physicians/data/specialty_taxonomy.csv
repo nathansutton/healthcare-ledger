@@ -1,0 +1,17 @@
+specialty,pattern,description
+primary care,207Q%,Family Medicine and its subspecialties
+primary care,207R00000X,Internal Medicine (general)
+primary care,208D00000X,General Practice
+primary care,208000000X,Pediatrics (general)
+cardiology,207RC0000X,Cardiovascular Disease
+cardiology,207RC0001X,Clinical Cardiac Electrophysiology
+cardiology,207RI0011X,Interventional Cardiology
+cardiology,207RA0001X,Advanced Heart Failure and Transplant Cardiology
+dermatology,207N%,Dermatology and its subspecialties
+ophthalmology,207W%,Ophthalmology and its subspecialties
+psychiatry,2084P0800X,Psychiatry
+psychiatry,2084P0804X,Child and Adolescent Psychiatry
+psychiatry,2084P0802X,Addiction Psychiatry
+psychiatry,2084P0805X,Geriatric Psychiatry
+psychiatry,2084P0015X,Psychosomatic Medicine
+psychiatry,2084F0202X,Forensic Psychiatry

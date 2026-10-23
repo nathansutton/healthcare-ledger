@@ -57,7 +57,7 @@ Each export has a `README.md` with a worked example and recipes for DuckDB, Pyth
 
 ## Research
 
-[`research/`](research/) has worked studies with committed outputs, one self-contained directory each: [`getting-started`](research/getting-started/) (reading the export, the as-of query, entry, exit, moves and version churn) and [`np-full-practice-authority`](research/np-full-practice-authority/) (a staggered difference-in-differences study of state nurse practitioner scope-of-practice laws on the universe of NPs, month by month). Each table a study uses is built in DuckDB SQL in the notebook, next to the reasoning for it. `uv sync --group research` installs what the notebooks need.
+[`research/`](research/) has worked studies with committed outputs, one self-contained directory each: [`getting-started`](research/getting-started/) (reading the export, the as-of query, entry, exit, moves and version churn), [`np-full-practice-authority`](research/np-full-practice-authority/) (a staggered difference-in-differences study of state nurse practitioner scope-of-practice laws on the universe of NPs, month by month) and [`medicaid-ghost-physicians`](research/medicaid-ghost-physicians/) (a 2026 Health Affairs study of Medicaid-enrolled physicians who see no Medicaid patients, extended from three years to seven with the public T-MSIS extracts and the monthly history). Each table a study uses is built in DuckDB SQL in the notebook, next to the reasoning for it. `uv sync --group research` installs what the notebooks need.
 
 ## Limits
 
