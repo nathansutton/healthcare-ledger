@@ -342,10 +342,35 @@ Each row is one *version*: the provider's record as CMS published it, valid from
     else:
         changes = "- No corrections recorded. Edition 1 is the first public edition."
 
+    monthly = ctx.row_counts.get("provider_monthly")
+    monthly_row = monthly_section = ""
+    if monthly is not None:
+        monthly_row = (f"| `parquet/provider_monthly/provider_YYYY-MM.parquet` | one file per snapshot month: every NPI in "
+                       f"that month's file, one row each, all 330 CMS columns wide ({monthly:,} rows in all) |\n")
+        monthly_section = f"""
+## One file per month
+
+`parquet/provider_monthly/` holds the same data as a monthly panel: `provider_YYYY-MM.parquet`
+is the registry as CMS published it that month, one row per NPI, in the CMS file's wide layout
+(taxonomy slots 1 to 15, other-identifier slots 1 to 50, in canonical slot order). Each file
+carries `snapshot_id` and `as_of_date`, so the files stack into an NPI-by-month panel, and
+`effective_date`, which joins a row to its version in `parquet/provider/`.
+
+```sql
+-- returns 1 row: {ctx.latest_provider_count:,} providers
+SELECT count(*) FROM read_parquet('parquet/provider_monthly/provider_{ctx.last_as_of[:7]}.parquet');
+-- the whole panel
+SELECT as_of_date, count(*) FROM read_parquet('parquet/provider_monthly/*.parquet') GROUP BY 1 ORDER BY 1;
+```
+
+These files are large (hundreds of MB per month) and say nothing the version tables do not;
+download only the months you need.
+"""
+
     csv_section = ""
     if csv_too:
         csv_section = """
-`csv/` mirrors every Parquet table as gzipped CSV with identical columns and the same
+`csv/` mirrors every Parquet table (except the monthly files) as gzipped CSV with identical columns and the same
 `effective_year=YYYY` folders. It exists for tools that cannot read Parquet. The provider
 table alone is tens of millions of rows, so do not try to append all of it in Stata; filter
 first (see the Stata recipe) or load one `effective_year` folder at a time.
@@ -378,7 +403,7 @@ WHERE effective_date <= DATE '{ctx.last_as_of}' AND (end_date IS NULL OR end_dat
 
 Use any date between {ctx.first_as_of} and {ctx.last_as_of}. Between two snapshots the result is the
 earlier snapshot. `snapshots.csv` lists every snapshot date.
-
+{monthly_section}
 ## Files
 
 | Path | What it is |
@@ -389,7 +414,7 @@ earlier snapshot. `snapshots.csv` lists every snapshot date.
 | `parquet/practice_location.parquet` | secondary practice location versions, since July 2018 ({ctx.row_counts.get('practice_location', 0):,} rows) |
 | `parquet/other_name.parquet` | organization other-name versions, since July 2018 ({ctx.row_counts.get('other_name', 0):,} rows) |
 | `parquet/endpoint.parquet` | endpoint versions, since March 2019 ({ctx.row_counts.get('endpoint', 0):,} rows) |
-| `snapshots.csv` | one row per monthly snapshot: dates, source file, per-stream counts and content fingerprints |
+{monthly_row}| `snapshots.csv` | one row per monthly snapshot: dates, source file, per-stream counts and content fingerprints |
 | `data_dictionary.csv` | every exported column with its type, CMS header and any suppression note |
 | `manifest.json` | release id, counts, and the size and SHA-256 of every file |
 | `SHA256SUMS` | checksums of the data files; `sha256sum -c SHA256SUMS` verifies a download |

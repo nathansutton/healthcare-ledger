@@ -15,11 +15,18 @@ Layout of ``--out``::
       practice_location.parquet        secondary practice location versions
       other_name.parquet               organization other-name versions
       endpoint.parquet                 endpoint versions
-    csv/                               same tables, gzipped CSV (.csv.gz), same partitioning
+      provider_monthly/                optional (--monthly-files): provider_YYYY-MM.parquet, one per snapshot
+    csv/                               same tables, gzipped CSV (.csv.gz), same partitioning (no monthly files)
 
 Big tables are hive-partitioned by the year of ``effective_date`` so a
 researcher can fetch a slice without the whole thing. DuckDB, Arrow, pandas,
 polars and Spark all read a partitioned directory as one table.
+
+The monthly files are the same provider data the other way around: one file per snapshot holding
+every NPI in that month's CMS file, wide, with the 330-column layout researchers know from CMS.
+They are rebuilt from the version table by the as-of lookup the release fingerprints use
+(release.interval_fingerprint), so a month here is exactly the month the release vouches for.
+Opt-in because they are large: about 0.3 to 0.8 GB per month, 100 GB for the full history.
 
 Write order matters for the release id: data files, then ``SHA256SUMS`` (which fixes the
 id), then README and CITATION (which quote the id), then ``manifest.json`` last. A directory
@@ -125,6 +132,42 @@ def _copy(con: duckdb.DuckDBPyConnection, sql: str, dest: Path, fmt: str, partit
         con.execute(f"COPY ({sql}) TO '{dest.with_suffix(suffix)}' ({opts})")
 
 
+MONTHLY = "provider_monthly"
+MONTHLY_META = ["snapshot_id", "as_of_date", "npi", "effective_date"]
+MONTHLY_DESC = {
+    "snapshot_id": "Snapshot id (YYYYMMDD of as-of date) this file is a copy of; one value per file",
+    "as_of_date": "As-of date of the snapshot; one value per file",
+    "npi": META_DESC["npi"],
+    "effective_date": "effective_date of the provider version in force on as_of_date (joins to provider)",
+}
+
+
+def _monthly_sql(snapshot_id: int, as_of: str) -> str:
+    """Every NPI in snapshot ``snapshot_id``, wide, one row each (the version in force on ``as_of``)."""
+    cols = ", ".join(f"NULL::VARCHAR AS {c.name}" if c.name in SUPPRESSED_COLUMNS else c.name for c in PROVIDER.columns)
+    return (f"SELECT {snapshot_id}::INTEGER AS snapshot_id, DATE '{as_of}' AS as_of_date, npi, effective_date, {cols} "
+            f"FROM provider_version WHERE effective_date <= DATE '{as_of}' "
+            f"AND (end_date IS NULL OR end_date > DATE '{as_of}') ORDER BY npi")
+
+
+def _write_monthly(con: duckdb.DuckDBPyConnection, dest: Path) -> int:
+    """One Parquet file per snapshot, named by its month; returns the total row count."""
+    snaps = con.execute("SELECT snapshot_id, as_of_date FROM snapshot ORDER BY snapshot_id").fetchall()
+    months = [d.strftime("%Y-%m") for _, d in snaps]
+    dupes = sorted({m for m in months if months.count(m) > 1})
+    if dupes:
+        raise UserError(f"cannot write one file per month: more than one snapshot in {', '.join(dupes)}")
+    shutil.rmtree(dest, ignore_errors=True)  # a month dropped by a rollback must not survive
+    dest.mkdir(parents=True)
+    total = 0
+    for (sid, as_of), month in zip(snaps, months):
+        log.info("exporting %s %s", MONTHLY, month)
+        f = dest / f"provider_{month}.parquet"
+        con.execute(f"COPY ({_monthly_sql(sid, as_of.isoformat())}) TO '{f}' (FORMAT PARQUET, COMPRESSION ZSTD)")
+        total += con.execute(f"SELECT count(*) FROM read_parquet('{f}')").fetchone()[0]
+    return total
+
+
 def _dd_type(kind: str) -> str:
     return {"date": "DATE", "int": "INTEGER"}.get(kind, "VARCHAR")
 
@@ -149,16 +192,22 @@ def _entry(out: Path, rel: str) -> dict:
     return {"path": rel, "bytes": f.stat().st_size, "sha256": _sha256(f)}
 
 
-def _file_entries(out: Path, include_csv: bool) -> list[dict]:
+def _file_entries(out: Path, include_csv: bool, include_monthly: bool = False) -> list[dict]:
     """Path, size and SHA-256 of every data file under ``out`` (everything but NON_DATA_FILES)."""
     skip = set(NON_DATA_FILES)
+    stale = []
     if not include_csv and (out / "csv").exists():
         log.warning("%s exists but this export is parquet-only; treating it as stale and leaving it "
                     "out of the manifest", out / "csv")
+        stale.append("csv/")
+    if not include_monthly and (out / "parquet" / MONTHLY).exists():
+        log.warning("%s exists but this export has no monthly files; treating it as stale and leaving it "
+                    "out of the manifest", out / "parquet" / MONTHLY)
+        stale.append(f"parquet/{MONTHLY}/")
     entries = []
     for f in sorted(p for p in out.rglob("*") if p.is_file()):
         rel = f.relative_to(out).as_posix()
-        if rel in skip or (not include_csv and rel.startswith("csv/")):
+        if rel in skip or rel.startswith(tuple(stale)):
             continue
         entries.append(_entry(out, rel))
     entries.sort(key=lambda e: e["path"])
@@ -200,23 +249,41 @@ def data_dictionary_rows() -> list[tuple[str, str, str, str, str]]:
     return rows
 
 
-def write_data_dictionary(path: Path) -> None:
+def monthly_dictionary_rows() -> list[tuple[str, str, str, str, str]]:
+    """Dictionary rows of the optional monthly files (same CMS columns as the raw file, wide)."""
+    rows = [(MONTHLY, m, {"snapshot_id": "INTEGER", "as_of_date": "DATE", "effective_date": "DATE"}.get(m, "VARCHAR"),
+             "", MONTHLY_DESC[m]) for m in MONTHLY_META]
+    for c in PROVIDER.columns:
+        field, _, n = c.name.rpartition("_")
+        if n.isdigit() and field in TAXONOMY_FIELDS + OTHER_ID_FIELDS:
+            desc = ("Slot N in canonical order, as in provider_taxonomy / provider_other_identifier"
+                    + ("; " + SCRUB_DESC[field] if field in SCRUB_DESC else ""))
+        else:
+            desc = SUPPRESSED_DESC if c.name in SUPPRESSED_COLUMNS else SCRUB_DESC.get(c.name, "")
+        rows.append((MONTHLY, c.name, _dd_type(c.kind), c.cms_header, desc))
+    return rows
+
+
+def write_data_dictionary(path: Path, monthly: bool = False) -> None:
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["table", "column", "type", "cms_header", "description"])
         w.writerows(data_dictionary_rows())
+        if monthly:
+            w.writerows(monthly_dictionary_rows())
 
 
 def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = None,
                memory_limit: str | None = None, releases: Path | None = None,
-               new_edition: bool = False, changelog: Path | None = None) -> str:
+               new_edition: bool = False, changelog: Path | None = None, monthly_files: bool = False) -> str:
     """Write a release into ``out`` and return its release id.
 
     ``releases`` is the repository's ``releases/`` directory (edition number, earlier releases).
     With it, the export is blocked unless the warehouse still reproduces the latest release of the
     current edition (release.py), and the new release's metadata is recorded there. Without it the
     export is edition 1 and nothing is recorded. ``new_edition`` starts the next edition instead
-    (a breaking correction; needs a dated change-log entry in ``changelog``).
+    (a breaking correction; needs a dated change-log entry in ``changelog``). ``monthly_files``
+    adds one wide provider file per snapshot (Parquet only; large, so opt-in).
     """
     csv_too = csv
     if not Path(db).exists():
@@ -248,7 +315,9 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
                             + "; ".join(problems[:5]) + (f" (+{len(problems) - 5} more)" if len(problems) > 5 else ""))
 
         # Gate 3: continuity with the latest release of the current edition.
-        dictionary = {(t, c, ty) for t, c, ty, _, _ in data_dictionary_rows()}
+        # The monthly table is always part of the comparison: it is a format choice like --csv, and
+        # leaving it out of one export must not block the next.
+        dictionary = {(t, c, ty) for t, c, ty, _, _ in data_dictionary_rows() + monthly_dictionary_rows()}
         edition = release.read_edition(releases)
         if new_edition:
             release.check_new_edition_allowed(release.latest_release(releases), changelog)
@@ -300,7 +369,7 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
             LEFT JOIN snapshot_stream ep ON ep.snapshot_id = s.snapshot_id AND ep.stream = 'endpoint'
             ORDER BY s.snapshot_id"""
         con.execute(f"COPY ({snap_sql}) TO '{out / 'snapshots.csv'}' (FORMAT CSV, HEADER)")
-        write_data_dictionary(out / "data_dictionary.csv")
+        write_data_dictionary(out / "data_dictionary.csv", monthly=monthly_files)
 
         counts: dict[str, int] = {}
         for name, (sql, partition) in tables().items():
@@ -309,9 +378,11 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
             _copy(con, sql, out / "parquet" / name, "parquet", partition)
             if csv_too:
                 _copy(con, sql, out / "csv" / name, "csv", partition)
+        if monthly_files:
+            counts[MONTHLY] = _write_monthly(con, out / "parquet" / MONTHLY)
 
         first, last, n = con.execute("SELECT min(as_of_date), max(as_of_date), count(*) FROM snapshot").fetchone()
-        files = _file_entries(out, csv_too)
+        files = _file_entries(out, csv_too, monthly_files)
         sums = "".join(f"{e['sha256']}  {e['path']}\n" for e in files).encode()
         (out / "SHA256SUMS").write_bytes(sums)
         rid = release.release_id(edition, last, sums)

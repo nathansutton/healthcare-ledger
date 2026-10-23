@@ -54,6 +54,7 @@ class MonthlyOptions:
     work: Path
     releases: Path
     csv: bool = True
+    monthly_files: bool = False
     threads: int | None = None
     memory: str | None = None
     download: bool = True
@@ -241,7 +242,7 @@ def _check_and_export(o: MonthlyOptions, todo: list, prev, latest: int, before: 
     log.info("export to %s", o.out)
     try:
         rid = export_all(o.db, o.out, csv=o.csv, threads=o.threads, memory_limit=o.memory,
-                         releases=o.releases, changelog=o.changelog)
+                         releases=o.releases, changelog=o.changelog, monthly_files=o.monthly_files)
     except UserError as e:
         hint = ""
         if "privacy" in str(e):

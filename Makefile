@@ -13,6 +13,9 @@ RES = $(if $(THREADS),--threads $(THREADS)) $(if $(MEMORY),--memory $(MEMORY))
 MIRROR   ?=
 # VERIFY_ALL=1 makes `make verify` check every loaded month, not just the latest.
 VERIFY_ALL ?=
+# MONTHLY_FILES=1 adds one wide provider file per month to `make export` / `make monthly` (about 100 GB).
+MONTHLY_FILES ?=
+MONTHLY_FLAG = $(if $(MONTHLY_FILES),--monthly-files)
 
 .PHONY: install test discover probe download check-sources load validate verify export status monthly backfill-fingerprints
 
@@ -47,14 +50,14 @@ verify:
 	uv run nppes-over-time verify --db $(DB) --source $(SOURCE) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)
 
 export:
-	uv run nppes-over-time export --db $(DB) --out $(OUT) --csv --releases $(RELEASES) $(RES)
+	uv run nppes-over-time export --db $(DB) --out $(OUT) --csv --releases $(RELEASES) $(MONTHLY_FLAG) $(RES)
 
 status:
 	uv run nppes-over-time status --db $(DB)
 
 # The monthly routine for maintainers (docs/MAINTAINING.md): download, load, validate, verify, continuity, export.
 monthly:
-	uv run nppes-over-time monthly --source $(SOURCE) --db $(DB) --work $(WORK) --out $(OUT) --releases $(RELEASES) $(RES)
+	uv run nppes-over-time monthly --source $(SOURCE) --db $(DB) --work $(WORK) --out $(OUT) --releases $(RELEASES) $(MONTHLY_FLAG) $(RES)
 
 # One-time, for a warehouse built before content fingerprints existed.
 backfill-fingerprints:

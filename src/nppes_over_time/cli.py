@@ -101,7 +101,8 @@ def cmd_export(a: argparse.Namespace) -> int:
     from .export import export_all
     require_db(a.db)
     rid = export_all(Path(a.db), Path(a.out), csv=a.csv, threads=a.threads, memory_limit=a.memory,
-                     releases=Path(a.releases), new_edition=a.new_edition, changelog=Path(a.changelog))
+                     releases=Path(a.releases), new_edition=a.new_edition, changelog=Path(a.changelog),
+                     monthly_files=a.monthly_files)
     print(f"release {rid}")
     return 0
 
@@ -181,7 +182,7 @@ def cmd_monthly(a: argparse.Namespace) -> int:
     since = month_arg(a.download_since) if a.download_since else None
     return run_monthly(MonthlyOptions(
         source=Path(a.source), db=Path(a.db), out=Path(a.out), work=_work(a), releases=Path(a.releases),
-        csv=not a.no_csv, threads=a.threads, memory=a.memory, download=not a.no_download, download_since=since,
+        csv=not a.no_csv, monthly_files=a.monthly_files, threads=a.threads, memory=a.memory, download=not a.no_download, download_since=since,
         publish_root=a.publish_root, changelog=Path(a.changelog), max_absent_share=a.max_absent_share))
 
 
@@ -231,6 +232,8 @@ def build_parser() -> argparse.ArgumentParser:
     _db_arg(e)
     e.add_argument("--out", default=DEFAULT_OUT, help=f"export directory (default {DEFAULT_OUT})")
     e.add_argument("--csv", action="store_true", help="also write gzipped CSV for Stata/R users")
+    e.add_argument("--monthly-files", action="store_true",
+                   help="also write one wide provider Parquet file per snapshot month (about 100 GB in all)")
     e.add_argument("--releases", default=DEFAULT_RELEASES,
                    help=f"release records directory in the repository checkout (default {DEFAULT_RELEASES})")
     e.add_argument("--new-edition", action="store_true",
@@ -277,6 +280,8 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--releases", default=DEFAULT_RELEASES, help=f"release records directory (default {DEFAULT_RELEASES})")
     m.add_argument("--changelog", default=DEFAULT_CHANGELOG, help=argparse.SUPPRESS)
     m.add_argument("--no-csv", action="store_true", help="skip the gzipped CSV mirror")
+    m.add_argument("--monthly-files", action="store_true",
+                   help="also write one wide provider Parquet file per snapshot month (about 100 GB in all)")
     m.add_argument("--no-download", action="store_true", help="do not contact CMS; load only what --source already holds")
     m.add_argument("--download-since", help="first month to ask CMS for, YYYY-MM (default: the newest loaded snapshot's month; "
                         "earlier months are only useful for an out-of-order insert)")
