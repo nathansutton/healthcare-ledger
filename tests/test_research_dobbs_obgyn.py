@@ -41,6 +41,27 @@ def test_states_match_the_paper():
     for a, b in (("MS", "MO"), ("NV", "NH")):
         assert rows[a]["etable2_women_15_49"] == rows[b]["women_15_49"]
         assert rows[b]["etable2_women_15_49"] == rows[a]["women_15_49"]
+    # Guttmacher's July 2024 rating: every restrictive state is rated most restrictive, and the protected-access
+    # group of section 6 is 18 states and DC, two of them (MI, MT) in the paper's comparison group
+    ratings = {"Most Restrictive", "Very Restrictive", "Restrictive", "Some Restrictions/Protections",
+               "Protective", "Very Protective", "Most Protective"}
+    assert {r["guttmacher_july_2024"] for r in rows.values()} == ratings
+    assert all(rows[s]["guttmacher_july_2024"] == "Most Restrictive" for s in groups["restrictive"])
+    protected = sorted(s for s, r in rows.items() if r["guttmacher_july_2024"].endswith("Protective"))
+    assert len(protected) == 19 and "DC" in protected
+    assert [s for s in protected if rows[s]["study_group"]] == ["MI", "MT"]
+
+
+def test_population_by_year_covers_every_state_and_year():
+    states = {r["state"] for r in _rows("states.csv")}
+    rows = _rows("population_by_year.csv")
+    assert {(r["state"], int(r["year"])) for r in rows} == {(s, y) for s in states for y in range(2018, 2026)}
+    assert len(rows) == len(states) * 8
+    acs = {r["state"]: int(r["women_15_49"]) for r in _rows("states.csv")}
+    for r in rows:
+        assert r["estimate"] == ("intercensal 2010-2020" if int(r["year"]) < 2020 else "vintage 2025"), r
+        # the estimates are close to the 2017-2021 ACS average in every state and year
+        assert 0.85 < int(r["women_15_49"]) / acs[r["state"]] < 1.15, r
 
 
 def test_taxonomy_codes_are_etable_1():
@@ -78,7 +99,7 @@ def fixture_export(tmp_path_factory) -> Path:
         main_row("1000000004", **tx, taxonomy_code_1="363LX0001X", primary_taxonomy_1="Y"),   # obstetric NP
         main_row("1000000005", **tx, taxonomy_code_1="207R00000X", primary_taxonomy_1="Y"),   # internist
         main_row("1000000006", **dict(tx, entity_type="2"), **ob),                     # an organization: not counted
-        main_row("1000000007", **dict(person, practice_state="CA", practice_postal_code="900011234"), **ob),  # not a study state
+        main_row("1000000007", **dict(person, practice_state="CA", practice_postal_code="900011234"), **ob),  # protected-access only
         main_row("1000000008", **tx, taxonomy_code_1="207V00000X", primary_taxonomy_1="N",  # no taxonomy flagged primary
                  taxonomy_code_2="207R00000X", primary_taxonomy_2="N"),
         main_row("1000000009", **tx, taxonomy_code_1="207R00000X", primary_taxonomy_1="Y",  # an internist with an OB secondary
@@ -101,9 +122,10 @@ def test_notebook_sql_runs_end_to_end_on_a_fixture_export(fixture_export):
         con.execute(block)
 
     assert con.execute("SELECT count(*) FROM states WHERE study_group IS NOT NULL").fetchone()[0] == 26
-    # the organization, the California physician and the record with no primary taxonomy are not study versions
+    # the organization and the record with no primary taxonomy are not study versions; the California physician
+    # is one, for section 6, but not in the paper's panel
     assert con.execute("SELECT npi FROM study_versions GROUP BY npi ORDER BY npi").fetchall() == [
-        ("1000000001",), ("1000000002",), ("1000000003",), ("1000000004",), ("1000000005",), ("1000000009",)]
+        ("1000000001",), ("1000000002",), ("1000000003",), ("1000000004",), ("1000000005",), ("1000000007",), ("1000000009",)]
     # an OB-GYN code counts only as the primary taxonomy, and as a secondary only for family physicians
     assert con.execute("SELECT obgyn, family_medicine_ob, primary_care FROM study_versions WHERE npi = '1000000009'").fetchall() == [
         (False, False, True)]
@@ -124,3 +146,19 @@ def test_notebook_sql_runs_end_to_end_on_a_fixture_export(fixture_export):
     # every study state has a row in every year, with zeros where nobody practises
     assert con.execute("SELECT count(*) FROM state_year WHERE panel = 'paper'").fetchone()[0] == 52
     assert con.execute("SELECT obgyn FROM monthly WHERE state = 'PA' ORDER BY as_of_date").fetchall() == [(1,), (2,)]
+    assert con.execute("SELECT count(*) FROM state_year WHERE state = 'CA'").fetchone()[0] == 0
+
+    # section 6: both December files are in every December panel, neither is a quarterly file
+    assert con.execute("SELECT panel, count(*) FROM alt_dates GROUP BY panel ORDER BY panel").fetchall() == [
+        ("december_2018_2023", 2), ("december_2018_2024", 2), ("extended", 2), ("paper", 2)]
+    # 26 study states and 17 protected-access states outside them, in each panel and file
+    assert con.execute("SELECT count(*) FROM alt_panel").fetchone()[0] == 4 * 2 * 43
+    assert con.execute("SELECT obgyn FROM alt_panel WHERE state = 'CA' AND panel = 'paper' ORDER BY as_of_date").fetchall() == [(1,), (1,)]
+    # the same counts as state_year, divided by the population of the file's year
+    assert con.execute("""
+        SELECT count(*) FROM alt_panel a JOIN state_year y USING (panel, as_of_date, state)
+        WHERE a.obgyn <> y.obgyn OR a.women <> y.women""").fetchone()[0] == 0
+    tx = con.execute("""
+        SELECT year(as_of_date), women_that_year FROM alt_panel WHERE state = 'TX' AND panel = 'paper' ORDER BY 1""").fetchall()
+    population = {(r["state"], int(r["year"])): int(r["women_15_49"]) for r in _rows("population_by_year.csv")}
+    assert tx == [(2021, population[("TX", 2021)]), (2022, population[("TX", 2022)])]
