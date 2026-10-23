@@ -99,16 +99,17 @@ def test_np_events_from_synthetic_versions():
         ('A', DATE '2013-01-13', DATE '2014-01-12', 'changed', 'MD', 'X', NULL, '363L00000X', true),
         ('A', DATE '2014-01-12', DATE '2015-01-11', 'changed', 'PA', 'X', NULL, '363L00000X', true),
         ('A', DATE '2015-01-11', DATE '2016-01-10', 'changed', 'PA', 'Y', NULL, '363L00000X', true),
-        ('A', DATE '2016-01-10', NULL, NULL, NULL, NULL, DATE '2016-01-02', NULL, NULL),
+        ('A', DATE '2016-01-10', DATE '2017-01-08', 'absent', NULL, NULL, DATE '2016-01-02', NULL, NULL),  -- the stub later leaves the file: still one exit
         -- B: NP from the start, switches away to a physician assistant code in 2015 (exit), never deactivated
         ('B', DATE '2012-01-08', DATE '2015-01-11', 'changed', 'NY', 'N', NULL, '363L00000X', true),
         ('B', DATE '2015-01-11', NULL, NULL, 'NY', 'N', NULL, '363A00000X', false),
         -- C: NP who left the file in 2014
         ('C', DATE '2012-01-08', DATE '2014-01-12', 'absent', 'TX', 'N', NULL, '363L00000X', true),
-        -- D: NP whose 2013 version has no flagged primary taxonomy (unknown): no exit and no second entry
+        -- D: NP whose 2013 version has no flagged primary taxonomy (unknown): no exit and no second entry, and the
+        -- move to KY that first shows on it is dated by the next NP version
         ('D', DATE '2012-01-08', DATE '2013-01-13', 'changed', 'OH', 'N', NULL, '363L00000X', true),
-        ('D', DATE '2013-01-13', DATE '2014-01-12', 'changed', 'OH', 'N', NULL, NULL, NULL),
-        ('D', DATE '2014-01-12', NULL, NULL, 'OH', 'N', NULL, '363L00000X', true),
+        ('D', DATE '2013-01-13', DATE '2014-01-12', 'changed', 'KY', 'N', NULL, NULL, NULL),
+        ('D', DATE '2014-01-12', NULL, NULL, 'KY', 'N', NULL, '363L00000X', true),
         -- E: first version unknown, flagged NP in 2013 (a new NPI's entry), then leaves the file on an unknown version
         ('E', DATE '2012-01-08', DATE '2013-01-13', 'changed', 'IA', 'N', NULL, NULL, NULL),
         ('E', DATE '2013-01-13', DATE '2014-01-12', 'changed', 'IA', 'N', NULL, '363L00000X', true),
@@ -131,10 +132,11 @@ def test_np_events_from_synthetic_versions():
     assert one("B", "exit", "detail") == "switched_taxonomy" and one("B", "exit", "state") == "NY"
     assert one("C", "exit", "detail") == "absent" and one("C", "exit", "date") == date(2014, 1, 12)
     assert one("D", "entry", "date") == date(2012, 1, 8)
+    assert one("D", "move", "from_state") == "OH" and one("D", "move", "date") == date(2014, 1, 12)
     assert one("E", "entry", "detail") == "new_npi" and one("E", "entry", "date") == date(2013, 1, 13)
     assert one("E", "exit", "detail") == "absent" and one("E", "exit", "date") == date(2015, 1, 11)
     counts = dict(con.execute("SELECT event, count(*) FROM np_events GROUP BY event").fetchall())
-    assert counts == {"entry": 5, "exit": 4, "move": 1, "became_sole_proprietor": 1}
+    assert counts == {"entry": 5, "exit": 4, "move": 2, "became_sole_proprietor": 1}
 
 
 @pytest.fixture(scope="module")
