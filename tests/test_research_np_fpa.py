@@ -104,7 +104,15 @@ def test_np_events_from_synthetic_versions():
         ('B', DATE '2012-01-08', DATE '2015-01-11', 'changed', 'NY', 'N', NULL, '363L00000X', true),
         ('B', DATE '2015-01-11', NULL, NULL, 'NY', 'N', NULL, '363A00000X', false),
         -- C: NP who left the file in 2014
-        ('C', DATE '2012-01-08', DATE '2014-01-12', 'absent', 'TX', 'N', NULL, '363L00000X', true)
+        ('C', DATE '2012-01-08', DATE '2014-01-12', 'absent', 'TX', 'N', NULL, '363L00000X', true),
+        -- D: NP whose 2013 version has no flagged primary taxonomy (unknown): no exit and no second entry
+        ('D', DATE '2012-01-08', DATE '2013-01-13', 'changed', 'OH', 'N', NULL, '363L00000X', true),
+        ('D', DATE '2013-01-13', DATE '2014-01-12', 'changed', 'OH', 'N', NULL, NULL, NULL),
+        ('D', DATE '2014-01-12', NULL, NULL, 'OH', 'N', NULL, '363L00000X', true),
+        -- E: first version unknown, flagged NP in 2013 (a new NPI's entry), then leaves the file on an unknown version
+        ('E', DATE '2012-01-08', DATE '2013-01-13', 'changed', 'IA', 'N', NULL, NULL, NULL),
+        ('E', DATE '2013-01-13', DATE '2014-01-12', 'changed', 'IA', 'N', NULL, '363L00000X', true),
+        ('E', DATE '2014-01-12', DATE '2015-01-11', 'absent', 'IA', 'N', NULL, NULL, NULL)
     ) v(npi, effective_date, end_date, close_reason, practice_state, sole_proprietor, deactivation_date, primary_taxonomy, is_np)
     """)
     con.execute(sql_creating(NOTEBOOK, "np_events"))
@@ -122,13 +130,18 @@ def test_np_events_from_synthetic_versions():
     assert one("B", "entry", "detail") == "new_npi"
     assert one("B", "exit", "detail") == "switched_taxonomy" and one("B", "exit", "state") == "NY"
     assert one("C", "exit", "detail") == "absent" and one("C", "exit", "date") == date(2014, 1, 12)
+    assert one("D", "entry", "date") == date(2012, 1, 8)
+    assert one("E", "entry", "detail") == "new_npi" and one("E", "entry", "date") == date(2013, 1, 13)
+    assert one("E", "exit", "detail") == "absent" and one("E", "exit", "date") == date(2015, 1, 11)
     counts = dict(con.execute("SELECT event, count(*) FROM np_events GROUP BY event").fetchall())
-    assert counts == {"entry": 3, "exit": 3, "move": 1, "became_sole_proprietor": 1}
+    assert counts == {"entry": 5, "exit": 4, "move": 1, "became_sole_proprietor": 1}
 
 
 @pytest.fixture(scope="module")
 def fixture_export(tmp_path_factory) -> Path:
-    """A three-month export: one NP who moves from Maryland to Pennsylvania, one who stays in Texas."""
+    """A three-month export: one NP who moves from Maryland to Pennsylvania, one who stays in Texas, and one
+    whose NP code is in slot 1 only because nothing is flagged primary (not counted), and a Texas NP with two
+    taxonomies flagged primary (counted once)."""
     tmp = tmp_path_factory.mktemp("np_fpa")
     src = tmp / "zips"
     src.mkdir()
@@ -136,9 +149,11 @@ def fixture_export(tmp_path_factory) -> Path:
     md = dict(np_, practice_state="MD", practice_postal_code="212011234")
     pa = dict(np_, practice_state="PA", practice_postal_code="171011234")
     tx = dict(np_, practice_state="TX", practice_postal_code="770021234")
-    write_zip(src, "20160101", "20160110", [main_row("1000000001", **md), main_row("1000000002", **tx)])
-    write_zip(src, "20160201", "20160214", [main_row("1000000001", **pa), main_row("1000000002", **tx)])
-    write_zip(src, "20160301", "20160313", [main_row("1000000001", **pa), main_row("1000000002", **tx)])
+    unflagged = main_row("1000000003", **dict(tx, primary_taxonomy_1="N", taxonomy_code_2="390200000X", primary_taxonomy_2="N"))
+    two_primaries = main_row("1000000004", **dict(tx, taxonomy_code_2="390200000X", primary_taxonomy_2="Y"))
+    write_zip(src, "20160101", "20160110", [main_row("1000000001", **md), main_row("1000000002", **tx), unflagged, two_primaries])
+    write_zip(src, "20160201", "20160214", [main_row("1000000001", **pa), main_row("1000000002", **tx), two_primaries])
+    write_zip(src, "20160301", "20160313", [main_row("1000000001", **pa), main_row("1000000002", **tx), two_primaries])
     db = tmp / "w.duckdb"
     assert main(["load", "--source", str(src), "--db", str(db), "--work", str(tmp / "work")]) == 0
     out = tmp / "export"
@@ -152,16 +167,16 @@ def test_notebook_sql_runs_end_to_end_on_a_fixture_export(fixture_export):
     for block in notebook_sql(NOTEBOOK):
         con.execute(block)
 
-    assert con.execute("SELECT count(*), count(DISTINCT npi) FROM np_versions").fetchone() == (3, 2)
+    assert con.execute("SELECT count(*), count(DISTINCT npi) FROM np_versions").fetchone() == (4, 3)
     assert con.execute("SELECT event, state, from_state FROM np_events WHERE event = 'move'").fetchall() == [("move", "PA", "MD")]
     stock = con.execute("SELECT state, month, nps, move, move_out FROM np_state_month ORDER BY state, month").fetchall()
     assert stock == [
         ("MD", date(2016, 1, 1), 1, 0, 0),
         ("PA", date(2016, 2, 1), 1, 1, 0),
         ("PA", date(2016, 3, 1), 1, 0, 0),
-        ("TX", date(2016, 1, 1), 1, 0, 0),
-        ("TX", date(2016, 2, 1), 1, 0, 0),
-        ("TX", date(2016, 3, 1), 1, 0, 0),
+        ("TX", date(2016, 1, 1), 2, 0, 0),
+        ("TX", date(2016, 2, 1), 2, 0, 0),
+        ("TX", date(2016, 3, 1), 2, 0, 0),
     ]
     # MD's law was in force on the move date; PA never adopted
     assert con.execute("SELECT destination, from_fpa_state FROM np_moves").fetchall() == [("into never-FPA state", True)]
