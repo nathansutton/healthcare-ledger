@@ -80,7 +80,7 @@ The relative decline in OB-GYN supply in states that banned abortion after *Dobb
 
 ## Declarations
 
-**Data and code availability.** All data are public. The monthly NPPES history, the reference data (state groups, taxonomy codes, population estimates with checksums and archived source URLs) and the notebook that produces every number, table and figure in this paper are at https://github.com/nathansutton/nppes-over-time, directory `research/dobbs-obgyn-workforce` [COMMIT HASH]. The notebook runs end to end in about a minute.
+**Data and code availability.** All data are public. The monthly NPPES history, the reference data (state groups, taxonomy codes, population estimates with checksums and archived source URLs) and the notebook that produces every number, table and figure in this paper are at https://github.com/nathansutton/nppes-over-time, directory `research/dobbs-obgyn-workforce`, commit [38cb50c](https://github.com/nathansutton/nppes-over-time/tree/38cb50cc8026574ba8eb9bc5bc5f37f01a026b78/research/dobbs-obgyn-workforce). The notebook runs end to end in about a minute.
 
 **Ethics.** The study uses only public, provider-level administrative data and aggregate population estimates and involves no human participants; institutional review was not required.
 
