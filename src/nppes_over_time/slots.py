@@ -1,11 +1,12 @@
-"""Canonical order of the main file's repeating groups (taxonomy/license slots, other-identifier slots).
+"""Canonical order of the main file's taxonomy/license slots.
 
 CMS stores two repeating groups in numbered slots: 15 taxonomy slots (taxonomy code, license
 number, license state, primary switch, taxonomy group) and 50 other-identifier slots (identifier,
 type, state, issuer). It reshuffles entries between slots from month to month without changing
 them: in some years 96-99% of the version changes those columns cause are the same entries in a
 different order. Hashing the slots as CMS wrote them would turn every
-reshuffle into a new version.
+reshuffle into a new version. The other-identifier slots are suppressed entirely (scrub.py rule 1),
+so only the taxonomy group needs an order.
 
 So each group is put into a canonical order before it is hashed or stored, after the scrub rules
 have run (a suppressed value is suppressed before the sort sees it):
@@ -54,12 +55,7 @@ TAXONOMY = SlotGroup(
     sort_fields=("taxonomy_code", "license_state", "license_number", "taxonomy_group", "primary_taxonomy"),
     primary_field="primary_taxonomy",
 )
-OTHER_ID = SlotGroup(
-    name="other_id", n=50,
-    fields=("other_id", "other_id_type", "other_id_state", "other_id_issuer"),
-    sort_fields=("other_id_type", "other_id_state", "other_id", "other_id_issuer"),
-)
-GROUPS: tuple[SlotGroup, ...] = (TAXONOMY, OTHER_ID)
+GROUPS: tuple[SlotGroup, ...] = (TAXONOMY,)
 
 
 def _struct(g: SlotGroup, i: int) -> str:

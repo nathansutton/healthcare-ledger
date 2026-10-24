@@ -181,3 +181,34 @@ def test_export_carries_the_medicare_tables_and_records_their_sources(tmp_path, 
     assert (releases / manifest["release_id"] / "medicare_snapshots.csv").exists()
     # a second export passes the continuity check against the first, including the PPEF fingerprints
     assert main(["export", "--db", str(db), "--out", str(out), "--releases", str(releases)]) == 0
+
+
+def test_swapped_state_and_zip_headers_are_read_by_content(tmp_path, ppef_source):
+    # NBER's copies of the August 2016 and January 2017 address files label ZIP_CD and STATE_CD the wrong way round
+    _write(ppef_source / "2020-Q1" / "PPEF_Practice_Location_Extract_2020.04.01.csv", "ENRLMT_ID,CITY_NAME,ZIP_CD,STATE_CD",
+           ["I001,BALTIMORE,MD,212011234", "I001,TOWSON,MD,212040000", "I002,HOUSTON,TX,770020000"])
+    db = _load_all(tmp_path, ppef_source)
+    con = duckdb.connect(str(db), read_only=True)
+    assert con.execute("SELECT city, state, zip FROM medicare_practice_location_version WHERE effective_date = DATE '2020-04-01' "
+                       "ORDER BY city").fetchall() == [("BALTIMORE", "MD", "212011234"), ("HOUSTON", "TX", "770020000"),
+                                                      ("TOWSON", "MD", "212040000")]
+    con.close()
+    assert main(["validate", "--db", str(db)]) == 0
+
+
+def test_medicare_checks_catch_tax_ids_and_misread_columns(tmp_path, ppef_source):
+    from nppes_over_time.ppef import check_problems
+    _write(ppef_source / "2020-Q1" / "PPEF_Enrollment_Extract_2020.04.01.csv", OLD_HEADER, [
+        "1000000003,8000000003,O003,00-85,CLINIC/GROUP PRACTICE,MD,,,,GROUP LLC 12-3456789,"])
+    db = _load_all(tmp_path, ppef_source)
+    con = duckdb.connect(str(db))
+    assert con.execute("SELECT org_name FROM medicare_enrollment_version WHERE effective_date = DATE '2020-04-01'").fetchone() == (
+        "GROUP LLC [REDACTED]",)
+    assert check_problems(con) == []
+    con.execute("UPDATE medicare_practice_location_version SET state = '212011234' WHERE city = 'BALTIMORE'")
+    con.execute("UPDATE medicare_enrollment_version SET first_name = 'ANN 2'")
+    problems = check_problems(con)
+    con.close()
+    assert any(p.startswith("shape: medicare_practice_location.state") for p in problems)
+    assert any(p.startswith("privacy: medicare_enrollment.first_name contains a digit") for p in problems)
+    assert main(["validate", "--db", str(db)]) == 1

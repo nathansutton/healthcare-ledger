@@ -39,6 +39,8 @@ After a successful run:
 
 The `medicare_*` tables come from CMS's quarterly Medicare Fee-For-Service Public Provider Enrollment extracts. They are optional: a release has them only if the warehouse does. Keep the files in one directory per quarter, named as CMS labels the quarter, with that quarter's `PPEF_*.csv` files inside (`data/ppef/2026-Q1/PPEF_Enrollment_Extract_2026.04.01.csv`, and the practice location, reassignment, secondary specialty and additional NPI sub-files beside it). The loader dates the quarter by the extract date in the file names, not by the directory name.
 
+To rebuild the directories of an existing release from a fresh clone, run `uv run nppes-over-time ppef-download` (or `make ppef-download`). It fetches every file `releases/ppef_sources.csv` records into `data/ppef/<quarter>/`, extracts the members of CMS's historical zips, and checks each sha256; `--check` only verifies what is there. In October 2026 every recorded URL still served the recorded bytes.
+
 Where the files are:
 
 - **Current and recent quarters**: data.cms.gov. The catalog `https://data.cms.gov/data.json` lists the current enrollment extract; every quarter's dataset id (also past ones) answers at `https://data.cms.gov/data-api/v1/dataset-resources/<id>` with the download URL of the enrollment file, the four sub-files and the data dictionary. Past ids are in Wayback captures of `data.json`.
@@ -65,7 +67,21 @@ The loader does not append a month that is older than the newest loaded snapshot
 
 ## Privacy refusal
 
-If `validate` or `export` finds a tax id, do not publish. Do not share the values. Send the log to the maintainer.
+If `validate` or `export` finds a tax id, do not publish. Do not share the values. Send the log to the maintainer. `export` checks twice: the warehouse (`scrub.py`, `ppef.check_problems`), then the Parquet files it wrote (`audit.py`). A failure in the second check deletes the files it wrote. `privacy_audit.csv` gives per-column counts, never values.
+
+A new license format (a state starts issuing numbers in a new pattern) makes those licenses NULL until it is added to `src/nppes_over_time/license_formats.csv`, which is a breaking correction: the file lists the (state, format) pairs used by at least 25 NPIs and is frozen per edition (METHODOLOGY 2a).
+
+## Publish on Zenodo
+
+A release is published as one Zenodo record per release id, as a new version of the same concept record so the concept DOI always resolves to the newest release.
+
+```bash
+uv run nppes-over-time package --out export --dest deposit/<release id>     # add --no-csv to leave the CSV copies out
+```
+
+`package` re-verifies every data file against `manifest.json`, refuses an export whose `privacy_audit.csv` is missing or has a failure, and writes one stored zip per table and format (unzipping them all next to `SHA256SUMS` restores the export's paths), the metadata files as they are, `LICENSE-DATA.txt` (CC0), `zenodo.json` (the deposition metadata) and `PACKAGE_SHA256SUMS`. A Zenodo record takes at most 100 files and 50 GB; `package` stops if the deposit would not fit.
+
+Upload: in the Zenodo web interface choose "New version" on the existing record (or "New upload" the first time), upload every file in `deposit/<release id>/`, paste the fields of `zenodo.json`, check the preview and publish. With the REST API: create the new version, `PUT` each file to the deposition's bucket URL, `PUT` `zenodo.json` as the metadata, then publish. Publishing cannot be undone: a published file can only be superseded by a new version. Then add the DOI to `releases/<id>/` (a `DOI` file) and to the README.
 
 ## Breaking corrections
 

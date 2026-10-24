@@ -55,7 +55,8 @@ log = logging.getLogger(__name__)
 
 EDITION_FILE = "EDITION"
 RELEASE_FILES = ("manifest.json", "SHA256SUMS", "snapshots.csv", "data_dictionary.csv")
-OPTIONAL_RELEASE_FILES = ("medicare_snapshots.csv",)   # present only when the Medicare PPEF quarters are loaded
+OPTIONAL_RELEASE_FILES = ("medicare_snapshots.csv",   # present only when the Medicare PPEF quarters are loaded
+                          "privacy_audit.csv")        # from edition 3
 RELEASE_ID_RE = re.compile(r"^e(?P<edition>\d+)-(?P<asof>\d{8})-(?P<hash>[0-9a-f]{8})$")
 CHANGELOG_ENTRY_RE = re.compile(r"^- (?P<date>\d{4}-\d{2}-\d{2})(?P<rest>.*)$")
 CHANGELOG_HEADING_RE = re.compile(r"^##\s.*change log", re.IGNORECASE)
@@ -361,13 +362,13 @@ Each row is one *version*: the provider's record as CMS published it, valid from
     monthly_row = monthly_section = ""
     if monthly is not None:
         monthly_row = (f"| `parquet/provider_monthly/provider_YYYY-MM.parquet` | one file per snapshot month: every NPI in "
-                       f"that month's file, one row each, all 330 CMS columns wide ({monthly:,} rows in all) |\n")
+                       f"that month's file, one row each, in the CMS wide layout ({monthly:,} rows in all) |\n")
         monthly_section = f"""
 ## One file per month
 
 `parquet/provider_monthly/` holds the same data as a monthly panel: `provider_YYYY-MM.parquet`
 is the registry as CMS published it that month, one row per NPI, in the CMS file's wide layout
-(taxonomy slots 1 to 15, other-identifier slots 1 to 50, in canonical slot order). Each file
+(taxonomy slots 1 to 15 in canonical slot order; the 200 other-identifier columns are not published). Each file
 carries `snapshot_id` and `as_of_date`, so the files stack into an NPI-by-month panel, and
 `effective_date`, which joins a row to its version in `parquet/provider/`.
 
@@ -448,12 +449,12 @@ earlier snapshot. `snapshots.csv` lists every snapshot date.
 |---|---|
 | `parquet/provider/effective_year=YYYY/` | one row per NPI per version; 54 scalar CMS columns plus version metadata ({ctx.row_counts.get('provider', 0):,} rows) |
 | `parquet/provider_taxonomy/effective_year=YYYY/` | one row per version per taxonomy slot: code, license, state, primary flag, group ({ctx.row_counts.get('provider_taxonomy', 0):,} rows) |
-| `parquet/provider_other_identifier/effective_year=YYYY/` | one row per version per other-identifier slot; tax ids suppressed ({ctx.row_counts.get('provider_other_identifier', 0):,} rows) |
 | `parquet/practice_location.parquet` | secondary practice location versions, since July 2018 ({ctx.row_counts.get('practice_location', 0):,} rows) |
 | `parquet/other_name.parquet` | organization other-name versions, since July 2018 ({ctx.row_counts.get('other_name', 0):,} rows) |
 | `parquet/endpoint.parquet` | endpoint versions, since March 2019 ({ctx.row_counts.get('endpoint', 0):,} rows) |
 {monthly_row}{medicare_rows}| `snapshots.csv` | one row per monthly snapshot: dates, source file, per-stream counts and content fingerprints |
 | `data_dictionary.csv` | every exported column with its type, CMS header and any suppression note |
+| `privacy_audit.csv` | per text column: rows scanned for formatted SSNs and EINs and nine-digit numbers, and the verdict |
 | `manifest.json` | release id, counts, and the size and SHA-256 of every file |
 | `SHA256SUMS` | checksums of the data files; `sha256sum -c SHA256SUMS` verifies a download |
 | `CITATION.cff` | citation metadata for this release |
@@ -477,9 +478,9 @@ Every table starts with the same columns:
 
 A new version is created when *any* CMS column changes, including cosmetic edits and CMS-wide
 reformatting (three 2008 and 2009 snapshots re-version almost every provider). `provider_taxonomy`
-and `provider_other_identifier` join to `provider` on `(npi, effective_date)`. The `slot` column is
-a canonical position, not the position in the CMS file: empty slots are dropped, entries are sorted
-by content, and in `provider_taxonomy` the slot CMS flagged as primary is slot 1. A month in which
+joins to `provider` on `(npi, effective_date)`. The `slot` column is a canonical position, not the
+position in the CMS file: empty slots are dropped, entries are sorted by content, and the slot CMS
+flagged as primary is slot 1. A month in which
 CMS only reshuffled slots therefore creates no version. Deactivated providers remain as stubs with
 only `npi` and `deactivation_date` populated.
 
@@ -531,10 +532,14 @@ Without Python, `gunzip` one `csv/provider/effective_year=YYYY/*.csv.gz` at a ti
 ## What is not here
 
 * **No tax ids or SSNs.** CMS withholds the EIN and SSN from their own fields but providers type them
-  into free-form fields. Values that are certainly a tax id or SSN (formatted `NN-NNNNNNN` or
-  `NNN-NN-NNNN`, or nine digits under an issuer that says tax id, EIN, TIN or SSN) are removed before
-  anything is hashed, and the exporter refuses to write if any remain. `data_dictionary.csv` names every
-  column a rule touches. If you find one anyway, report it (below) and do not redistribute it.
+  into free-form fields. The rules fail closed: the 50 "Other Provider Identifier" slots are not
+  published at all; a license number is removed when it contains a formatted SSN or EIN, or is a
+  nine-digit number that is not a known license format of its state; a credential with a nine-digit
+  number in it is removed; and in names, addresses and other text every formatted SSN or EIN and every
+  nine-digit number is replaced by `[REDACTED]`. All of this happens before anything is hashed, the
+  exporter refuses to write if any check fails, and `privacy_audit.csv` records an independent scan of
+  the published files. `data_dictionary.csv` names every column a rule touches. If you find a tax id or
+  SSN anyway, report it (below) and do not redistribute it.
 * **Weekly files.** The model consumes CMS's monthly full replacements only, so a change is dated to the
   first monthly snapshot that showed it. Before April 2011 the archive has two to five files a year
   (and May 2013 is missing), so a version's start date is then an upper bound on when the change happened.
@@ -572,6 +577,8 @@ including the full methodology, is in the repository: {REPO_URL}.
 
 
 def render_citation(ctx: ReadmeContext, released: date) -> str:
+    medicare = (f", and {ctx.ppef_snapshots} quarterly Medicare fee-for-service enrollment extracts (PPEF, "
+                f"{ctx.ppef_first_as_of} to {ctx.ppef_last_as_of})" if ctx.ppef_snapshots else "")
     return f"""cff-version: 1.2.0
 message: "If you use this data, please cite this release by its id, and cite CMS NPPES as the underlying source."
 type: dataset
@@ -583,8 +590,9 @@ repository-code: {REPO_URL}
 abstract: >-
   Slowly Changing Dimension Type 2 panel of every provider in the CMS National Plan and Provider
   Enumeration System, built from {ctx.snapshots} monthly snapshots ({ctx.first_as_of} to {ctx.last_as_of}):
-  {ctx.distinct_npis:,} NPIs and {ctx.row_counts.get('provider', 0):,} provider versions, plus taxonomy, other-identifier,
-  practice-location, other-name and endpoint versions. Edition {ctx.edition}. Generated by {ctx.generator}.
+  {ctx.distinct_npis:,} NPIs and {ctx.row_counts.get('provider', 0):,} provider versions, plus taxonomy,
+  practice-location, other-name and endpoint versions{medicare}. Tax ids and SSNs removed.
+  Edition {ctx.edition}. Generated by {ctx.generator}.
 authors:
   - family-names: Sutton
     given-names: Nathan

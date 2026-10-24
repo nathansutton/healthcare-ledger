@@ -18,7 +18,7 @@ VERIFY_ALL ?=
 MONTHLY_FILES ?=
 MONTHLY_FLAG = $(if $(MONTHLY_FILES),--monthly-files)
 
-.PHONY: install test discover probe download check-sources load validate verify export status monthly backfill-fingerprints ppef-load ppef-sources
+.PHONY: install test discover probe download check-sources load validate verify export package status monthly backfill-fingerprints ppef-download ppef-load ppef-sources
 
 install:
 	uv sync
@@ -55,11 +55,20 @@ ppef-load:
 ppef-sources:
 	uv run nppes-over-time ppef-sources --db $(DB) --releases $(RELEASES)
 
+# Fetch every PPEF file releases/ppef_sources.csv records into $(PPEF_SOURCE)/<quarter>/, sha256-checked.
+ppef-download:
+	uv run nppes-over-time ppef-download --dest $(PPEF_SOURCE) --releases $(RELEASES)
+
 verify:
 	uv run nppes-over-time verify --db $(DB) --source $(SOURCE) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)
 
 export:
 	uv run nppes-over-time export --db $(DB) --out $(OUT) --csv --releases $(RELEASES) $(MONTHLY_FLAG) $(RES)
+
+# Turn the export into a Zenodo deposit (docs/MAINTAINING.md, "Publish on Zenodo").
+DEPOSIT ?= deposit
+package:
+	uv run nppes-over-time package --out $(OUT) --dest $(DEPOSIT)
 
 status:
 	uv run nppes-over-time status --db $(DB)

@@ -6,7 +6,7 @@ This project does not host the CMS files and does not give you the data. It is a
 
 Each month, CMS publishes a full copy of the NPI registry. CMS keeps only the latest copy. This project reads an archive of the monthly files and makes an SCD Type 2 panel. The panel has one row for each NPI and version, with the first and last dates CMS showed that version. You can make any monthly file again exactly from the panel. It is the successor to the [NBER NPI/NPPES cumulative collection](https://www.nber.org/research/data/npinppes-cumulative-collection-preliminary).
 
-The build uses Python, DuckDB and the CMS zip files only. The output is Parquet, and optionally gzipped CSV. A change in any of the 330 CMS columns makes a new version. When an NPI leaves the file, its last version closes with `close_reason = 'absent'`. Tax ids are removed before hashing ([METHODOLOGY.md](docs/METHODOLOGY.md) section 2a).
+The build uses Python, DuckDB and the CMS zip files only. The output is Parquet, and optionally gzipped CSV. A change in any published CMS column makes a new version. When an NPI leaves the file, its last version closes with `close_reason = 'absent'`. Tax ids and SSNs are removed before hashing, the 50 "Other Provider Identifier" slots are not published, and every export is scanned for tax ids and SSNs before it is released ([METHODOLOGY.md](docs/METHODOLOGY.md) section 2a).
 
 ## Quick start
 
@@ -29,7 +29,6 @@ The `Makefile` has one target for each command. To extend the panel by one month
 |---|---|---|
 | `provider` | NPI × version | 54 scalar CMS columns |
 | `provider_taxonomy` | NPI × version × slot | up to 15 slots, primary taxonomy first |
-| `provider_other_identifier` | NPI × version × slot | up to 50 slots; tax ids removed |
 | `practice_location`, `other_name` | NPI × version × row | since July 2018 |
 | `endpoint` | NPI × version × row | since March 2019 |
 | `medicare_enrollment` | enrollment id × version | Medicare FFS enrollments (PECOS, the public PPEF file), quarterly from February 2016; optional |
@@ -37,6 +36,7 @@ The `Makefile` has one target for each command. To extend the panel by one month
 | `medicare_snapshots` | quarterly file | counts and content fingerprints |
 | `snapshots` | monthly file | counts and content fingerprints |
 | `data_dictionary` | column | CMS header for each column |
+| `privacy_audit` | column | rows scanned for formatted SSNs and EINs and nine-digit numbers, and the verdict |
 
 Each row has `effective_date` (inclusive), `end_date` (exclusive, NULL while current), `is_current`, `first_snapshot_id`, `last_snapshot_id`, `close_reason` and `version_hash`. The dates are the as-of dates of the CMS files.
 
@@ -59,9 +59,9 @@ con = duckdb.connect()
 con.sql("SELECT count(*) FROM read_parquet('export/parquet/provider/*/*.parquet', hive_partitioning=true)")
 ```
 
-Each export has a `README.md` with a worked example and recipes for DuckDB, Python, R and Stata. It also has `CITATION.cff`, `data_dictionary.csv`, `snapshots.csv`, `SHA256SUMS` and `manifest.json`. The exporter writes `manifest.json` last. If it is missing, the export is not complete.
+Each export has a `README.md` with a worked example and recipes for DuckDB, Python, R and Stata. It also has `CITATION.cff`, `data_dictionary.csv`, `snapshots.csv`, `privacy_audit.csv`, `SHA256SUMS` and `manifest.json`. The exporter writes `manifest.json` last. If it is missing, the export is not complete.
 
-`export --monthly-files` (or `make export MONTHLY_FILES=1`) also writes the data as a monthly panel: `parquet/provider_monthly/provider_YYYY-MM.parquet`, one file per snapshot with every NPI in that month's CMS file, one row each, in the wide 330-column CMS layout. Each file is the as-of query over the version table written out. The files are large (0.3 to 0.8 GB a month, about 100 GB for the full history), so they are opt-in and Parquet only.
+`export --monthly-files` (or `make export MONTHLY_FILES=1`) also writes the data as a monthly panel: `parquet/provider_monthly/provider_YYYY-MM.parquet`, one file per snapshot with every NPI in that month's CMS file, one row each, in the wide CMS layout without the 200 suppressed other-identifier columns. Each file is the as-of query over the version table written out. The files are large (0.3 to 0.8 GB a month, about 100 GB for the full history), so they are opt-in and Parquet only.
 
 ## Research
 

@@ -121,7 +121,7 @@ def test_release_record_written_and_listed(source, tmp_path, releases):
     out = tmp_path / "export"
     rid = export_all(db, out, releases=releases)
     rec = releases / rid
-    assert sorted(p.name for p in rec.iterdir()) == sorted(release.RELEASE_FILES)
+    assert sorted(p.name for p in rec.iterdir()) == sorted(release.RELEASE_FILES + ("privacy_audit.csv",))
     for name in release.RELEASE_FILES:
         assert (rec / name).read_bytes() == (out / name).read_bytes()
     refs = release.list_releases(releases)

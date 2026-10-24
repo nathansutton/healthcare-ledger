@@ -91,11 +91,11 @@ def test_privacy_refusal_names_column_count_and_next_step(source, tmp_path, caps
     db = tmp_path / "w.duckdb"
     assert main(["load", "--source", str(source), "--db", str(db), "--work", str(tmp_path / "work")]) == 0
     con = duckdb.connect(str(db))
-    con.execute("UPDATE provider_version SET other_id_1 = '12-3456789'")
+    con.execute("UPDATE provider_version SET ein = '12-3456789'")
     con.close()
     assert main(["export", "--db", str(db), "--out", str(tmp_path / "export"), "--releases", str(tmp_path / "rel")]) == 1
     err = _one_line(capsys)
-    assert "other_id_1 holds a formatted EIN or SSN: 1 row(s)" in err
+    assert "ein is populated: 1 row(s)" in err
     assert "Do not publish" in err and "maintainer" in err and "MAINTAINING.md" in err
     assert not (tmp_path / "export" / "manifest.json").exists()
     assert not (tmp_path / "rel").exists()

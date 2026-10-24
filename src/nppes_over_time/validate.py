@@ -11,8 +11,9 @@ Invariants, per stream (NPPES streams keyed by ``npi``; Medicare PPEF streams ke
 * Reconstructing each loaded snapshot by interval lookup yields exactly the
   number of keys that snapshot's file contained.
 
-Plus the privacy invariants in ``scrub.py``: no tax id or SSN anywhere in
-``provider_version``. ``export`` runs those too and refuses to write if any fail.
+Plus the privacy invariants in ``scrub.py`` (no tax id or SSN in any NPPES version table) and
+``ppef.check_problems`` (the same for the medicare tables, and the shape of their code columns).
+``export`` runs those too and refuses to write if any fail.
 """
 
 from __future__ import annotations
@@ -103,6 +104,10 @@ def validate(db: Path) -> list[str]:
             check_stream(s.name, ppef.KEY, "ppef_snapshot_stream", one_row_per_key=False)
     privacy = privacy_problems(con)
     problems += privacy
-    log.info("%-70s %s", "provider_version: tax ids and SSNs suppressed", "ok" if not privacy else f"FAIL ({len(privacy)} check(s))")
+    log.info("%-70s %s", "NPPES version tables: tax ids and SSNs suppressed", "ok" if not privacy else f"FAIL ({len(privacy)} check(s))")
+    medicare = ppef.check_problems(con)
+    problems += medicare
+    if ppef.loaded(con):
+        log.info("%-70s %s", "medicare version tables: privacy and column shapes", "ok" if not medicare else f"FAIL ({len(medicare)} check(s))")
     con.close()
     return problems

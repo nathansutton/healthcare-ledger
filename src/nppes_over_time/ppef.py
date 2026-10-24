@@ -60,9 +60,10 @@ from pathlib import Path
 import duckdb
 
 from . import schema
+from .errors import UserError
 from .loader import SEP, StreamStats, fingerprint_sql
 from .schema import Column, header_key
-from .scrub import TAXID_SHAPE_RE
+from .scrub import free_text_columns, has_token, redact_expr
 
 log = logging.getLogger(__name__)
 
@@ -137,10 +138,9 @@ ADDITIONAL_NPI = PpefStream(
 PPEF_STREAMS: tuple[PpefStream, ...] = (ENROLLMENT, PRACTICE_LOCATION, REASSIGNMENT, SECONDARY_SPECIALTY, ADDITIONAL_NPI)
 PPEF_STREAM_BY_NAME = {s.name: s for s in PPEF_STREAMS}
 
-# name columns get the formatted-tax-id rule of METHODOLOGY 2a, like the NPPES name columns; a person's name
-# that contains a digit is NULL as well (SSNs, NPIs and birth dates typed into the middle-name field; CMS's own
+# free-text columns get the tax-id token rule of METHODOLOGY 2a, like the NPPES ones; a person's name that
+# contains a digit is NULL (SSNs, NPIs and birth dates typed into the middle-name field; CMS's own
 # re-publication of the January 2026 extract removed exactly those values)
-NAME_COLUMNS = {"first_name", "middle_name", "last_name", "org_name"}
 PERSON_NAME_COLUMNS = {"first_name", "middle_name", "last_name"}
 
 META_COLUMNS = [
@@ -401,6 +401,18 @@ class PpefWarehouse:
         log.warning("%s parsed after repairing %d non-UTF-8 line(s) (decoded as latin-1)", path.name, n)
         return f"repaired-utf8+{n}"
 
+    def _state_zip_swapped(self, raw: str, mapping: dict[str, str | None]) -> bool:
+        """True when most values under the state header are ZIP codes and most under the ZIP header are
+        state codes. NBER's copies of the August 2016 and January 2017 address files label the two
+        columns the wrong way round; the files from April 2017 on have them right."""
+        st, zp = mapping.get("state"), mapping.get("zip")
+        if st is None or zp is None:
+            return False
+        n, st_zip, zp_state = self.con.execute(
+            f"SELECT count(*), count(*) FILTER (WHERE regexp_matches(trim({_q(st)}), '^[0-9]{{5}}([0-9]{{4}})?$')), "
+            f"count(*) FILTER (WHERE regexp_matches(trim({_q(zp)}), '^[A-Z]{{2}}$')) FROM {raw}").fetchone()
+        return n > 0 and st_zip > n / 2 and zp_state > n / 2
+
     def _stage(self, s: PpefStream, path: Path, sid: int) -> _Staged | None:
         c = self.con
         raw = f"raw_{s.name}"
@@ -410,6 +422,11 @@ class PpefWarehouse:
         if unmatched:
             raise ValueError(f"{path.name}: unmapped columns {unmatched}")
         sel = [f"nullif(trim({_q(mapping[KEY])}), '') AS {KEY}"]
+        free_text = set(free_text_columns(s))
+        if s is PRACTICE_LOCATION and self._state_zip_swapped(raw, mapping):
+            log.warning("%s: the STATE_CD and ZIP_CD headers are swapped (state codes under ZIP_CD); reading them by content",
+                        path.name)
+            mapping = {**mapping, "state": mapping["zip"], "zip": mapping["state"]}
         for col in s.columns:
             src = mapping[col.name]
             if src is None:
@@ -420,8 +437,8 @@ class PpefWarehouse:
                 expr = f"nullif({expr}, {tok})"
             if col.name in PERSON_NAME_COLUMNS:
                 expr = f"CASE WHEN regexp_matches({expr}, '[0-9]') THEN NULL ELSE {expr} END"
-            elif col.name in NAME_COLUMNS:
-                expr = f"CASE WHEN regexp_matches({expr}, '{TAXID_SHAPE_RE}') THEN NULL ELSE {expr} END"
+            elif col.name in free_text:
+                expr = redact_expr(expr)
             if col.name == "pac_id":
                 # CMS's historical zips wrote the 10-digit PAC id from a number, dropping leading zeros (10% of
                 # ids in 2016 to 2022); the current files keep them. Restore the width so ids match across quarters.
@@ -547,6 +564,39 @@ def recompute_fingerprints(con: duckdb.DuckDBPyConnection) -> dict[tuple[int, st
     return out
 
 
+# -------------------------------------------------------------------- checks
+def privacy_checks(s: PpefStream) -> list[tuple[str, str]]:
+    """(description, predicate) pairs that must count 0 in ``s``'s version table (METHODOLOGY 2a and 6)."""
+    checks = [(f"{s.name}.{n} holds a tax-id token", has_token(n)) for n in free_text_columns(s)]
+    checks += [(f"{s.name}.{n} contains a digit", f"regexp_matches({n}, '[0-9]')")
+               for n in s.data_columns if n in PERSON_NAME_COLUMNS]
+    return checks
+
+
+# Shape of the code-valued columns. A failure means a column was read under the wrong header.
+SHAPE_CHECKS: dict[str, list[tuple[str, str]]] = {
+    "medicare_enrollment": [("npi", "^[0-9]{10}$"), ("pac_id", "^[0-9]{10}$"), ("state", "^[A-Z]{2}$")],
+    "medicare_practice_location": [("state", "^[A-Z]{2}$"), ("zip", "^[0-9]{5}([0-9]{4})?$")],
+    "medicare_additional_npi": [("npi", "^[0-9]{10}$")],
+}
+
+
+def check_problems(con: duckdb.DuckDBPyConnection) -> list[str]:
+    """Privacy and shape checks over every loaded medicare_* version table; returns the failures."""
+    if not loaded(con):
+        return []
+    problems: list[str] = []
+    for s in PPEF_STREAMS:
+        checks = [(f"privacy: {d}", p) for d, p in privacy_checks(s)]
+        checks += [(f"shape: {s.name}.{c} does not match {rx}", f"NOT regexp_matches({c}, '{rx}')")
+                   for c, rx in SHAPE_CHECKS.get(s.name, [])]
+        if not checks:
+            continue
+        row = con.execute(f"SELECT {', '.join(f'count(*) FILTER (WHERE {p})' for _, p in checks)} FROM {s.name}_version").fetchone()
+        problems += [f"{d}: {n} row(s)" for (d, _), n in zip(checks, row) if n]
+    return problems
+
+
 # --------------------------------------------------------------------- export
 SNAPSHOTS_FILE = "medicare_snapshots.csv"
 META_EXPORT = [KEY, "effective_date", "end_date", "is_current", "first_snapshot_id", "last_snapshot_id", "close_reason", "version_hash", "row_seq"]
@@ -593,7 +643,8 @@ def data_dictionary_rows() -> list[tuple[str, str, str, str, str]]:
             rows.append((s.name, m, types.get(m, "VARCHAR"), s.key_header if m == KEY else "", META_DESC[m]))
         for c in s.columns:
             desc = ("NULL when it contains a digit (METHODOLOGY 6)" if c.name in PERSON_NAME_COLUMNS
-                    else "Formatted EINs and SSNs are NULL (METHODOLOGY 2a)" if c.name in NAME_COLUMNS else "")
+                    else "Formatted SSNs and EINs and nine-digit numbers are replaced by [REDACTED] (METHODOLOGY 2a)"
+                    if c.name in free_text_columns(s) else "")
             if c.hash_optional:
                 desc = (desc + "; " if desc else "") + "Added by CMS later; NULL in earlier quarters and outside the version hash while NULL"
             rows.append((s.name, c.name, _sql_type(c.kind), c.cms_header, desc))
@@ -623,6 +674,96 @@ def sources_problems(con: duckdb.DuckDBPyConnection, releases: Path | None) -> l
             problems.append(f"{sid} {file}: no row in {path.name}")
         elif have != sha:
             problems.append(f"{sid} {file}: {path.name} records sha256 {have[:12]}..., the loaded file is {sha[:12]}...")
+    return problems
+
+
+def read_sources(releases: Path) -> list[dict[str, str]]:
+    import csv
+
+    path = Path(releases) / SOURCES_FILE
+    if not path.exists():
+        raise UserError(f"{path} does not exist; nothing records where the PPEF files come from", exit_code=2)
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def _fetch_url(url: str, target: Path, tries: int = 4) -> None:
+    """Stream ``url`` into ``target`` (via ``target.part``), retrying with a growing pause."""
+    import urllib.error
+    import urllib.request
+
+    from .download import UA
+
+    tmp = target.with_name(target.name + ".part")
+    for attempt in range(1, tries + 1):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=300) as r:
+                if "html" in (r.headers.get("Content-Type") or "").lower():
+                    raise ValueError("the server answered with a web page, not the file")
+                with open(tmp, "wb") as f:
+                    while chunk := r.read(16 << 20):
+                        f.write(chunk)
+            tmp.rename(target)
+            return
+        except (urllib.error.URLError, OSError, ValueError) as e:
+            tmp.unlink(missing_ok=True)
+            if attempt == tries:
+                raise UserError(f"could not download {url}: {e}; try again later (data.cms.gov throttles bursts)") from None
+            log.warning("attempt %d/%d for %s failed: %s; retrying", attempt, tries, url, e)
+            time.sleep(60 * attempt)
+
+
+def download_sources(releases: Path, dest: Path, *, check_only: bool = False, pace: float = 1.0) -> list[str]:
+    """Rebuild the quarter directories of ``releases/ppef_sources.csv`` under ``dest``, sha256-checked.
+
+    Each row is a file the release was built from: ``dest/<directory>/<file>``. A file already there
+    with the recorded sha256 is kept. Otherwise it is fetched from ``url``, or, when ``member`` is set,
+    extracted from the zip at ``url`` (cached once in ``dest/zips/``). ``check_only`` downloads nothing
+    and reports the files that are missing or differ. Returns the problems; empty means every file
+    is present and matches.
+    """
+    import zipfile
+
+    rows = read_sources(releases)
+    dest = Path(dest)
+    problems: list[str] = []
+    zips: dict[str, Path] = {}
+    for r in rows:
+        target = dest / r["directory"] / r["file"]
+        if target.is_file() and target.stat().st_size == int(r["bytes"]) and _sha256(target) == r["sha256"]:
+            continue
+        if check_only:
+            problems.append(f"{r['directory']}/{r['file']}: {'differs from the recorded sha256' if target.exists() else 'missing'}")
+            continue
+        if not r["url"]:
+            problems.append(f"{r['directory']}/{r['file']}: no url recorded in {SOURCES_FILE}")
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if r["member"]:
+            zpath = zips.get(r["url"])
+            if zpath is None:
+                zpath = dest / "zips" / r["url"].rsplit("/", 1)[-1]
+                if not zpath.exists():
+                    zpath.parent.mkdir(parents=True, exist_ok=True)
+                    log.info("downloading %s", r["url"])
+                    _fetch_url(r["url"], zpath)
+                    time.sleep(pace)
+                zips[r["url"]] = zpath
+            log.info("extracting %s from %s", r["member"], zpath.name)
+            tmp = target.with_name(target.name + ".part")
+            with zipfile.ZipFile(zpath) as z, z.open(r["member"]) as src, open(tmp, "wb") as out:
+                while chunk := src.read(16 << 20):
+                    out.write(chunk)
+            tmp.rename(target)
+        else:
+            log.info("downloading %s", r["url"])
+            _fetch_url(r["url"], target)
+            time.sleep(pace)
+        got = _sha256(target)
+        if got != r["sha256"]:
+            target.rename(target.with_name(target.name + ".mismatch"))
+            problems.append(f"{r['directory']}/{r['file']}: {r['url']} now serves sha256 {got[:12]}..., the release was built "
+                            f"from {r['sha256'][:12]}...; the upstream file changed (kept as .mismatch)")
     return problems
 
 

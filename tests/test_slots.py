@@ -38,20 +38,20 @@ def test_reshuffled_slots_are_not_a_new_version(source, tmp_path):
     con = load_all(source, tmp_path)
     assert con.execute("SELECT count(*) FROM provider_version").fetchone()[0] == 1
     assert con.execute("SELECT n_changed FROM snapshot_stream WHERE snapshot_id = 20200209 AND stream = 'provider'").fetchone()[0] == 0
-    # stored order: primary taxonomy first; other ids by type code
+    # stored order: primary taxonomy first; the other ids are suppressed (scrub.py rule 1)
     row = con.execute("""SELECT taxonomy_code_1, primary_taxonomy_1, taxonomy_group_1, taxonomy_code_2, primary_taxonomy_2,
-                                other_id_1, other_id_type_1, other_id_issuer_1, other_id_2, other_id_type_2, other_id_state_2
+                                other_id_1, other_id_type_1, other_id_2
                          FROM provider_version""").fetchone()
-    assert row == ("208D00000X", "Y", "G", "207Q00000X", "N", "U2", "02", "UPIN", "M1", "05", "CO")
+    assert row == ("208D00000X", "Y", "G", "207Q00000X", "N", None, None, None)
 
 
 def test_empty_slots_are_packed_to_the_front(source, tmp_path):
     write_zip(source, "20200101", "20200112", [
-        main_row("1000000001", entity_type="1", taxonomy_code_3="207Q00000X", primary_taxonomy_3="Y", other_id_7="X7", other_id_type_7="01"),
+        main_row("1000000001", entity_type="1", taxonomy_code_3="207Q00000X", primary_taxonomy_3="Y"),
     ])
     con = load_all(source, tmp_path)
-    row = con.execute("SELECT taxonomy_code_1, primary_taxonomy_1, taxonomy_code_3, other_id_1, other_id_type_1, other_id_7 FROM provider_version").fetchone()
-    assert row == ("207Q00000X", "Y", None, "X7", "01", None)
+    row = con.execute("SELECT taxonomy_code_1, primary_taxonomy_1, taxonomy_code_3 FROM provider_version").fetchone()
+    assert row == ("207Q00000X", "Y", None)
 
 
 def test_sort_is_total_and_stable_for_ties(source, tmp_path):
@@ -68,16 +68,17 @@ def test_sort_is_total_and_stable_for_ties(source, tmp_path):
 
 
 def test_scrub_runs_before_the_sort(source, tmp_path):
-    # slot 1 is only a formatted EIN: scrubbed to nothing and dropped. Slot 2 keeps its issuer text
-    # under a NULL id. Slot 3 is a real Medicaid id and sorts first by type code.
+    # slot 1 is only a nine-digit number with no state: scrubbed to nothing and dropped. Slot 2 keeps
+    # its taxonomy and state under a NULL license. Slot 3 is a real license and sorts by code.
     write_zip(source, "20200101", "20200112", [
-        main_row("1000000001", entity_type="1", other_id_1="12-3456789",
-                 other_id_2="123456789", other_id_type_2="01", other_id_issuer_2="TAX ID",
-                 other_id_3="M3", other_id_type_3="05", other_id_state_3="CO"),
+        main_row("1000000001", entity_type="1", license_number_1="123456789",
+                 taxonomy_code_2="208D00000X", license_number_2="123-45-6789", license_state_2="TX",
+                 taxonomy_code_3="207Q00000X", license_number_3="A12345", license_state_3="CO"),
     ])
     con = load_all(source, tmp_path)
-    assert con.execute("SELECT other_id_1, other_id_type_1, other_id_issuer_1, other_id_2, other_id_type_2, other_id_3 FROM provider_version").fetchone() == (
-        None, "01", "TAX ID", "M3", "05", None)
+    assert con.execute("SELECT taxonomy_code_1, license_number_1, taxonomy_code_2, license_number_2, license_state_2, "
+                       "taxonomy_code_3, license_state_3 FROM provider_version").fetchone() == (
+        "207Q00000X", "A12345", "208D00000X", None, "TX", None, None)
 
 
 def test_verify_accepts_reshuffled_source_months(source, tmp_path):
@@ -99,17 +100,17 @@ def test_export_slot_is_the_canonical_position(source, tmp_path):
     con = duckdb.connect()
     tax = con.execute(f"SELECT slot, taxonomy_code, primary_taxonomy FROM read_parquet('{out}/parquet/provider_taxonomy/*/*.parquet') ORDER BY slot").fetchall()
     assert tax == [(1, "208D00000X", "Y"), (2, "207Q00000X", "N")]
-    ids = con.execute(f"SELECT slot, other_id, other_id_type FROM read_parquet('{out}/parquet/provider_other_identifier/*/*.parquet') ORDER BY slot").fetchall()
-    assert ids == [(1, "U2", "02"), (2, "M1", "05")]
+    assert not (out / "parquet" / "provider_other_identifier").exists()
     dd = (out / "data_dictionary.csv").read_text()
     assert "canonical" in dd.lower()
 
 
 def test_canonical_slot_hash_is_pinned(source, tmp_path):
     # Golden hash for a row with slot content: changing the sort rule re-versions every NPI that has slots.
+    # (Edition 3 changed it once: the other-identifier slots are suppressed.)
     write_zip(source, "20200101", "20200112", [main_row("1000000001", entity_type="1", last_name="SMITH", **_swap({**TWO_TAX, **TWO_IDS}))])
     con = load_all(source, tmp_path)
-    assert con.execute("SELECT version_hash FROM provider_version").fetchone() == ("11c882c99d5837b426956f848144b6f8",)
+    assert con.execute("SELECT version_hash FROM provider_version").fetchone() == ("bf87ee7939cdcf590e7fd008e1e49ea7",)
 
 
 def test_canonical_select_covers_every_slot_column_once():

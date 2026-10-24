@@ -8,10 +8,10 @@ Layout of ``--out``::
     SHA256SUMS                         checksums of the data files only (the release id derives from it)
     data_dictionary.csv                every exported column with type and CMS header
     snapshots.csv                      one row per loaded snapshot with per-stream counts and fingerprints
+    privacy_audit.csv                  independent scan of the written Parquet files for tax ids and SSNs (audit.py)
     parquet/
       provider/effective_year=YYYY/    core provider versions (scalar columns)
       provider_taxonomy/...            long: one row per (version, taxonomy slot)
-      provider_other_identifier/...    long: one row per (version, identifier slot)
       practice_location.parquet        secondary practice location versions
       other_name.parquet               organization other-name versions
       endpoint.parquet                 endpoint versions
@@ -23,7 +23,8 @@ researcher can fetch a slice without the whole thing. DuckDB, Arrow, pandas,
 polars and Spark all read a partitioned directory as one table.
 
 The monthly files are the same provider data the other way around: one file per snapshot holding
-every NPI in that month's CMS file, wide, with the 330-column layout researchers know from CMS.
+every NPI in that month's CMS file, wide, in the CMS column layout without the 200 suppressed
+other-identifier columns (scrub.py rule 1).
 They are rebuilt from the version table by the as-of lookup the release fingerprints use
 (release.interval_fingerprint), so a month here is exactly the month the release vouches for.
 Opt-in because they are large: about 0.3 to 0.8 GB per month, 100 GB for the full history.
@@ -45,11 +46,11 @@ from pathlib import Path
 
 import duckdb
 
-from . import __version__, ppef, release, sources
+from . import __version__, audit, ppef, release, sources
 from .errors import PrivacyRefusal, UserError
 from .loader import finalize
 from .schema import ENDPOINT, OTHER_NAME, PRACTICE_LOCATION, PROVIDER, STREAMS, Stream
-from .scrub import SUPPRESSED_COLUMNS, privacy_problems
+from .scrub import OTHER_ID_COLUMNS, SUPPRESSED_COLUMNS, free_text_columns, privacy_problems
 
 log = logging.getLogger(__name__)
 
@@ -69,17 +70,22 @@ META_DESC = {
     "effective_year": "Partition key: year(effective_date)",
 }
 SUPPRESSED_DESC = "Suppressed: never published by this project, whatever the CMS file contains (see METHODOLOGY 2a)"
+REDACT_DESC = "Formatted SSNs and EINs and nine-digit numbers in the text are replaced by [REDACTED] (METHODOLOGY 2a)"
 SCRUB_DESC = {
-    "other_id": "NULL when the value is a formatted EIN or SSN, or has nine digits under an issuer that names a tax id or SSN (METHODOLOGY 2a)",
-    "other_id_issuer": "Formatted EINs or SSNs embedded in the text are replaced by [REDACTED] (METHODOLOGY 2a)",
-    "license_number": "NULL when the value is a formatted EIN or SSN (METHODOLOGY 2a)",
+    "license_number": ("NULL when it contains a formatted SSN, is a formatted EIN, or is a nine-digit number that is not a "
+                       "known license format of its state or recurs under another state (METHODOLOGY 2a)"),
+    "credential": "NULL when it contains a formatted SSN or EIN or a nine-digit number (METHODOLOGY 2a)",
+    "other_credential": "NULL when it contains a formatted SSN or EIN or a nine-digit number (METHODOLOGY 2a)",
+    "ao_credential": "NULL when it contains a formatted SSN or EIN or a nine-digit number (METHODOLOGY 2a)",
+    **{c: REDACT_DESC for c in free_text_columns(PROVIDER)},
 }
 
 SCALAR_PROVIDER = [c for c in PROVIDER.columns
                    if not any(c.name.startswith(p) for p in ("taxonomy_code_", "license_number_", "license_state_",
                                                               "primary_taxonomy_", "taxonomy_group_", "other_id_"))]
 TAXONOMY_FIELDS = ["taxonomy_code", "license_number", "license_state", "primary_taxonomy", "taxonomy_group"]
-OTHER_ID_FIELDS = ["other_id", "other_id_type", "other_id_state", "other_id_issuer"]
+# the wide monthly layout: every CMS column but the suppressed other identifiers
+MONTHLY_PROVIDER = [c for c in PROVIDER.columns if c.name not in OTHER_ID_COLUMNS]
 
 
 def _taxonomy_sql() -> str:
@@ -91,17 +97,12 @@ def _taxonomy_sql() -> str:
     return " UNION ALL ".join(parts)
 
 
-def _other_id_sql() -> str:
-    parts = []
-    for i in range(1, 51):
-        cols = ", ".join(f"{f}_{i} AS {f}" for f in OTHER_ID_FIELDS)
-        any_set = " OR ".join(f"{f}_{i} IS NOT NULL" for f in OTHER_ID_FIELDS)
-        parts.append(f"SELECT {', '.join(META_EXPORT)}, {i} AS slot, {cols} FROM provider_version WHERE {any_set}")
-    return " UNION ALL ".join(parts)
-
-
 def _supp_sql(s: Stream) -> str:
     return f"SELECT {', '.join(META_EXPORT)}, row_seq, {', '.join(s.data_columns)} FROM {s.name}_version"
+
+
+# provider_other_identifier: published until edition 2; the other identifiers are suppressed since edition 3
+RETIRED_TABLES = ("provider_other_identifier",)
 
 
 def tables() -> dict[str, tuple[str, bool]]:
@@ -111,7 +112,6 @@ def tables() -> dict[str, tuple[str, bool]]:
     return {
         "provider": (f"SELECT {', '.join(META_EXPORT)}, {core} FROM provider_version", True),
         "provider_taxonomy": (_taxonomy_sql(), True),
-        "provider_other_identifier": (_other_id_sql(), True),
         "practice_location": (_supp_sql(PRACTICE_LOCATION), False),
         "other_name": (_supp_sql(OTHER_NAME), False),
         "endpoint": (_supp_sql(ENDPOINT), False),
@@ -144,7 +144,7 @@ MONTHLY_DESC = {
 
 def _monthly_sql(snapshot_id: int, as_of: str) -> str:
     """Every NPI in snapshot ``snapshot_id``, wide, one row each (the version in force on ``as_of``)."""
-    cols = ", ".join(f"NULL::VARCHAR AS {c.name}" if c.name in SUPPRESSED_COLUMNS else c.name for c in PROVIDER.columns)
+    cols = ", ".join(f"NULL::VARCHAR AS {c.name}" if c.name in SUPPRESSED_COLUMNS else c.name for c in MONTHLY_PROVIDER)
     return (f"SELECT {snapshot_id}::INTEGER AS snapshot_id, DATE '{as_of}' AS as_of_date, npi, effective_date, {cols} "
             f"FROM provider_version WHERE effective_date <= DATE '{as_of}' "
             f"AND (end_date IS NULL OR end_date > DATE '{as_of}') ORDER BY npi")
@@ -236,16 +236,11 @@ def data_dictionary_rows() -> list[tuple[str, str, str, str, str]]:
                "taxonomy_group": "Healthcare Provider Taxonomy Group_N"}[f]
         desc = "Slot N of 15 unpivoted in canonical order (primary taxonomy first); slots where all five fields are blank are dropped"
         rows.append(("provider_taxonomy", f, "VARCHAR", hdr, desc + ("; " + SCRUB_DESC[f] if f in SCRUB_DESC else "")))
-    meta("provider_other_identifier", ["slot"])
-    for f in OTHER_ID_FIELDS:
-        hdr = {"other_id": "Other Provider Identifier_N", "other_id_type": "Other Provider Identifier Type Code_N",
-               "other_id_state": "Other Provider Identifier State_N", "other_id_issuer": "Other Provider Identifier Issuer_N"}[f]
-        desc = "Slot N of 50 unpivoted in canonical order; slots where all four fields are blank are dropped"
-        rows.append(("provider_other_identifier", f, "VARCHAR", hdr, desc + ("; " + SCRUB_DESC[f] if f in SCRUB_DESC else "")))
     for s in (PRACTICE_LOCATION, OTHER_NAME, ENDPOINT):
         meta(s.name, ["row_seq"])
+        redacted = set(free_text_columns(s))
         for c in s.columns:
-            rows.append((s.name, c.name, _dd_type(c.kind), c.cms_header, ""))
+            rows.append((s.name, c.name, _dd_type(c.kind), c.cms_header, REDACT_DESC if c.name in redacted else ""))
     return rows
 
 
@@ -253,10 +248,10 @@ def monthly_dictionary_rows() -> list[tuple[str, str, str, str, str]]:
     """Dictionary rows of the optional monthly files (same CMS columns as the raw file, wide)."""
     rows = [(MONTHLY, m, {"snapshot_id": "INTEGER", "as_of_date": "DATE", "effective_date": "DATE"}.get(m, "VARCHAR"),
              "", MONTHLY_DESC[m]) for m in MONTHLY_META]
-    for c in PROVIDER.columns:
+    for c in MONTHLY_PROVIDER:
         field, _, n = c.name.rpartition("_")
-        if n.isdigit() and field in TAXONOMY_FIELDS + OTHER_ID_FIELDS:
-            desc = ("Slot N in canonical order, as in provider_taxonomy / provider_other_identifier"
+        if n.isdigit() and field in TAXONOMY_FIELDS:
+            desc = ("Slot N in canonical order, as in provider_taxonomy"
                     + ("; " + SCRUB_DESC[field] if field in SCRUB_DESC else ""))
         else:
             desc = SUPPRESSED_DESC if c.name in SUPPRESSED_COLUMNS else SCRUB_DESC.get(c.name, "")
@@ -301,7 +296,7 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
             raise UserError(f"database {db} holds no snapshots; run `load` first", exit_code=2)
 
         # Hard gate: never write an export that carries a tax id or SSN.
-        problems = privacy_problems(con)
+        problems = privacy_problems(con) + ppef.check_problems(con)
         if problems:
             raise PrivacyRefusal(problems)
 
@@ -382,6 +377,9 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
                               dictionary_rows + (monthly_dictionary_rows() if monthly_files else []))
 
         all_tables = tables()
+        for name in RETIRED_TABLES:                 # tables an earlier edition published must not linger
+            shutil.rmtree(out / "parquet" / name, ignore_errors=True)
+            shutil.rmtree(out / "csv" / name, ignore_errors=True)
         if with_ppef:
             all_tables.update(ppef.export_tables())
         else:
@@ -397,6 +395,17 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
                 _copy(con, sql, out / "csv" / name, "csv", partition)
         if monthly_files:
             counts[MONTHLY] = _write_monthly(con, out / "parquet" / MONTHLY)
+
+        # Gate 5: an independent scan of the files just written (audit.py). On failure the data files go, so
+        # nothing half-checked is left behind to upload.
+        audit_rows = audit.audit(out)
+        audit.write_audit(out / audit.AUDIT_FILE, audit_rows)
+        problems = audit.failures(audit_rows)
+        if problems:
+            for d in ("parquet", "csv"):
+                shutil.rmtree(out / d, ignore_errors=True)
+            raise PrivacyRefusal(problems)
+        log.info("privacy audit of the exported files: ok (%d text columns, %s)", len(audit_rows), audit.AUDIT_FILE)
 
         first, last, n = con.execute("SELECT min(as_of_date), max(as_of_date), count(*) FROM snapshot").fetchone()
         files = _file_entries(out, csv_too, monthly_files)

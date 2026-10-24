@@ -1,8 +1,8 @@
 """Command line interface.
 
 Build and check:  discover, download, load, validate, verify, rollback, status
-Medicare PPEF:    ppef-load, ppef-sources, ppef-reset (quarterly enrollment extracts, docs/MAINTAINING.md)
-Publish:          export, backfill-fingerprints, monthly (download, load, validate, verify,
+Medicare PPEF:    ppef-download, ppef-load, ppef-sources, ppef-reset (quarterly enrollment extracts, docs/MAINTAINING.md)
+Publish:          export, package, backfill-fingerprints, monthly (download, load, validate, verify,
                   continuity check and export in one command; see docs/MAINTAINING.md)
 
 Every error the operator can fix is one line on stderr naming the problem, its cause and the
@@ -137,6 +137,22 @@ def cmd_ppef_reset(a: argparse.Namespace) -> int:
     finally:
         con.close()
     print(f"dropped {len(dropped)} table(s): {', '.join(dropped)}")
+    return 0
+
+
+def cmd_ppef_download(a: argparse.Namespace) -> int:
+    from .ppef import download_sources
+    problems = download_sources(Path(a.releases), Path(a.dest), check_only=a.check)
+    for p in problems:
+        print("PROBLEM:", p)
+    print("OK: every recorded PPEF file is present and matches its sha256" if not problems else f"{len(problems)} problem(s)")
+    return 1 if problems else 0
+
+
+def cmd_package(a: argparse.Namespace) -> int:
+    from .package import package
+    files = package(Path(a.out), Path(a.dest), include_csv=not a.no_csv)
+    print(f"{a.dest}: {len(files) + 1} files, {sum(f['bytes'] for f in files) / 1e9:.1f} GB")
     return 0
 
 
@@ -303,6 +319,18 @@ def build_parser() -> argparse.ArgumentParser:
     _db_arg(prs)
     prs.add_argument("--yes", action="store_true", help="confirm")
     prs.set_defaults(fn=cmd_ppef_reset)
+
+    pdl = sub.add_parser("ppef-download", help="fetch every PPEF file releases/ppef_sources.csv records into --dest/<quarter>/, sha256-checked; --check only verifies")
+    pdl.add_argument("--dest", default=DEFAULT_PPEF_SOURCE)
+    pdl.add_argument("--releases", default=DEFAULT_RELEASES)
+    pdl.add_argument("--check", action="store_true", help="download nothing; report files that are missing or differ")
+    pdl.set_defaults(fn=cmd_ppef_download)
+
+    pk = sub.add_parser("package", help="turn a finished export into a Zenodo deposit: one zip per table, metadata, checksums")
+    pk.add_argument("--out", default=DEFAULT_OUT, help="the export directory")
+    pk.add_argument("--dest", default="deposit", help="empty directory for the deposit")
+    pk.add_argument("--no-csv", action="store_true", help="leave the gzipped CSV copies out of the deposit")
+    pk.set_defaults(fn=cmd_package)
 
     psrc = sub.add_parser("ppef-sources", help="write releases/ppef_sources.csv (file, size, sha256 of every loaded PPEF file; keeps recorded urls)")
     _db_arg(psrc)
