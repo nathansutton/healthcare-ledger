@@ -8,7 +8,7 @@ A published letter (Staiger, Strasser and Myers, 2025) criticizes the design on 
 
 The paper's eTable 2 prints the populations of Mississippi and Missouri, and of Nevada and New Hampshire, swapped. Its regression used the correct values.
 
-[`dobbs_obgyn_workforce.ipynb`](dobbs_obgyn_workforce.ipynb) has the replication, the extension, the letter's tests and how to read them.
+[`dobbs_obgyn_workforce.ipynb`](dobbs_obgyn_workforce.ipynb) has the replication, the extension, the letter's tests and how to read them. [`preprint/`](preprint/) has the write-up as a short paper; its figure is written by the notebook.
 
 ## Running it
 
