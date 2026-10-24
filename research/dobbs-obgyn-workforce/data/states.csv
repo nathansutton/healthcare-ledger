@@ -1,52 +1,52 @@
-state,name,fips,study_group,women_15_49,etable2_women_15_49
-AK,Alaska,02,,165445,
-AL,Alabama,01,restrictive,1129774,1129774
-AR,Arkansas,05,restrictive,670818,670818
-AZ,Arizona,04,,1572851,
-CA,California,06,,9307839,
-CO,Colorado,08,,1348151,
-CT,Connecticut,09,,797045,
-DC,District of Columbia,11,,201987,
-DE,Delaware,10,control,211609,211609
-FL,Florida,12,control,4548094,4548094
-GA,Georgia,13,,2546657,
-HI,Hawaii,15,,311370,
-IA,Iowa,19,control,689097,689097
-ID,Idaho,16,restrictive,401504,401504
-IL,Illinois,17,,2934331,
-IN,Indiana,18,,1521089,
-KS,Kansas,20,control,646851,646851
-KY,Kentucky,21,restrictive,995949,995949
-LA,Louisiana,22,restrictive,1063211,1063211
-MA,Massachusetts,25,,1636894,
-MD,Maryland,24,,1409712,
-ME,Maine,23,,278788,
-MI,Michigan,26,control,2204696,2204696
-MN,Minnesota,27,,1251062,
-MO,Missouri,29,restrictive,1362830,678137
-MS,Mississippi,28,restrictive,678137,1362830
-MT,Montana,30,control,227184,227184
-NC,North Carolina,37,,2383358,
-ND,North Dakota,38,,170342,
-NE,Nebraska,31,,431806,
-NH,New Hampshire,33,control,291844,695742
-NJ,New Jersey,34,,2049290,
-NM,New Mexico,35,,461482,
-NV,Nevada,32,control,695742,291844
-NY,New York,36,,4630850,
-OH,Ohio,39,,2591624,
-OK,Oklahoma,40,restrictive,888143,888143
-OR,Oregon,41,,955916,
-PA,Pennsylvania,42,control,2809413,2809413
-RI,Rhode Island,44,control,248893,248893
-SC,South Carolina,45,,1133335,
-SD,South Dakota,46,restrictive,185020,185020
-TN,Tennessee,47,restrictive,1563652,1563652
-TX,Texas,48,restrictive,6930093,6930093
-UT,Utah,49,control,794123,794123
-VA,Virginia,51,control,1975997,1975997
-VT,Vermont,50,,138039,
-WA,Washington,53,,1749199,
-WI,Wisconsin,55,control,1272086,1272086
-WV,West Virginia,54,restrictive,374296,374296
-WY,Wyoming,56,control,123110,123110
+state,name,fips,study_group,women_15_49,etable2_women_15_49,guttmacher_july_2024
+AK,Alaska,02,,165445,,Protective
+AL,Alabama,01,restrictive,1129774,1129774,Most Restrictive
+AR,Arkansas,05,restrictive,670818,670818,Most Restrictive
+AZ,Arizona,04,,1572851,,Very Restrictive
+CA,California,06,,9307839,,Very Protective
+CO,Colorado,08,,1348151,,Protective
+CT,Connecticut,09,,797045,,Protective
+DC,District of Columbia,11,,201987,,Protective
+DE,Delaware,10,control,211609,211609,Some Restrictions/Protections
+FL,Florida,12,control,4548094,4548094,Most Restrictive
+GA,Georgia,13,,2546657,,Very Restrictive
+HI,Hawaii,15,,311370,,Protective
+IA,Iowa,19,control,689097,689097,Restrictive
+ID,Idaho,16,restrictive,401504,401504,Most Restrictive
+IL,Illinois,17,,2934331,,Protective
+IN,Indiana,18,,1521089,,Most Restrictive
+KS,Kansas,20,control,646851,646851,Restrictive
+KY,Kentucky,21,restrictive,995949,995949,Most Restrictive
+LA,Louisiana,22,restrictive,1063211,1063211,Most Restrictive
+MA,Massachusetts,25,,1636894,,Protective
+MD,Maryland,24,,1409712,,Very Protective
+ME,Maine,23,,278788,,Protective
+MI,Michigan,26,control,2204696,2204696,Very Protective
+MN,Minnesota,27,,1251062,,Very Protective
+MO,Missouri,29,restrictive,1362830,678137,Most Restrictive
+MS,Mississippi,28,restrictive,678137,1362830,Most Restrictive
+MT,Montana,30,control,227184,227184,Protective
+NC,North Carolina,37,,2383358,,Restrictive
+ND,North Dakota,38,,170342,,Most Restrictive
+NE,Nebraska,31,,431806,,Very Restrictive
+NH,New Hampshire,33,control,291844,695742,Some Restrictions/Protections
+NJ,New Jersey,34,,2049290,,Very Protective
+NM,New Mexico,35,,461482,,Very Protective
+NV,Nevada,32,control,695742,291844,Some Restrictions/Protections
+NY,New York,36,,4630850,,Very Protective
+OH,Ohio,39,,2591624,,Restrictive
+OK,Oklahoma,40,restrictive,888143,888143,Most Restrictive
+OR,Oregon,41,,955916,,Most Protective
+PA,Pennsylvania,42,control,2809413,2809413,Restrictive
+RI,Rhode Island,44,control,248893,248893,Some Restrictions/Protections
+SC,South Carolina,45,,1133335,,Most Restrictive
+SD,South Dakota,46,restrictive,185020,185020,Most Restrictive
+TN,Tennessee,47,restrictive,1563652,1563652,Most Restrictive
+TX,Texas,48,restrictive,6930093,6930093,Most Restrictive
+UT,Utah,49,control,794123,794123,Very Restrictive
+VA,Virginia,51,control,1975997,1975997,Restrictive
+VT,Vermont,50,,138039,,Most Protective
+WA,Washington,53,,1749199,,Protective
+WI,Wisconsin,55,control,1272086,1272086,Restrictive
+WV,West Virginia,54,restrictive,374296,374296,Most Restrictive
+WY,Wyoming,56,control,123110,123110,Restrictive

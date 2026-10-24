@@ -4,9 +4,11 @@ Zhu, Huntington, McConnell, Whelan, Aaron and Rodriguez (*JAMA Internal Medicine
 
 This study rebuilds their panel from the monthly NPPES history and reproduces their Table to within a few tenths per 100,000. It runs the sensitivity analyses their supplement describes, then the same regression through July 2026. The estimate grows to -3.8 (-5.3 percent, P = .04). But the restrictive states were falling behind at the same pace before *Dobbs* as after it: the paper's own parallel-trends test puts the pre-period divergence at -0.8 per 100,000 a year (not significant), which alone would produce most of the estimate, and the monthly gap has no break at the decision.
 
+A published letter (Staiger, Strasser and Myers, 2025) criticizes the design on three counts, and each is tested by changing one thing. Consistent file dates (December only, or quarterly) give -2.6 to -3.0. A population for each year gives -2.6. Protected-access comparison states give a larger estimate, -4.7, but fail the parallel-trends test outright (-1.8 per 100,000 a year before *Dobbs*, P = .001). In every version the pre-*Dobbs* trend alone produces 88 to 143 percent of the estimate.
+
 The paper's eTable 2 prints the populations of Mississippi and Missouri, and of Nevada and New Hampshire, swapped. Its regression used the correct values.
 
-[`dobbs_obgyn_workforce.ipynb`](dobbs_obgyn_workforce.ipynb) has the replication, the extension and how to read them.
+[`dobbs_obgyn_workforce.ipynb`](dobbs_obgyn_workforce.ipynb) has the replication, the extension, the letter's tests and how to read them.
 
 ## Running it
 
@@ -16,7 +18,7 @@ export NPPES_EXPORT=/path/to/export                  # default: the repository's
 uv run jupyter lab dobbs_obgyn_workforce.ipynb
 ```
 
-Each table (`states`, `taxonomy`, `study_versions`, `panel_dates`, `state_year`, `monthly`) is built in DuckDB SQL in the cell that first needs it, with the reasoning just above. The notebook runs end to end in about a minute on the full export.
+Each table (`states`, `taxonomy`, `study_versions`, `panel_dates`, `state_year`, `monthly`, `population`, `alt_dates`, `alt_panel`) is built in DuckDB SQL in the cell that first needs it, with the reasoning just above. The notebook runs end to end in about a minute on the full export.
 
 ## Data
 
