@@ -5,6 +5,7 @@ DB       ?= data/nppes.duckdb
 WORK     ?= data/work
 OUT      ?= export
 RELEASES ?= releases
+PPEF_SOURCE ?= data/ppef    # one directory per quarter of Medicare PPEF extracts (docs/MAINTAINING.md)
 # DuckDB resource limits. Unset = DuckDB's defaults (all cores, 80% of RAM). Set e.g. THREADS=8 MEMORY=24GB.
 THREADS  ?=
 MEMORY   ?=
@@ -17,7 +18,7 @@ VERIFY_ALL ?=
 MONTHLY_FILES ?=
 MONTHLY_FLAG = $(if $(MONTHLY_FILES),--monthly-files)
 
-.PHONY: install test discover probe download check-sources load validate verify export status monthly backfill-fingerprints
+.PHONY: install test discover probe download check-sources load validate verify export status monthly backfill-fingerprints ppef-load ppef-sources
 
 install:
 	uv sync
@@ -45,6 +46,14 @@ load:
 
 validate:
 	uv run nppes-over-time validate --db $(DB)
+
+# Medicare PPEF quarters (optional): load every quarter directory in $(PPEF_SOURCE) not yet in the warehouse, then
+# record file sizes and sha256s in releases/ppef_sources.csv (fill in the urls before exporting).
+ppef-load:
+	uv run nppes-over-time ppef-load --source $(PPEF_SOURCE) --db $(DB) --work $(WORK) $(RES)
+
+ppef-sources:
+	uv run nppes-over-time ppef-sources --db $(DB) --releases $(RELEASES)
 
 verify:
 	uv run nppes-over-time verify --db $(DB) --source $(SOURCE) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)

@@ -18,6 +18,7 @@ uv run nppes-over-time download     # get the recorded zips into data/raw, sha25
 uv run nppes-over-time load         # build data/nppes.duckdb (hours for the full archive)
 uv run nppes-over-time validate     # SCD invariants, snapshot reconstruction, privacy rules
 uv run nppes-over-time export --csv # write export/
+uv run nppes-over-time ppef-load    # optional: add the Medicare PPEF quarters in data/ppef before export
 ```
 
 The `Makefile` has one target for each command. To extend the panel by one month and make a release, use `make monthly`. [MAINTAINING.md](docs/MAINTAINING.md) is the runbook.
@@ -31,10 +32,15 @@ The `Makefile` has one target for each command. To extend the panel by one month
 | `provider_other_identifier` | NPI × version × slot | up to 50 slots; tax ids removed |
 | `practice_location`, `other_name` | NPI × version × row | since July 2018 |
 | `endpoint` | NPI × version × row | since March 2019 |
+| `medicare_enrollment` | enrollment id × version | Medicare FFS enrollments (PECOS, the public PPEF file), quarterly from February 2016; optional |
+| `medicare_practice_location`, `medicare_reassignment`, `medicare_secondary_specialty`, `medicare_additional_npi` | enrollment id × version × row | the PPEF sub-files |
+| `medicare_snapshots` | quarterly file | counts and content fingerprints |
 | `snapshots` | monthly file | counts and content fingerprints |
 | `data_dictionary` | column | CMS header for each column |
 
 Each row has `effective_date` (inclusive), `end_date` (exclusive, NULL while current), `is_current`, `first_snapshot_id`, `last_snapshot_id`, `close_reason` and `version_hash`. The dates are the as-of dates of the CMS files.
+
+The `medicare_*` tables are the same history for CMS's quarterly [Medicare Fee-For-Service Public Provider Enrollment](https://data.cms.gov/provider-characteristics/medicare-provider-supplier-enrollment/medicare-fee-for-service-public-provider-enrollment) files, 2016 to now. Their key is the PECOS enrollment id; `medicare_enrollment.npi` joins them to the NPPES tables. The dates are the extract dates of the quarterly files ([METHODOLOGY.md](docs/METHODOLOGY.md) section 6). They are in a release only when the maintainer loaded the quarters (`ppef-load`).
 
 ```sql
 -- the registry as CMS published it on 2019-01-13 (5,844,727 providers in the 2026-10-18 build)

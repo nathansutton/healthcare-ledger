@@ -45,7 +45,7 @@ from pathlib import Path
 
 import duckdb
 
-from . import __version__, release, sources
+from . import __version__, ppef, release, sources
 from .errors import PrivacyRefusal, UserError
 from .loader import finalize
 from .schema import ENDPOINT, OTHER_NAME, PRACTICE_LOCATION, PROVIDER, STREAMS, Stream
@@ -264,13 +264,11 @@ def monthly_dictionary_rows() -> list[tuple[str, str, str, str, str]]:
     return rows
 
 
-def write_data_dictionary(path: Path, monthly: bool = False) -> None:
+def write_data_dictionary(path: Path, rows: list[tuple[str, str, str, str, str]] | None = None) -> None:
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["table", "column", "type", "cms_header", "description"])
-        w.writerows(data_dictionary_rows())
-        if monthly:
-            w.writerows(monthly_dictionary_rows())
+        w.writerows(rows if rows is not None else data_dictionary_rows())
 
 
 def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = None,
@@ -292,6 +290,8 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
     con = duckdb.connect(str(db))
     try:
         finalize(con)  # make open versions' last_snapshot_id current even after an interrupted load
+        ppef.finalize(con)
+        with_ppef = ppef.loaded(con)
         if threads:
             con.execute(f"SET threads={int(threads)}")
         if memory_limit:
@@ -308,16 +308,17 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
         # Gate 2: every snapshot's fingerprint from the version tables equals the one stored at load.
         log.info("recomputing content fingerprints from the version tables")
         release.ensure_fingerprint_column(con)
-        recomputed = release.recompute_fingerprints(con)
-        problems = release.fingerprint_problems(release.stored_fingerprints(con), recomputed)
+        recomputed = {**release.recompute_fingerprints(con), **ppef.recompute_fingerprints(con)}
+        problems = release.fingerprint_problems({**release.stored_fingerprints(con), **ppef.stored_fingerprints(con)}, recomputed)
         if problems:
             raise UserError("export blocked; the warehouse does not match its load-time fingerprints: "
                             + "; ".join(problems[:5]) + (f" (+{len(problems) - 5} more)" if len(problems) > 5 else ""))
 
         # Gate 3: continuity with the latest release of the current edition.
+        dictionary_rows = data_dictionary_rows() + (ppef.data_dictionary_rows() if with_ppef else [])
         # The monthly table is always part of the comparison: it is a format choice like --csv, and
         # leaving it out of one export must not block the next.
-        dictionary = {(t, c, ty) for t, c, ty, _, _ in data_dictionary_rows() + monthly_dictionary_rows()}
+        dictionary = {(t, c, ty) for t, c, ty, _, _ in dictionary_rows + monthly_dictionary_rows()}
         edition = release.read_edition(releases)
         if new_edition:
             release.check_new_edition_allowed(release.latest_release(releases), changelog)
@@ -347,6 +348,11 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
                                 f"download` records the months it fetches; for a zip obtained elsewhere run "
                                 f"`nppes-over-time download --record <zip> [--url <where it is public>]`")
             log.info("sources: every snapshot has a recorded source zip (%s)", manifest)
+        problems = ppef.sources_problems(con, releases)
+        if problems:
+            raise UserError(f"export blocked; {len(problems)} loaded PPEF file(s) are not recorded in releases/{ppef.SOURCES_FILE}: "
+                            + "; ".join(problems[:5]) + (f" (+{len(problems) - 5} more)" if len(problems) > 5 else "")
+                            + ". Run `nppes-over-time ppef-sources` and fill in the urls (docs/MAINTAINING.md)")
 
         # A directory without manifest.json is an incomplete export; the manifest is written last.
         # Removed only after the gates pass, so a refused export leaves a previous intact one alone.
@@ -369,10 +375,21 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
             LEFT JOIN snapshot_stream ep ON ep.snapshot_id = s.snapshot_id AND ep.stream = 'endpoint'
             ORDER BY s.snapshot_id"""
         con.execute(f"COPY ({snap_sql}) TO '{out / 'snapshots.csv'}' (FORMAT CSV, HEADER)")
-        write_data_dictionary(out / "data_dictionary.csv", monthly=monthly_files)
+        (out / ppef.SNAPSHOTS_FILE).unlink(missing_ok=True)
+        if with_ppef:
+            con.execute(f"COPY ({ppef.snapshots_sql()}) TO '{out / ppef.SNAPSHOTS_FILE}' (FORMAT CSV, HEADER)")
+        write_data_dictionary(out / "data_dictionary.csv",
+                              dictionary_rows + (monthly_dictionary_rows() if monthly_files else []))
 
+        all_tables = tables()
+        if with_ppef:
+            all_tables.update(ppef.export_tables())
+        else:
+            for name in ppef.export_tables():       # a stale medicare table from an earlier export must not linger
+                shutil.rmtree(out / "parquet" / name, ignore_errors=True)
+                shutil.rmtree(out / "csv" / name, ignore_errors=True)
         counts: dict[str, int] = {}
-        for name, (sql, partition) in tables().items():
+        for name, (sql, partition) in all_tables.items():
             log.info("exporting %s", name)
             counts[name] = con.execute(f"SELECT count(*) FROM ({sql})").fetchone()[0]
             _copy(con, sql, out / "parquet" / name, "parquet", partition)
@@ -395,6 +412,8 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
                               "WHERE npi = ? AND entity_type IS NOT NULL ORDER BY effective_date DESC LIMIT 1", [ex]).fetchone()
             ex_name = row[0] if row else None
         latest_count = con.execute("SELECT n_npis FROM snapshot_stream WHERE stream = 'provider' ORDER BY snapshot_id DESC LIMIT 1").fetchone()[0]
+        ppef_n, ppef_first, ppef_last = (con.execute("SELECT count(*), min(as_of_date)::VARCHAR, max(as_of_date)::VARCHAR FROM ppef_snapshot").fetchone()
+                                         if with_ppef else (0, "", ""))
         generated_at = release.now_iso()
         ctx = release.ReadmeContext(
             release_id=rid, edition=edition, generated_at=generated_at, snapshots=n,
@@ -402,7 +421,8 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
             distinct_npis=con.execute("SELECT count(DISTINCT npi) FROM provider_version").fetchone()[0],
             row_counts=counts, formats=["parquet"] + (["csv"] if csv_too else []),
             example_npi=ex, example_rows=ex_rows, example_name=ex_name, latest_provider_count=latest_count,
-            changelog=release.changelog_entries(changelog))
+            changelog=release.changelog_entries(changelog),
+            ppef_snapshots=ppef_n, ppef_first_as_of=ppef_first or "", ppef_last_as_of=ppef_last or "")
         (out / "README.md").write_text(release.render_readme(ctx))
         (out / "CITATION.cff").write_text(release.render_citation(ctx, datetime.now(timezone.utc).date()))
 
@@ -416,6 +436,7 @@ def export_all(db: Path, out: Path, *, csv: bool = False, threads: int | None = 
             "last_as_of_date": str(last),
             "distinct_npis": ctx.distinct_npis,
             "row_counts": counts,
+            "ppef_snapshots": ppef_n,
             "formats": ctx.formats,
             "example_npi": ex,
             "sha256sums_sha256": hashlib.sha256(sums).hexdigest(),
