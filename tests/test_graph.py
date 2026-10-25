@@ -166,6 +166,11 @@ def test_notebook_sql_runs_on_a_fixture_graph(warehouse, tmp_path):
         con.execute(f"CREATE VIEW {t} AS SELECT * FROM read_parquet('{out}/{t}.parquet')")
     con.execute(f"CREATE VIEW quarters AS SELECT * FROM read_csv('{out}/quarters.csv')")
     con.execute("CREATE TABLE hrr AS SELECT * FROM read_csv('data/zip_hrr_2019.csv', all_varchar = true)")
+    # 2019 Medicaid: P2 (NPI 1000000002) bills more through H's group NPI than through G's; self-billing is ignored
+    con.execute("CREATE TABLE medicaid_spending (billing_npi VARCHAR, servicing_npi VARCHAR, month DATE, paid DOUBLE)")
+    con.executemany("INSERT INTO medicaid_spending VALUES (?, ?, ?, ?)", [
+        ("3000000002", "1000000002", "2019-06-01", 500.0), ("2000000001", "1000000002", "2019-03-01", 100.0),
+        ("1000000002", "1000000002", "2019-03-01", 9000.0)])
     blocks = notebook_sql(NOTEBOOK, queries=True)
     assert len(blocks) >= 10
     for sql in blocks:
@@ -177,6 +182,13 @@ def test_notebook_sql_runs_on_a_fixture_graph(warehouse, tmp_path):
     assert all(s == (100.0,) for s in shares)
     hhi = con.execute("SELECT DISTINCT specialty FROM market_hhi ORDER BY 1").fetchall()
     assert hhi == [("cardiology",), ("primary care",)]
+    # 2019 volume ranks the reassignments of the first quarter on or after 2019-12-31: P2 goes to H with 5/6 of it
+    main = con.execute("SELECT as_of_date, practitioner_pac_id, organization_pac_id, share FROM main_group ORDER BY ALL").fetchall()
+    assert main == [(date.fromisoformat(Q[0]), "P1", "G", 1.0), (date.fromisoformat(Q[0]), "P2", "H", 500 / 600)]
+    weights = con.execute("""SELECT weighting, practitioner_pac_id, organization_pac_id, wt FROM weighted_edge
+                             WHERE weighting LIKE 'Medicaid%' ORDER BY ALL""").fetchall()
+    assert [w for w in weights if w[0] == "Medicaid plurality"] == [("Medicaid plurality", "P1", "G", 1.0),
+                                                                   ("Medicaid plurality", "P2", "H", 1.0)]
 
 
 def test_reference_data():

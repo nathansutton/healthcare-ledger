@@ -4,12 +4,12 @@ Can the public CMS files in this warehouse be joined into one graph of who pract
 
 `nppes-over-time graph-build` builds the graph quarter by quarter, February 2016 to September 2026 (43 PPEF quarters; [METHODOLOGY.md](../../docs/METHODOLOGY.md) section 8). Its nodes are practitioners and organizations, keyed by PECOS associate id, and active POS hospitals, keyed by CCN. It has two kinds of edges. A **reassignment** edge runs from a practitioner to each organization that bills Medicare for them. A **hospital link** runs from a hospital's Medicare enrollment to its CCN, matched by address and phone and checked against CMS's own crosswalk: right 97 to 100 percent of the time, and found for 89 percent of linkable enrollments. In September 2026 the graph holds 2.2 million practitioners, 291,000 organizations, 7,031 hospitals and 3.7 million reassignment edges.
 
-[`provider_networks.ipynb`](provider_networks.ipynb) replicates three published measures and extends each over the decade:
+[`provider_networks.ipynb`](provider_networks.ipynb) replicates three published measures and extends each over the decade. Section 4b adds billing volume from HHS's public Medicaid claims extract, the one public source that links a billing organization to a servicing clinician with dollars:
 
 | Measure | Paper | Result |
 |---|---|---|
 | Share of physicians by group size | Welch et al. 2013; Muhlestein and Smith 2016 | **Replicates in direction.** Physicians in groups of 100 or more rise from 46 to 67 percent, 2016 to 2026; those in groups of nine or fewer fall from 24 to 13 percent. Both hold whether multi-group physicians are split fractionally or left out. Levels are about 10 points more consolidated than the papers report, for known reasons the public data cannot remove. The papers' finding that primary care consolidated faster than specialties reverses after 2016. |
-| Share of local markets highly concentrated (HHI > 2,500), HRR by specialty | Capps, Dranove and Ody 2017; Fulton 2017 | **Not identified.** The sign of the trend depends on how a physician with several organizations is counted, and the public files have no billing volume to choose their main one. |
+| Share of local markets highly concentrated (HHI > 2,500), HRR by specialty | Capps, Dranove and Ody 2017; Fulton 2017 | **Not identified from Medicare files alone; flat with Medicaid volume.** On the Medicare files, the sign of the trend depends on how a physician with several organizations is counted. The papers' rule (main firm = plurality of billing) can be applied with HHS's public Medicaid claims, which rank the groups of four in ten multi-group physicians. Under that rule the share of concentrated markets moves by less than two points in every specialty, end of 2018 to February 2025. The two Medicare-only weightings bracket it. |
 | Physicians billing through an organization that bills as a hospital | Luo et al. 2024 ("basic TIN" variant) | **A floor.** The share rises from 17 to 18 percent fractional, or 24 to 29 percent with any hospital reassignment. This is below Luo et al.'s 43 percent in 2019, as the basic measure must be. |
 
 ## Why the graph is built this way
@@ -44,7 +44,8 @@ Each of these is a published measure the graph is ready for, and none is done he
 1. **Ownership edges.** Load CMS's monthly All Owners files (hospitals, nursing homes, home health agencies, hospices, from late 2022). They give direct and indirect owners by associate id, with private-equity and REIT flags. This would follow ASPE's ultimate-owner method (Welch, Xu, De Lew and Sommers, 2023).
 2. **Systems.** Find connected components over ownership edges, the step Luo et al. took with Schedule R. Validate against the AHRQ Compendium hospital linkage file.
 3. **Other facilities.** Extend the hospital link to nursing homes, home health agencies, hospices and dialysis facilities.
-4. **Staleness.** Use archived Doctors and Clinicians files (claims-filtered group membership) to measure how much of the level gap comes from stale reassignments.
+4. **Staleness.** Use archived Doctors and Clinicians files (claims-filtered group membership; quarterly from 2014, captured by the Internet Archive through 2022) to measure how much of the level gap comes from stale reassignments, and as a Medicare-side main-group rule beside the Medicaid one.
+5. **Tax ids.** Insurers' Transparency in Coverage price files list provider groups by tax id and NPI, from 2022. They would replace the associate-id stand-in with the tax id itself.
 
 ## Running it
 
@@ -52,10 +53,11 @@ Each of these is a published measure the graph is ready for, and none is done he
 uv sync --group research
 uv run nppes-over-time graph-build --db data/nppes.e3.duckdb --out graph   # about two minutes
 export NPPES_GRAPH=$PWD/graph                                             # default: the repository's graph/
+export HHS_MEDICAID=/path/to/hhs   # optional, for section 4b: holds the unzipped medicaid-provider-spending.csv
 uv run jupyter lab research/provider-networks/provider_networks.ipynb
 ```
 
-The notebook runs in about fifteen seconds. Each table (`link_check`, `physician_q`, `physician_edge`, `group_size`, `size_shares`, `physician_specialty`, `market_hhi`) is built in DuckDB SQL in the cell that first needs it, with the reasoning just above it.
+Without `HHS_MEDICAID`, section 4b runs on an empty table and shows nothing. The first run with it converts the 12 GB CSV to Parquet next to it (a few minutes). Each table (`link_check`, `physician_q`, `physician_edge`, `group_size`, `size_shares`, `physician_specialty`, `market_hhi`) is built in DuckDB SQL in the cell that first needs it, with the reasoning just above it.
 
 ## Data
 
