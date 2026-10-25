@@ -11,9 +11,13 @@ Invariants, per stream (NPPES streams keyed by ``npi``; Medicare PPEF streams ke
 * Reconstructing each loaded snapshot by interval lookup yields exactly the
   number of keys that snapshot's file contained.
 
-Plus the privacy invariants in ``scrub.py`` (no tax id or SSN in any NPPES version table) and
-``ppef.check_problems`` (the same for the medicare tables, and the shape of their code columns).
-``export`` runs those too and refuses to write if any fail.
+Plus the privacy invariants in ``scrub.py`` (no tax id or SSN in any NPPES version table),
+``ppef.check_problems`` (the same for the medicare tables, and the shape of their code columns) and
+``pos.check_problems`` (the same for the pos_* facility tables). ``export`` runs those too and
+refuses to write if any fail.
+
+A POS stream has a third close reason, ``moved`` (the CCN went to the other POS file in the same
+quarter), so for it the versions closed at a snapshot are changed + absent + moved.
 """
 
 from __future__ import annotations
@@ -23,7 +27,7 @@ from pathlib import Path
 
 import duckdb
 
-from . import ppef
+from . import pos, ppef
 from .schema import STREAMS
 from .scrub import privacy_problems
 
@@ -75,8 +79,9 @@ def validate(db: Path) -> list[str]:
         check(f"{v}: last_snapshot_id before first_snapshot_id",
               f"SELECT count(*) FROM {v} WHERE last_snapshot_id < first_snapshot_id")
         n_keys_col = "n_npis" if bookkeeping == "snapshot_stream" else "n_keys"
+        moved_col = "n_moved" if "n_moved" in {r[0] for r in con.execute(f"DESCRIBE {bookkeeping}").fetchall()} else "0"
         snaps = con.execute(
-            f"""SELECT snapshot_id, {n_keys_col}, n_new, n_changed, n_absent, csv_mode
+            f"""SELECT snapshot_id, {n_keys_col}, n_new, n_changed, n_absent + {moved_col}, csv_mode
                 FROM {bookkeeping} WHERE stream = '{name}' ORDER BY 1""").fetchall()
         # One pass each for the opened/closed counts of every snapshot, not two scans per snapshot.
         opened = dict(con.execute(
@@ -94,14 +99,17 @@ def validate(db: Path) -> list[str]:
                   expect=n_keys)
             check(f"{v}: versions opened at {sid} = new + changed", None, expect=n_new + n_changed,
                   got=opened.get(sid, 0))
-            check(f"{v}: versions closed at {sid} = changed + absent", None, expect=n_changed + n_absent,
-                  got=closed.get(sid, 0))
+            check(f"{v}: versions closed at {sid} = changed + absent{' + moved' if moved_col != '0' else ''}", None,
+                  expect=n_changed + n_absent, got=closed.get(sid, 0))
 
     for s in STREAMS:
         check_stream(s.name, "npi", "snapshot_stream", one_row_per_key=(s.name == "provider"))
     if ppef.loaded(con):
         for s in ppef.PPEF_STREAMS:
             check_stream(s.name, ppef.KEY, "ppef_snapshot_stream", one_row_per_key=False)
+    if pos.loaded(con):
+        for s in pos.POS_STREAMS:
+            check_stream(s.name, pos.KEY, "pos_snapshot_stream", one_row_per_key=False)
     privacy = privacy_problems(con)
     problems += privacy
     log.info("%-70s %s", "NPPES version tables: tax ids and SSNs suppressed", "ok" if not privacy else f"FAIL ({len(privacy)} check(s))")
@@ -109,5 +117,9 @@ def validate(db: Path) -> list[str]:
     problems += medicare
     if ppef.loaded(con):
         log.info("%-70s %s", "medicare version tables: privacy and column shapes", "ok" if not medicare else f"FAIL ({len(medicare)} check(s))")
+    facilities = pos.check_problems(con)
+    problems += facilities
+    if pos.loaded(con):
+        log.info("%-70s %s", "pos version tables: privacy and column shapes", "ok" if not facilities else f"FAIL ({len(facilities)} check(s))")
     con.close()
     return problems

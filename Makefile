@@ -6,6 +6,7 @@ WORK     ?= data/work
 OUT      ?= export
 RELEASES ?= releases
 PPEF_SOURCE ?= data/ppef    # one directory per quarter of Medicare PPEF extracts (docs/MAINTAINING.md)
+POS_SOURCE ?= data/pos      # one directory per quarter of Provider of Services files (docs/MAINTAINING.md)
 # DuckDB resource limits. Unset = DuckDB's defaults (all cores, 80% of RAM). Set e.g. THREADS=8 MEMORY=24GB.
 THREADS  ?=
 MEMORY   ?=
@@ -18,7 +19,7 @@ VERIFY_ALL ?=
 MONTHLY_FILES ?=
 MONTHLY_FLAG = $(if $(MONTHLY_FILES),--monthly-files)
 
-.PHONY: install test discover probe download check-sources load validate verify export package status monthly backfill-fingerprints ppef-download ppef-load ppef-sources
+.PHONY: install test discover probe download check-sources load validate verify export package status monthly backfill-fingerprints ppef-download ppef-load ppef-sources pos-download pos-load pos-sources
 
 install:
 	uv sync
@@ -58,6 +59,18 @@ ppef-sources:
 # Fetch every PPEF file releases/ppef_sources.csv records into $(PPEF_SOURCE)/<quarter>/, sha256-checked.
 ppef-download:
 	uv run nppes-over-time ppef-download --dest $(PPEF_SOURCE) --releases $(RELEASES)
+
+# Provider of Services quarters (optional): load every quarter directory in $(POS_SOURCE) not yet in the warehouse, then
+# record file sizes and sha256s in releases/pos_sources.csv (fill in the urls before exporting).
+pos-load:
+	uv run nppes-over-time pos-load --source $(POS_SOURCE) --db $(DB) --work $(WORK) $(RES)
+
+pos-sources:
+	uv run nppes-over-time pos-sources --db $(DB) --releases $(RELEASES)
+
+# Fetch every POS file releases/pos_sources.csv records into $(POS_SOURCE)/<quarter>/, sha256-checked.
+pos-download:
+	uv run nppes-over-time pos-download --dest $(POS_SOURCE) --releases $(RELEASES)
 
 verify:
 	uv run nppes-over-time verify --db $(DB) --source $(SOURCE) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)

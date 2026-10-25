@@ -49,7 +49,6 @@ The files CMS served at the time, which NBER keeps for August 2016 to April 2019
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import re
 import time
@@ -59,8 +58,7 @@ from pathlib import Path
 
 import duckdb
 
-from . import schema
-from .errors import UserError
+from . import filesources, schema
 from .loader import SEP, StreamStats, fingerprint_sql
 from .schema import Column, header_key
 from .scrub import free_text_columns, has_token, redact_expr
@@ -243,12 +241,7 @@ def repair_utf8(src: Path, dest: Path) -> int:
     return bad
 
 
-def _sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        while chunk := fh.read(16 << 20):
-            h.update(chunk)
-    return h.hexdigest()
+_sha256 = filesources.sha256_of
 
 
 def _sql_type(kind: str) -> str:
@@ -653,118 +646,27 @@ def data_dictionary_rows() -> list[tuple[str, str, str, str, str]]:
 
 # -------------------------------------------------------------------- sources
 SOURCES_FILE = "ppef_sources.csv"
-SOURCE_COLUMNS = ["snapshot_id", "directory", "file", "bytes", "sha256", "origin", "url", "member"]
+SOURCE_COLUMNS = filesources.COLUMNS
 
 
 def sources_problems(con: duckdb.DuckDBPyConnection, releases: Path | None) -> list[str]:
     """Loaded PPEF files that ``releases/ppef_sources.csv`` does not record with the same sha256."""
-    import csv
-
     if not loaded(con) or releases is None:
         return []
-    path = Path(releases) / SOURCES_FILE
-    if not path.exists():
-        return [f"{path} does not exist; run `nppes-over-time ppef-sources` and fill in the urls"]
-    with open(path, newline="") as f:
-        recorded = {(int(r["snapshot_id"]), r["file"]): r["sha256"] for r in csv.DictReader(f)}
-    problems = []
-    for sid, file, sha in con.execute("SELECT snapshot_id, file, sha256 FROM ppef_snapshot_stream ORDER BY 1, 2").fetchall():
-        have = recorded.get((sid, file))
-        if have is None:
-            problems.append(f"{sid} {file}: no row in {path.name}")
-        elif have != sha:
-            problems.append(f"{sid} {file}: {path.name} records sha256 {have[:12]}..., the loaded file is {sha[:12]}...")
-    return problems
+    loaded_files = con.execute("SELECT snapshot_id, file, sha256 FROM ppef_snapshot_stream ORDER BY 1, 2").fetchall()
+    return filesources.manifest_problems(Path(releases) / SOURCES_FILE, loaded_files,
+                                         "run `nppes-over-time ppef-sources` and fill in the urls")
 
 
 def read_sources(releases: Path) -> list[dict[str, str]]:
-    import csv
-
-    path = Path(releases) / SOURCES_FILE
-    if not path.exists():
-        raise UserError(f"{path} does not exist; nothing records where the PPEF files come from", exit_code=2)
-    with open(path, newline="") as f:
-        return list(csv.DictReader(f))
-
-
-def _fetch_url(url: str, target: Path, tries: int = 4) -> None:
-    """Stream ``url`` into ``target`` (via ``target.part``), retrying with a growing pause."""
-    import urllib.error
-    import urllib.request
-
-    from .download import UA
-
-    tmp = target.with_name(target.name + ".part")
-    for attempt in range(1, tries + 1):
-        try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=300) as r:
-                if "html" in (r.headers.get("Content-Type") or "").lower():
-                    raise ValueError("the server answered with a web page, not the file")
-                with open(tmp, "wb") as f:
-                    while chunk := r.read(16 << 20):
-                        f.write(chunk)
-            tmp.rename(target)
-            return
-        except (urllib.error.URLError, OSError, ValueError) as e:
-            tmp.unlink(missing_ok=True)
-            if attempt == tries:
-                raise UserError(f"could not download {url}: {e}; try again later (data.cms.gov throttles bursts)") from None
-            log.warning("attempt %d/%d for %s failed: %s; retrying", attempt, tries, url, e)
-            time.sleep(60 * attempt)
+    return filesources.read_manifest(Path(releases) / SOURCES_FILE, "PPEF")
 
 
 def download_sources(releases: Path, dest: Path, *, check_only: bool = False, pace: float = 1.0) -> list[str]:
-    """Rebuild the quarter directories of ``releases/ppef_sources.csv`` under ``dest``, sha256-checked.
-
-    Each row is a file the release was built from: ``dest/<directory>/<file>``. A file already there
-    with the recorded sha256 is kept. Otherwise it is fetched from ``url``, or, when ``member`` is set,
-    extracted from the zip at ``url`` (cached once in ``dest/zips/``). ``check_only`` downloads nothing
-    and reports the files that are missing or differ. Returns the problems; empty means every file
-    is present and matches.
-    """
-    import zipfile
-
-    rows = read_sources(releases)
-    dest = Path(dest)
-    problems: list[str] = []
-    zips: dict[str, Path] = {}
-    for r in rows:
-        target = dest / r["directory"] / r["file"]
-        if target.is_file() and target.stat().st_size == int(r["bytes"]) and _sha256(target) == r["sha256"]:
-            continue
-        if check_only:
-            problems.append(f"{r['directory']}/{r['file']}: {'differs from the recorded sha256' if target.exists() else 'missing'}")
-            continue
-        if not r["url"]:
-            problems.append(f"{r['directory']}/{r['file']}: no url recorded in {SOURCES_FILE}")
-            continue
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if r["member"]:
-            zpath = zips.get(r["url"])
-            if zpath is None:
-                zpath = dest / "zips" / r["url"].rsplit("/", 1)[-1]
-                if not zpath.exists():
-                    zpath.parent.mkdir(parents=True, exist_ok=True)
-                    log.info("downloading %s", r["url"])
-                    _fetch_url(r["url"], zpath)
-                    time.sleep(pace)
-                zips[r["url"]] = zpath
-            log.info("extracting %s from %s", r["member"], zpath.name)
-            tmp = target.with_name(target.name + ".part")
-            with zipfile.ZipFile(zpath) as z, z.open(r["member"]) as src, open(tmp, "wb") as out:
-                while chunk := src.read(16 << 20):
-                    out.write(chunk)
-            tmp.rename(target)
-        else:
-            log.info("downloading %s", r["url"])
-            _fetch_url(r["url"], target)
-            time.sleep(pace)
-        got = _sha256(target)
-        if got != r["sha256"]:
-            target.rename(target.with_name(target.name + ".mismatch"))
-            problems.append(f"{r['directory']}/{r['file']}: {r['url']} now serves sha256 {got[:12]}..., the release was built "
-                            f"from {r['sha256'][:12]}...; the upstream file changed (kept as .mismatch)")
-    return problems
+    """Rebuild the quarter directories of ``releases/ppef_sources.csv`` under ``dest``, sha256-checked
+    (filesources.download_recorded). Returns the problems; empty means every file is present and matches."""
+    return filesources.download_recorded(read_sources(releases), dest, check_only=check_only, pace=pace,
+                                         manifest_name=SOURCES_FILE)
 
 
 def write_sources(con: duckdb.DuckDBPyConnection, releases: Path) -> int:
@@ -773,26 +675,10 @@ def write_sources(con: duckdb.DuckDBPyConnection, releases: Path) -> int:
     Returns the number of rows whose url is still empty (the maintainer fills those from
     data.cms.gov's dataset-resources listing or the historical zips; docs/MAINTAINING.md).
     """
-    import csv
-
-    path = Path(releases) / SOURCES_FILE
-    old: dict[tuple[int, str], dict] = {}
-    if path.exists():
-        with open(path, newline="") as f:
-            old = {(int(r["snapshot_id"]), r["file"]): r for r in csv.DictReader(f)}
-    rows = []
-    for sid, directory, file, nbytes, sha in con.execute(
-            "SELECT ss.snapshot_id, s.directory, ss.file, ss.bytes, ss.sha256 FROM ppef_snapshot_stream ss "
-            "JOIN ppef_snapshot s USING (snapshot_id) ORDER BY 1, 3").fetchall():
-        prev = old.get((sid, file), {})
-        rows.append({"snapshot_id": sid, "directory": directory, "file": file, "bytes": nbytes, "sha256": sha,
-                     "origin": prev.get("origin", ""), "url": prev.get("url", ""), "member": prev.get("member", "")})
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=SOURCE_COLUMNS, lineterminator="\n")
-        w.writeheader()
-        w.writerows(rows)
-    return sum(1 for r in rows if not r["url"])
+    rows = con.execute(
+        "SELECT ss.snapshot_id, s.directory, ss.file, ss.bytes, ss.sha256 FROM ppef_snapshot_stream ss "
+        "JOIN ppef_snapshot s USING (snapshot_id) ORDER BY 1, 3").fetchall()
+    return filesources.write_manifest(Path(releases) / SOURCES_FILE, rows)
 
 
 def parse_ymd(s: str) -> date:

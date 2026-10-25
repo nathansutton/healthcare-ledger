@@ -61,6 +61,29 @@ A quarter loads once. There is no rollback for PPEF quarters: to replace a quart
 
 Prefer the files CMS served at the time over its August 2025 "historical" zips, whose 2016 to 2022 files are truncated (METHODOLOGY section 6). NBER has the originals for August 2016 to April 2019 under `https://data.nber.org/ppef/<year>/<month>/` as `Base_Provider_Enrollment_File.csv`, `Address_Sub-_File.csv`, `Reassignment_Sub-_File.csv` and `Secondary_Specialty.csv`; rename them to the `PPEF_*_Extract_<date>.csv` pattern of their quarter and put them in the quarter directory in place of the zip's copies. The directory month is NBER's download month, not the extract date: match a download to its quarter by the enrollment row count. NBER's `2017/10` repeats the July 2017 file, so the October 2017 and May 2018 quarters have no original and stay on the zip's copies. `releases/ppef_sources.csv` records which copy each loaded quarter came from.
 
+## Provider of Services quarters
+
+The `pos_*` tables come from CMS's quarterly Provider of Services files (METHODOLOGY section 7). They are optional: a release has them only if the warehouse does. Keep the files in one directory per quarter, named `YYYY-QN`, with that quarter's file or files inside under the names CMS serves them (`data/pos/2019-Q1/POS_OTHER_MAR19.csv`; from `2023-Q4` also the iQIES file beside it, `data/pos/2023-Q4/Provider_of_Services_File_HHA_ASC_Hospices_iQiES_2023_Q4.csv`). The loader tells the two files apart by their header, not by their names, and dates the quarter by the directory name.
+
+To rebuild the directories of an existing release from a fresh clone, run `uv run nppes-over-time pos-download` (or `make pos-download`). It fetches every file `releases/pos_sources.csv` records into `data/pos/<quarter>/` and checks each sha256; `--check` only verifies what is there. In October 2026 data.cms.gov served every recorded file.
+
+Where the files are:
+
+- **data.cms.gov** lists every quarter of both files, past ones included: the datasets titled `Provider of Services File - Quality Improvement and Evaluation System : <date>` (the QIES file; titled `Hospital & Non-Hospital Facilities` before 2025) and `Provider of Services File - Internet Quality Improvement and Evaluation System : <date>` (the iQIES file) in `https://data.cms.gov/data.json`. The date in the title drifts (`2024-04-01` is the second quarter of 2024); the dataset's `temporal` field gives the quarter. Each dataset's id answers at `https://data.cms.gov/data-api/v1/dataset-resources/<id>` with the CSV's download URL, the data dictionary and the methodology note.
+- **NBER** keeps copies of the QIES file under `https://data.nber.org/pos/`: the originals of 2010-Q4 to 2022-Q3 in `2022/orig/` (`pos_other_Q<n><year>.csv`) and `web_update/orig/cms_csv/`, the year-end files in the per-year directories, and processed Stata and SAS versions back to 1984 in other layouts.
+
+Then:
+
+```bash
+make pos-load                         # loads every quarter not yet in the warehouse, in quarter order
+make validate
+make pos-sources                      # writes releases/pos_sources.csv (size and sha256 of every loaded file)
+```
+
+Fill in the `origin` (`cms`) and `url` columns of `releases/pos_sources.csv` for the new rows, commit it, and run `make export`. `export` refuses a quarter whose files are not recorded.
+
+A quarter loads once. There is no rollback for POS quarters: to replace a quarter's files, run `uv run nppes-over-time pos-reset --yes`, which drops the `pos_*` tables and nothing else, then `make pos-load` again (about a quarter of an hour for fifteen years). A new CMS column stops the load with `unmapped columns`; add it to `src/nppes_over_time/pos_columns.csv` with `hash_optional` set to `yes` (it is not in every file) and load again. A quarter in which a whole provider type leaves one file is normal (METHODOLOGY section 7); a quarter that would mark more than 5% of a type's CCNs absent while the type is still in the file is refused, like a truncated NPPES file. The 2020-Q1 file is such a file (9,566 facilities missing, back the next quarter); keep it out of the source directory (a directory name that is not `YYYY-QN`, such as `2020-Q1.incomplete`, is ignored).
+
 ## Out-of-order month
 
 The loader does not append a month that is older than the newest loaded snapshot. This is a breaking correction. To insert the month, run `nppes-over-time rollback --to <month before>` and then `make load`. If you do not want the month, remove the zip from `data/raw/`.

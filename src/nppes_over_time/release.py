@@ -56,6 +56,7 @@ log = logging.getLogger(__name__)
 EDITION_FILE = "EDITION"
 RELEASE_FILES = ("manifest.json", "SHA256SUMS", "snapshots.csv", "data_dictionary.csv")
 OPTIONAL_RELEASE_FILES = ("medicare_snapshots.csv",   # present only when the Medicare PPEF quarters are loaded
+                          "pos_snapshots.csv",        # present only when the Provider of Services quarters are loaded
                           "privacy_audit.csv")        # from edition 3
 RELEASE_ID_RE = re.compile(r"^e(?P<edition>\d+)-(?P<asof>\d{8})-(?P<hash>[0-9a-f]{8})$")
 CHANGELOG_ENTRY_RE = re.compile(r"^- (?P<date>\d{4}-\d{2}-\d{2})(?P<rest>.*)$")
@@ -177,11 +178,13 @@ def latest_release(releases: Path | None, edition: int | None = None) -> Release
 
 
 def read_release_fingerprints(ref: ReleaseRef) -> dict[tuple[int, str], str]:
-    """Fingerprints a release published: NPPES streams from snapshots.csv, PPEF streams from medicare_snapshots.csv."""
-    from .ppef import PPEF_STREAMS, SNAPSHOTS_FILE
+    """Fingerprints a release published: NPPES streams from snapshots.csv, PPEF streams from
+    medicare_snapshots.csv, POS streams from pos_snapshots.csv."""
+    from . import pos, ppef
 
     out: dict[tuple[int, str], str] = {}
-    for name, streams in (("snapshots.csv", STREAM_NAMES), (SNAPSHOTS_FILE, [s.name for s in PPEF_STREAMS])):
+    for name, streams in (("snapshots.csv", STREAM_NAMES), (ppef.SNAPSHOTS_FILE, [s.name for s in ppef.PPEF_STREAMS]),
+                          (pos.SNAPSHOTS_FILE, [s.name for s in pos.POS_STREAMS])):
         if not (ref.path / name).exists():
             continue
         with open(ref.path / name, newline="") as f:
@@ -317,6 +320,9 @@ class ReadmeContext:
     ppef_snapshots: int = 0          # Medicare PPEF quarters loaded (0: the medicare_* tables are not in this release)
     ppef_first_as_of: str = ""
     ppef_last_as_of: str = ""
+    pos_snapshots: int = 0           # Provider of Services quarters loaded (0: the pos_* tables are not in this release)
+    pos_first_as_of: str = ""
+    pos_last_as_of: str = ""
 
 
 def render_readme(ctx: ReadmeContext) -> str:
@@ -406,6 +412,29 @@ quarter; across quarters use the as-of filter on each table separately, because 
 versioned on its own.
 """
 
+    pos_rows = ""
+    pos_section = ""
+    if ctx.pos_snapshots:
+        rc = ctx.row_counts
+        pos_rows = f"""| `parquet/pos_facility/effective_year=YYYY/` | Medicare-certified facilities in the POS Hospital & Non-Hospital (QIES) file, one row per CCN per version ({rc.get('pos_facility', 0):,} rows) |
+| `parquet/pos_facility_iqies/effective_year=YYYY/` | facilities in the POS iQIES file, from the fourth quarter of 2023 ({rc.get('pos_facility_iqies', 0):,} rows) |
+| `pos_snapshots.csv` | one row per POS quarter: as-of date, files, per-stream counts and content fingerprints |
+"""
+        pos_section = f"""
+## Medicare-certified facilities (POS)
+
+The `pos_*` tables are the same kind of history for CMS's quarterly *Provider of Services* files,
+{ctx.pos_snapshots} quarters dated {ctx.pos_first_as_of} to {ctx.pos_last_as_of} (annual at year end before 2019). Their
+key is the CMS Certification Number `ccn`, the id a hospital, nursing home, home health agency,
+hospice, dialysis facility or clinic bills Medicare under. `effective_date` and `end_date` are the last
+days of quarters. CMS has published two files since the end of 2023 and is moving provider types from
+the first to the second: `pos_facility` is the Hospital & Non-Hospital Facilities (QIES) file,
+`pos_facility_iqies` the iQIES file. A CCN that leaves one file for the other in the same quarter is
+closed with `close_reason = 'moved'` and its history continues in the other table, so a facility's
+full history is the union of the two tables filtered on `ccn`. The two files code the provider type
+differently (`prvdr_ctgry_cd` against `prvdr_type_id`; `data_dictionary.csv` describes every column).
+"""
+
     csv_section = ""
     if csv_too:
         csv_section = """
@@ -452,7 +481,7 @@ earlier snapshot. `snapshots.csv` lists every snapshot date.
 | `parquet/practice_location.parquet` | secondary practice location versions, since July 2018 ({ctx.row_counts.get('practice_location', 0):,} rows) |
 | `parquet/other_name.parquet` | organization other-name versions, since July 2018 ({ctx.row_counts.get('other_name', 0):,} rows) |
 | `parquet/endpoint.parquet` | endpoint versions, since March 2019 ({ctx.row_counts.get('endpoint', 0):,} rows) |
-{monthly_row}{medicare_rows}| `snapshots.csv` | one row per monthly snapshot: dates, source file, per-stream counts and content fingerprints |
+{monthly_row}{medicare_rows}{pos_rows}| `snapshots.csv` | one row per monthly snapshot: dates, source file, per-stream counts and content fingerprints |
 | `data_dictionary.csv` | every exported column with its type, CMS header and any suppression note |
 | `privacy_audit.csv` | per text column: rows scanned for formatted SSNs and EINs and nine-digit numbers, and the verdict |
 | `manifest.json` | release id, counts, and the size and SHA-256 of every file |
@@ -461,7 +490,7 @@ earlier snapshot. `snapshots.csv` lists every snapshot date.
 {csv_section}
 The Parquet directories are hive-partitioned by `effective_year` (the year of `effective_date`).
 DuckDB, Arrow, pandas, polars, R `arrow` and Spark read such a directory as one table.
-{medicare_section}
+{medicare_section}{pos_section}
 ## Version metadata
 
 Every table starts with the same columns:
@@ -473,7 +502,7 @@ Every table starts with the same columns:
 | `end_date` | as-of date of the first snapshot in which it was gone (exclusive); NULL while current |
 | `is_current` | true for the latest version of an NPI still in the file |
 | `first_snapshot_id`, `last_snapshot_id` | YYYYMMDD of the first and last snapshot that showed this version |
-| `close_reason` | `changed` (a new version followed), `absent` (the NPI left the file), NULL while current |
+| `close_reason` | `changed` (a new version followed), `absent` (the NPI left the file), `moved` (POS tables only: the CCN went to the other POS file), NULL while current |
 | `version_hash` | MD5 of all data columns of the version |
 
 A new version is created when *any* CMS column changes, including cosmetic edits and CMS-wide
@@ -579,6 +608,8 @@ including the full methodology, is in the repository: {REPO_URL}.
 def render_citation(ctx: ReadmeContext, released: date) -> str:
     medicare = (f", and {ctx.ppef_snapshots} quarterly Medicare fee-for-service enrollment extracts (PPEF, "
                 f"{ctx.ppef_first_as_of} to {ctx.ppef_last_as_of})" if ctx.ppef_snapshots else "")
+    medicare += (f", and {ctx.pos_snapshots} quarterly Provider of Services files of Medicare-certified facilities (POS, "
+                 f"{ctx.pos_first_as_of} to {ctx.pos_last_as_of})" if ctx.pos_snapshots else "")
     return f"""cff-version: 1.2.0
 message: "If you use this data, please cite this release by its id, and cite CMS NPPES as the underlying source."
 type: dataset

@@ -2,6 +2,7 @@
 
 Build and check:  discover, download, load, validate, verify, rollback, status
 Medicare PPEF:    ppef-download, ppef-load, ppef-sources, ppef-reset (quarterly enrollment extracts, docs/MAINTAINING.md)
+POS facilities:   pos-download, pos-load, pos-sources, pos-reset (quarterly Provider of Services files, docs/MAINTAINING.md)
 Publish:          export, package, backfill-fingerprints, monthly (download, load, validate, verify,
                   continuity check and export in one command; see docs/MAINTAINING.md)
 
@@ -36,6 +37,7 @@ DEFAULT_OUT = "export"
 DEFAULT_RELEASES = "releases"
 DEFAULT_CHANGELOG = "docs/METHODOLOGY.md"
 DEFAULT_PPEF_SOURCE = "data/ppef"
+DEFAULT_POS_SOURCE = "data/pos"
 
 
 # ----------------------------------------------------------------- input checks
@@ -149,6 +151,69 @@ def cmd_ppef_download(a: argparse.Namespace) -> int:
     return 1 if problems else 0
 
 
+def cmd_pos_load(a: argparse.Namespace) -> int:
+    from .pos import PosWarehouse, discover_pos
+    src = Path(a.source)
+    if not src.is_dir():
+        raise UserError(f"POS source directory {src} does not exist; it should hold one subdirectory per quarter "
+                        f"(2011-Q4, 2019-Q1, ...) with that quarter's POS csv file(s) (docs/MAINTAINING.md)", exit_code=2)
+    snaps = discover_pos(src)
+    if not snaps:
+        raise UserError(f"no quarter directories (YYYY-QN) with a POS csv under {src}", exit_code=2)
+    wh = PosWarehouse(Path(a.db), threads=a.threads, memory_limit=a.memory, work_dir=_work(a),
+                      max_absent_share=a.max_absent_share)
+    try:
+        done = set(wh.loaded_snapshot_ids())
+        todo = [s for s in snaps if s.snapshot_id not in done]
+        if a.until:
+            todo = [s for s in todo if s.snapshot_id <= a.until]
+        if a.limit:
+            todo = todo[: a.limit]
+        log.info("%d POS quarters already loaded, %d to go", len(done), len(todo))
+        for s in todo:
+            wh.load_snapshot(s)
+        wh.finalize()
+    finally:
+        wh.close()
+    return 0
+
+
+def cmd_pos_reset(a: argparse.Namespace) -> int:
+    from .pos import reset
+    if not a.yes:
+        raise UserError("pos-reset drops every pos_* table and the POS bookkeeping (nothing else is touched); "
+                        "pass --yes to confirm", exit_code=2)
+    con = duckdb.connect(str(require_db(a.db)))
+    try:
+        dropped = reset(con)
+    finally:
+        con.close()
+    print(f"dropped {len(dropped)} table(s): {', '.join(dropped)}")
+    return 0
+
+
+def cmd_pos_download(a: argparse.Namespace) -> int:
+    from .pos import download_sources
+    problems = download_sources(Path(a.releases), Path(a.dest), check_only=a.check)
+    for p in problems:
+        print("PROBLEM:", p)
+    print("OK: every recorded POS file is present and matches its sha256" if not problems else f"{len(problems)} problem(s)")
+    return 1 if problems else 0
+
+
+def cmd_pos_sources(a: argparse.Namespace) -> int:
+    from .pos import loaded, write_sources
+    con = duckdb.connect(str(require_db(a.db)), read_only=True)
+    try:
+        if not loaded(con):
+            raise UserError(f"{a.db} holds no POS quarters; run `nppes-over-time pos-load` first", exit_code=2)
+        empty = write_sources(con, Path(a.releases))
+    finally:
+        con.close()
+    print(f"{Path(a.releases) / 'pos_sources.csv'} written; {empty} row(s) still need a url")
+    return 0
+
+
 def cmd_package(a: argparse.Namespace) -> int:
     from .package import package
     files = package(Path(a.out), Path(a.dest), include_csv=not a.no_csv)
@@ -218,6 +283,7 @@ def cmd_rollback(a: argparse.Namespace) -> int:
 
 
 def cmd_status(a: argparse.Namespace) -> int:
+    from .pos import loaded as pos_loaded
     from .ppef import loaded as ppef_loaded
     con = duckdb.connect(str(require_db(a.db)), read_only=True)
     try:
@@ -230,6 +296,8 @@ def cmd_status(a: argparse.Namespace) -> int:
                                     else "all (run backfill-fingerprints)"),
             "ppef_quarters": (con.execute("SELECT count(*), min(as_of_date)::VARCHAR, max(as_of_date)::VARCHAR FROM ppef_snapshot").fetchone()
                               if ppef_loaded(con) else 0),
+            "pos_quarters": (con.execute("SELECT count(*), min(as_of_date)::VARCHAR, max(as_of_date)::VARCHAR FROM pos_snapshot").fetchone()
+                             if pos_loaded(con) else 0),
         }, indent=2, default=str))
     finally:
         con.close()
@@ -325,6 +393,34 @@ def build_parser() -> argparse.ArgumentParser:
     pdl.add_argument("--releases", default=DEFAULT_RELEASES)
     pdl.add_argument("--check", action="store_true", help="download nothing; report files that are missing or differ")
     pdl.set_defaults(fn=cmd_ppef_download)
+
+    pol = sub.add_parser("pos-load", help="load the quarterly Provider of Services files (one directory per quarter) into the warehouse, in quarter order")
+    pol.add_argument("--source", default=DEFAULT_POS_SOURCE,
+                     help=f"directory of quarter directories (2011-Q4, ...) holding the POS csv file(s) (default {DEFAULT_POS_SOURCE})")
+    _db_arg(pol)
+    pol.add_argument("--work", help="scratch directory for DuckDB temp files (default: <db dir>/work)")
+    pol.add_argument("--limit", type=int, help="load at most N new quarters")
+    pol.add_argument("--until", type=int, help="stop after snapshot id YYYYMMDD")
+    _resources(pol)
+    pol.add_argument("--max-absent-share", type=float, default=0.05,
+                     help="refuse a quarter whose file would mark more than this share of CCNs absent from both POS files (default 0.05)")
+    pol.set_defaults(fn=cmd_pos_load)
+
+    pors = sub.add_parser("pos-reset", help="drop the POS tables so the quarters can be loaded again from scratch (other tables untouched)")
+    _db_arg(pors)
+    pors.add_argument("--yes", action="store_true", help="confirm")
+    pors.set_defaults(fn=cmd_pos_reset)
+
+    podl = sub.add_parser("pos-download", help="fetch every POS file releases/pos_sources.csv records into --dest/<quarter>/, sha256-checked; --check only verifies")
+    podl.add_argument("--dest", default=DEFAULT_POS_SOURCE)
+    podl.add_argument("--releases", default=DEFAULT_RELEASES)
+    podl.add_argument("--check", action="store_true", help="download nothing; report files that are missing or differ")
+    podl.set_defaults(fn=cmd_pos_download)
+
+    posrc = sub.add_parser("pos-sources", help="write releases/pos_sources.csv (file, size, sha256 of every loaded POS file; keeps recorded urls)")
+    _db_arg(posrc)
+    posrc.add_argument("--releases", default=DEFAULT_RELEASES, help=f"release records directory (default {DEFAULT_RELEASES})")
+    posrc.set_defaults(fn=cmd_pos_sources)
 
     pk = sub.add_parser("package", help="turn a finished export into a Zenodo deposit: one zip per table, metadata, checksums")
     pk.add_argument("--out", default=DEFAULT_OUT, help="the export directory")

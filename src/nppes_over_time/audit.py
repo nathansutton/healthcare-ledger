@@ -8,7 +8,7 @@ column exported by name) cannot leak what the warehouse does not hold.
 Every text column of every table under ``parquet/`` is scanned for tax-id tokens (``scrub.TOKEN_RE``:
 a formatted SSN, a formatted EIN or nine bare digits, bounded by non-digits). Columns that hold
 numbers by design are *exempt* and only counted: postal codes (nine-digit ZIP+4), telephone and fax
-numbers, code columns (a taxonomy code such as ``390200000X`` holds nine digits) and the hash and id
+numbers (the POS files' ``phne_num`` and ``fax_phne_num`` too), code columns (a taxonomy code such as ``390200000X`` holds nine digits) and the hash and id
 columns. Credentials and name columns may hold no nine digits, however separated (rules 3 and 4), and
 ``license_number`` is held to rule 2 of scrub.py: every hit must
 be a known license format of its state, and no bare nine may appear under two states in one version.
@@ -31,7 +31,7 @@ from .scrub import BARE_NINE_RE, CREDENTIAL_COLUMNS, NINE_RUN_RE, license_bad, t
 log = logging.getLogger(__name__)
 
 AUDIT_FILE = "privacy_audit.csv"
-EXEMPT_RE = re.compile(r"(^|_)(postal_code|zip|phone|phone_ext|fax)$|^(version_hash|npi|enrollment_id|pac_id|receiving_enrollment_id)$"
+EXEMPT_RE = re.compile(r"(^|_)(postal_code|zip|zip_cd|phone|phone_ext|fax|phne_num)$|^(version_hash|npi|enrollment_id|pac_id|receiving_enrollment_id|ccn)$"
                        # code columns: a taxonomy code such as 390200000X holds nine digits by design
                        r"|(^|_)(code|state|country|type|group|flag|sex)$|^primary_taxonomy$")
 SSN_FMT = r"(^|[^0-9])[0-9]{3}[ .-][0-9]{2}[ .-][0-9]{4}([^0-9]|$)"
