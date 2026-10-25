@@ -103,7 +103,7 @@ def audit(out: Path) -> list[AuditRow]:
                 if EXEMPT_RE.search(c):
                     rows.append(AuditRow(table, c, n, ssn, ein, nine, 0, "exempt"))
                     continue
-                violations = _license_violations(con, src) if c == "license_number" and any_token else any_token
+                violations = _license_violations(con, src) if c == "license_number" else any_token
                 rows.append(AuditRow(table, c, n, ssn, ein, nine, violations, "FAIL" if violations else "ok"))
     finally:
         con.close()

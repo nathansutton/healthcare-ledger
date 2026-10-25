@@ -23,10 +23,11 @@ Rules (column names are the canonical short names in ``schema.py``):
    (identifier, type, state and issuer, 50 slots). The other identifiers are payer and Medicaid
    ids mixed with tax ids that cannot be told apart, so none is published.
 2. ``license_number_N`` is NULL when it contains a formatted SSN, is exactly a formatted EIN, or
-   contains any other tax-id token and (a) its *format* is not a known license format of its state
+   (a) contains any other tax-id token and its *format* is not a known license format of its state
    (``license_formats.csv``), or (b) it is a *bare nine* (nine digits, optionally with spaces, dots
-   or dashes) and the same nine digits appear in another license slot of the row under a different
-   state (a license number belongs to one state; an SSN goes wherever the provider goes). The format
+   or dashes, whether or not they form a token) and the same nine digits appear in another license
+   slot of the row under a different state (a license number belongs to one state; an SSN goes
+   wherever the provider goes). The format
    of a bare nine is its first three digits followed by ``999999``; the format of any other value is
    the value in upper case with every digit replaced by ``9``.
 3. ``credential``, ``other_credential`` and ``ao_credential`` are NULL when they contain a
@@ -126,7 +127,7 @@ def license_bad(col: str, state: str, cross: str) -> str:
     lits = ", ".join(f"'{p}'" for p in license_formats())
     known = f"coalesce({state} || ':' || {license_format(col)} IN ({lits}), false)"
     return (f"(regexp_matches({col}, {_lit(SSN_TOKEN_RE)}) OR regexp_matches({col}, {_lit(EIN_EXACT_RE)}) "
-            f"OR ({has_token(col)} AND (NOT {known} OR ({_bare_nine(col)} AND {cross}))))")
+            f"OR ({has_token(col)} AND NOT {known}) OR ({_bare_nine(col)} AND {cross}))")
 
 
 LIC9 = "_lic9"

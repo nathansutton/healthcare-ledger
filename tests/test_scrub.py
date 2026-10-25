@@ -26,6 +26,9 @@ def _org(npi="1000000001", **over):
         license_number_8="010123456", license_state_8="DC",        # under two states is an SSN -> both NULL
         license_number_9="A12345", license_state_9="CO",           # ordinary license -> kept
         license_number_10="XQ123456789", license_state_10="CO",    # nine digits in an unknown format -> NULL
+        license_number_11="123.456780", license_state_11="IL",     # not a token, but the same nine digits
+        license_number_12="1234-56780", license_state_12="IN",     # under two states -> both NULL
+        license_number_13="222.333444", license_state_13="WI",     # not a token, one state -> kept
         credential="MD 123456789",                                 # number in a credential -> NULL
         other_credential="M.D.",                                   # kept
         parent_org_name="123456789",                               # the parent's TIN typed as its name -> redacted
@@ -63,7 +66,8 @@ def test_rules_apply_at_staging(source, tmp_path):
     assert set(other) == {0}
     assert _slots(con, ("license_number", "license_state"), 15) == {
         (None, "OH"), ("036123456", "IL"), ("041.123456", "IL"), (None, "NY"), (None, "TN"),
-        ("RBT-12-3456789", "FL"), (None, "CA"), (None, "DC"), ("A12345", "CO"), (None, "CO")}
+        ("RBT-12-3456789", "FL"), (None, "CA"), (None, "DC"), ("A12345", "CO"), (None, "CO"),
+        (None, "IL"), (None, "IN"), ("222.333444", "WI")}
     assert privacy_problems(con) == []
 
 
