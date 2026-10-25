@@ -19,6 +19,7 @@ uv run nppes-over-time load         # build data/nppes.duckdb (hours for the ful
 uv run nppes-over-time validate     # SCD invariants, snapshot reconstruction, privacy rules
 uv run nppes-over-time export --csv # write export/
 uv run nppes-over-time ppef-load    # optional: add the Medicare PPEF quarters in data/ppef before export
+uv run nppes-over-time pos-load     # optional: add the Provider of Services quarters in data/pos before export
 ```
 
 The `Makefile` has one target for each command. To extend the panel by one month and make a release, use `make monthly`. [MAINTAINING.md](docs/MAINTAINING.md) is the runbook.
@@ -34,6 +35,9 @@ The `Makefile` has one target for each command. To extend the panel by one month
 | `medicare_enrollment` | enrollment id × version | Medicare FFS enrollments (PECOS, the public PPEF file), quarterly from February 2016; optional |
 | `medicare_practice_location`, `medicare_reassignment`, `medicare_secondary_specialty`, `medicare_additional_npi` | enrollment id × version × row | the PPEF sub-files |
 | `medicare_snapshots` | quarterly file | counts and content fingerprints |
+| `pos_facility` | CCN × version | Medicare-certified facilities in the Provider of Services (POS) Hospital & Non-Hospital file, annual from December 2011, quarterly from 2019; optional |
+| `pos_facility_iqies` | CCN × version | facilities in the POS iQIES file, which CMS has been moving provider types into since the fourth quarter of 2023 |
+| `pos_snapshots` | quarterly file | counts and content fingerprints |
 | `snapshots` | monthly file | counts and content fingerprints |
 | `data_dictionary` | column | CMS header for each column |
 | `privacy_audit` | column | rows scanned for formatted SSNs and EINs and nine-digit numbers, and the verdict |
@@ -41,6 +45,8 @@ The `Makefile` has one target for each command. To extend the panel by one month
 Each row has `effective_date` (inclusive), `end_date` (exclusive, NULL while current), `is_current`, `first_snapshot_id`, `last_snapshot_id`, `close_reason` and `version_hash`. The dates are the as-of dates of the CMS files.
 
 The `medicare_*` tables are the same history for CMS's quarterly [Medicare Fee-For-Service Public Provider Enrollment](https://data.cms.gov/provider-characteristics/medicare-provider-supplier-enrollment/medicare-fee-for-service-public-provider-enrollment) files, 2016 to now. Their key is the PECOS enrollment id; `medicare_enrollment.npi` joins them to the NPPES tables. The dates are the extract dates of the quarterly files ([METHODOLOGY.md](docs/METHODOLOGY.md) section 6). They are in a release only when the maintainer loaded the quarters (`ppef-load`).
+
+The `pos_*` tables are the same history for CMS's quarterly [Provider of Services](https://data.cms.gov/provider-characteristics/hospitals-and-other-facilities/provider-of-services-file-quality-improvement-and-evaluation-system) files: every hospital, nursing home, home health agency, hospice, dialysis facility, surgical center and clinic certified for Medicare, with its address, category, certification and termination dates, ownership, beds, staffing and services, keyed by the CMS Certification Number (`ccn`). CMS publishes two files per quarter since the end of 2023 and moves provider types from the old (QIES) file to the new (iQIES) one; a CCN that moves is closed with `close_reason = 'moved'` in `pos_facility` and continues in `pos_facility_iqies` ([METHODOLOGY.md](docs/METHODOLOGY.md) section 7). The dates are the last days of the quarters. Optional, like the Medicare tables (`pos-load`).
 
 ```sql
 -- the registry as CMS published it on 2019-01-13 (5,844,727 providers in the 2026-10-18 build)

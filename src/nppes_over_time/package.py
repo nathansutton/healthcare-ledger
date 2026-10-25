@@ -6,7 +6,7 @@ download per table, so ``package`` writes::
 
     <dest>/
       README.md, CITATION.cff, manifest.json, SHA256SUMS,     copied unchanged from the export
-      data_dictionary.csv, snapshots.csv, medicare_snapshots.csv, privacy_audit.csv
+      data_dictionary.csv, snapshots.csv, medicare_snapshots.csv, pos_snapshots.csv, privacy_audit.csv
       LICENSE-DATA.txt                                         CC0 1.0 dedication of the data files
       parquet_<table>.zip                                      one table, paths as in the export
       csv_<table>.zip                                          the gzipped CSV of a table, when exported
@@ -40,7 +40,7 @@ from .release import REPO_URL
 log = logging.getLogger(__name__)
 
 META_FILES = ("README.md", "CITATION.cff", "manifest.json", "SHA256SUMS", "data_dictionary.csv", "snapshots.csv",
-              "medicare_snapshots.csv", AUDIT_FILE)
+              "medicare_snapshots.csv", "pos_snapshots.csv", AUDIT_FILE)
 PACKAGE_SUMS = "PACKAGE_SHA256SUMS"
 ZENODO_FILE = "zenodo.json"
 LICENSE_FILE = "LICENSE-DATA.txt"
@@ -53,8 +53,8 @@ CC0 1.0 Universal Public Domain Dedication: https://creativecommons.org/publicdo
 
 To the extent possible under law, the author has waived all copyright and related or neighboring
 rights to these data files. They are derived from the CMS National Plan and Provider Enumeration
-System (NPPES) Data Dissemination files and the CMS Medicare Fee-For-Service Public Provider
-Enrollment files, which are public. Please cite the release (CITATION.cff) and CMS.
+System (NPPES) Data Dissemination files, the CMS Medicare Fee-For-Service Public Provider
+Enrollment files and the CMS Provider of Services files, which are public. Please cite the release (CITATION.cff) and CMS.
 
 The code that produced them is Apache-2.0 licensed: """ + REPO_URL + "\n"
 
@@ -107,6 +107,8 @@ def zenodo_metadata(manifest: dict) -> dict:
     counts = manifest.get("row_counts", {})
     medicare = (f" It also holds {manifest['ppef_snapshots']} quarterly Medicare fee-for-service enrollment extracts (PPEF) "
                 f"as version tables keyed by PECOS enrollment id." if manifest.get("ppef_snapshots") else "")
+    medicare += (f" It also holds {manifest['pos_snapshots']} quarterly Provider of Services (POS) files of Medicare-certified "
+                 f"facilities as version tables keyed by CMS Certification Number." if manifest.get("pos_snapshots") else "")
     description = (
         f"<p>Monthly history of every provider in the CMS National Plan and Provider Enumeration System (NPPES), "
         f"{manifest['first_as_of_date']} to {manifest['last_as_of_date']}: {manifest['snapshots']} monthly snapshots as a "
