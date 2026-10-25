@@ -3,6 +3,7 @@
 /export/
 /deposit/
 /work/
+/graph/
 *.duckdb
 *.duckdb.wal
 *.parquet

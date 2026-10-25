@@ -84,6 +84,14 @@ Fill in the `origin` (`cms`) and `url` columns of `releases/pos_sources.csv` for
 
 A quarter loads once. There is no rollback for POS quarters: to replace a quarter's files, run `uv run nppes-over-time pos-reset --yes`, which drops the `pos_*` tables and nothing else, then `make pos-load` again (about a quarter of an hour for fifteen years). A new CMS column stops the load with `unmapped columns`; add it to `src/nppes_over_time/pos_columns.csv` with `hash_optional` set to `yes` (it is not in every file) and load again. A quarter in which a whole provider type leaves one file is normal (METHODOLOGY section 7); a quarter that would mark more than 5% of a type's CCNs absent while the type is still in the file is refused, like a truncated NPPES file. The 2020-Q1 file is such a file (9,566 facilities missing, back the next quarter); keep it out of the source directory (a directory name that is not `YYYY-QN`, such as `2020-Q1.incomplete`, is ignored).
 
+## Provider graph
+
+```bash
+make graph DB=data/nppes.e3.duckdb GRAPH=graph    # or: uv run nppes-over-time graph-build --db ... --out graph
+```
+
+The graph is derived from the NPPES, PPEF and POS tables (METHODOLOGY section 8) and is rebuilt from scratch each time, in about two minutes; run it after loading new PPEF or POS quarters. It needs all three sources in the warehouse and stops with a message naming the missing table otherwise. The research notebook in `research/provider-networks/` reads it from `$NPPES_GRAPH`. It is not part of the export.
+
 ## Out-of-order month
 
 The loader does not append a month that is older than the newest loaded snapshot. This is a breaking correction. To insert the month, run `nppes-over-time rollback --to <month before>` and then `make load`. If you do not want the month, remove the zip from `data/raw/`.
