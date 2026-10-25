@@ -1,4 +1,5 @@
-"""graph-build on a hand-made warehouse: associate-id roll-up, interval semantics, and the hospital matching rules.
+"""graph-build on a hand-made warehouse: associate-id roll-up, interval semantics, the hospital matching rules,
+and the annual system tables from a hand-made AHRQ Compendium directory.
 
 The graph reads only a few columns of five warehouse tables, so the fixture creates those columns directly
 instead of loading CMS files.
@@ -9,6 +10,7 @@ from pathlib import Path
 import duckdb
 import pytest
 
+from nppes_over_time import compendium as comp
 from nppes_over_time.cli import main
 from nppes_over_time.errors import UserError
 from nppes_over_time.graph import build_graph
@@ -77,6 +79,44 @@ def warehouse(tmp_path: Path) -> Path:
     ])
     con.close()
     return db
+
+
+GP_HEADER = ("tin_name,pecos_pac_ids,health_sys_id,health_sys_name,tin_name_md_ppas,state_md_ppas,md_do_md_ppas,"
+             "np_pa_md_ppas,service_lines_md_ppas,ma_only_tin")
+
+
+@pytest.fixture
+def compendium(tmp_path: Path) -> Path:
+    """Every file graph-build reads, one tiny CSV each, with AHRQ's quirks: Latin-1 with bare CR line endings,
+    multiple associate ids joined by ^, and practices AHRQ lists outside any system."""
+    d = tmp_path / "ahrq"
+    for kind, files in comp.FILES.items():
+        for year, name in files.items():
+            if kind == "system":
+                text = ("health_sys_id,health_sys_name,health_sys_city,health_sys_state,total_mds,prim_care_mds,grp_cnt,"
+                        "hosp_cnt,acutehosp_cnt,sys_multistate,sys_beds\n"
+                        "HSI1,General Health,Boston,MA,\"1,200\",300,4,1,1,0,400\n")
+            elif kind == "group_practice":
+                # H (the hospital's group) is in the system; G and the two-id practice Y^Z are not
+                text = (f"{GP_HEADER}\nGENERAL HOSPITAL,H,HSI1,General Health,GENERAL HOSPITAL,MA,30,2,900,0\n"
+                        f"GROUP PRACTICE,G,,,GROUP PRACTICE,MA,2,0,40,0\n"
+                        f"CL\xc9MENT PARTNERS,Y^Z,,,CL\xc9MENT PARTNERS,MA,3,0,50,0\n")
+            elif kind == "hospital":
+                text = ("compendium_hospital_id,ccn,hospital_name,hospital_street,hospital_city,hospital_state,hospital_zip,"
+                        "acutehosp_flag,health_sys_id,health_sys_name,health_sys_city,health_sys_state\n"
+                        "CHSP1,220001,General Hospital,100 Hospital Rd,Boston,MA,02114,1,HSI1,General Health,Boston,MA\n"
+                        "CHSP2,221001,Twin A,7 River Rd,Springfield,MA,01001,1,,,,\n")
+            else:
+                node, row_id, ccn, name_col = comp.LINKS[kind]
+                text = (f"{row_id},onekey_id,{ccn},{name_col},health_sys_id,health_sys_name\n"
+                        f"{kind[:2].upper()}1,1,225000,A FACILITY,,\n")
+            path = d / "raw" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if year == 2022 and kind == "group_practice":
+                path.write_bytes(text.replace("\n", "\r").encode("latin-1"))
+            else:
+                path.write_text(text)
+    return d
 
 
 def test_reassignments_roll_up_to_associate_ids_with_intervals(warehouse, tmp_path):
@@ -152,17 +192,83 @@ def test_missing_tables_are_a_user_error(tmp_path):
         build_graph(db, tmp_path / "g")
 
 
+def test_compendium_tables(warehouse, compendium, tmp_path):
+    out = tmp_path / "g"
+    m = build_graph(warehouse, out, compendium=compendium)
+    assert m["compendium"]["years"]["group_practice"] == [2016, 2018, 2020, 2021, 2022]
+    assert m["tables"]["system_link"]["annual"] is True
+    system = duckdb.sql(f"SELECT DISTINCT health_sys_id, total_mds, sys_beds FROM '{out}/system.parquet'").fetchall()
+    assert system == [("HSI1", 1200, 400.0)]                 # "1,200" read as a number
+    links = duckdb.sql(f"""SELECT node_type, node_id, health_sys_id, md_ppas_physicians, name
+                           FROM '{out}/system_link.parquet' WHERE year = 2022 ORDER BY 1, 2""").fetchall()
+    assert links == [
+        ("home_health", "225000", None, None, "A FACILITY"),
+        ("hospital", "220001", "HSI1", None, "General Hospital"),
+        ("hospital", "221001", None, None, "Twin A"),
+        ("nursing_home", "225000", None, None, "A FACILITY"),
+        ("organization", "G", None, 2, "GROUP PRACTICE"),
+        ("organization", "H", "HSI1", 30, "GENERAL HOSPITAL"),
+        ("organization", "Y", None, 3, "CLÉMENT PARTNERS"),     # Latin-1, CR line endings, two ids for one tax id
+        ("organization", "Z", None, 3, "CLÉMENT PARTNERS"),
+    ]
+    ids = duckdb.sql(f"""SELECT count(DISTINCT compendium_id) FROM '{out}/system_link.parquet'
+                         WHERE year = 2022 AND node_id IN ('Y', 'Z')""").fetchone()
+    assert ids == (1,)
+    years = duckdb.sql(f"SELECT DISTINCT year FROM '{out}/system_link.parquet' WHERE node_type = 'nursing_home' ORDER BY 1").fetchall()
+    assert years == [(2020,), (2021,), (2022,), (2023,)]
+
+
+def test_compendium_missing_files_are_a_user_error(warehouse, compendium, tmp_path):
+    (compendium / "raw" / comp.FILES["hospital"][2023]).unlink()
+    with pytest.raises(UserError, match="compendium-download"):
+        build_graph(warehouse, tmp_path / "g", compendium=compendium)
+    assert not (tmp_path / "g").exists()                        # checked before the build starts
+
+
+def test_compendium_download_falls_back_to_the_archive(tmp_path, monkeypatch):
+    import gzip
+    import json
+    index = json.dumps([["original", "timestamp"],
+                        [comp.BASE + "a.csv", "20240101000000"], [comp.BASE + "b.csv", "20250101000000"]]).encode()
+    calls = []
+
+    def fake_get(url, timeout=300):
+        calls.append(url)
+        if url.startswith("https://web.archive.org/cdx/"):
+            return 200, index
+        if url == comp.BASE + "a.csv":
+            return 200, b"x,y\n1,2\n"
+        if url.startswith(comp.BASE):
+            return 202, b""                                     # ahrq.gov's answer to scripts, sometimes
+        if "20250101000000id_/" + comp.BASE + "b.csv" in url:
+            return 200, gzip.compress(b"b,c\n3,4\n")             # a capture stored with its gzip encoding
+        return 404, b""
+
+    monkeypatch.setattr(comp, "_get", fake_get)
+    monkeypatch.setattr(comp, "KNOWN_FILES", ("never-captured.csv",))
+    rows = {r["name"]: r for r in comp.download(tmp_path, pause=0)}
+    assert (tmp_path / "raw" / "a.csv").read_bytes() == b"x,y\n1,2\n"
+    assert (tmp_path / "raw" / "b.csv").read_bytes() == b"b,c\n3,4\n"
+    assert rows["b.csv"]["source"].startswith("web.archive.org 20250101000000")
+    assert rows["never-captured.csv"]["bytes"] == 0
+    assert (tmp_path / "manifest.csv").is_file()
+    # a second run keeps what is there
+    calls.clear()
+    comp.download(tmp_path, pause=0)
+    assert not any(c.endswith(("a.csv", "b.csv")) for c in calls)
+
+
 STUDY = Path(__file__).resolve().parent.parent / "research" / "provider-networks"
 NOTEBOOK = STUDY / "provider_networks.ipynb"
 
 
-def test_notebook_sql_runs_on_a_fixture_graph(warehouse, tmp_path):
+def test_notebook_sql_runs_on_a_fixture_graph(warehouse, compendium, tmp_path):
     """Every SQL block of the provider-networks notebook, in order, against the fixture warehouse's graph."""
     from conftest import notebook_sql, study_con
     out = tmp_path / "g"
-    build_graph(warehouse, out)
+    build_graph(warehouse, out, compendium=compendium)
     con = study_con(STUDY)
-    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link"):
+    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link", "system", "system_link"):
         con.execute(f"CREATE VIEW {t} AS SELECT * FROM read_parquet('{out}/{t}.parquet')")
     con.execute(f"CREATE VIEW quarters AS SELECT * FROM read_csv('{out}/quarters.csv')")
     con.execute("CREATE TABLE hrr AS SELECT * FROM read_csv('data/zip_hrr_2019.csv', all_varchar = true)")
@@ -189,6 +295,16 @@ def test_notebook_sql_runs_on_a_fixture_graph(warehouse, tmp_path):
                              WHERE weighting LIKE 'Medicaid%' ORDER BY ALL""").fetchall()
     assert [w for w in weights if w[0] == "Medicaid plurality"] == [("Medicaid plurality", "P1", "G", 1.0),
                                                                    ("Medicaid plurality", "P2", "H", 1.0)]
+    # group size counts each physician once: in Q1, P2 reassigns only to H; in Q0 and Q2 G has P1 and half of P2
+    sizes = con.execute("SELECT as_of_date, organization_pac_id, headcount, physicians FROM group_size ORDER BY ALL").fetchall()
+    assert (date.fromisoformat(Q[0]), "G", 2, 1.5) in sizes and (date.fromisoformat(Q[1]), "G", 1, 1.0) in sizes
+    # section 6: each Compendium year reads the nearest quarter; H is in a system through its own tax id and,
+    # through its hospital enrollment's CCN, through the hospital file too; G is not
+    routes = con.execute("SELECT DISTINCT pac_id, route FROM system_org ORDER BY ALL").fetchall()
+    assert routes == [("H", "group practice file"), ("H", "hospital file")]
+    shares = con.execute("""SELECT practitioner_pac_id, health_sys_id FROM ahrq_edge
+                            WHERE year = 2022 ORDER BY ALL""").fetchall()
+    assert shares == [("P1", None), ("P2", "HSI1"), ("P2", None)]
 
 
 def test_reference_data():

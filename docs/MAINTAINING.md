@@ -92,6 +92,15 @@ make graph DB=data/nppes.e3.duckdb GRAPH=graph    # or: uv run nppes-over-time g
 
 The graph is derived from the NPPES, PPEF and POS tables (METHODOLOGY section 8) and is rebuilt from scratch each time, in about two minutes; run it after loading new PPEF or POS quarters. It needs all three sources in the warehouse and stops with a message naming the missing table otherwise. The research notebook in `research/provider-networks/` reads it from `$NPPES_GRAPH`. It is not part of the export.
 
+The notebook's section 6 also needs the AHRQ Compendium of U.S. Health Systems tables (METHODOLOGY section 8a):
+
+```bash
+make compendium-download                                         # every Compendium file into data/ahrq/raw (about 260 MB)
+make graph DB=data/nppes.e3.duckdb GRAPH=graph COMPENDIUM=data/ahrq
+```
+
+AHRQ publishes a new edition about once a year, usually two years after the year it describes. Run `compendium-download` again (it keeps the files it has), then add the new year's file names to `FILES` in `src/nppes_over_time/compendium.py`, which takes the latest revision of each year. ahrq.gov answers scripts with an empty 202 at times; the download then takes the Internet Archive's copy, and a file the archive has never captured has to be added to `KNOWN_FILES` by name.
+
 ## Out-of-order month
 
 The loader does not append a month that is older than the newest loaded snapshot. This is a breaking correction. To insert the month, run `nppes-over-time rollback --to <month before>` and then `make load`. If you do not want the month, remove the zip from `data/raw/`.

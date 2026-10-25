@@ -96,7 +96,20 @@ The hospital link matches the NPPES practice address and phone of a hospital-typ
 
 Every table has the warehouse's interval semantics (section 4): a row starts on the first quarter it is observed with exactly those values and ends (`end_date`, exclusive) on the first quarter it is not; a row in the last quarter has a NULL `end_date`. A value that changes, or an edge that lapses and returns, makes a new row. There is no `close_reason`. The builder's test checks that the intervals reproduce every quarter's count.
 
-The graph inherits the PPEF's breaks: organization enrollments fall by 40,000 between September 2022 and March 2023, and the April 2026 file is the first with physician assistants' reassignments (155,000 more practitioners with an edge than in January 2026). A reassignment is a billing permission, not employment or ownership, and an associate id is a tax id, not a health system.
+### 8a. Health systems from the AHRQ Compendium
+
+With `--compendium <dir>`, `graph-build` adds two tables from the AHRQ Compendium of U.S. Health Systems (`compendium.py`). They are annual, keyed by `year`, because each Compendium edition describes a calendar year: 2016, 2018 and 2020 to 2023 (there is no 2017 or 2019 edition).
+
+| Table | Key | Row |
+|---|---|---|
+| `system` | `year`, `health_sys_id` | a Compendium health system: name, city, state, physician and primary care physician counts, group, hospital and acute hospital counts, multistate flag, beds |
+| `system_link` | `year`, `node_type`, `node_id`, `compendium_id` | an entity AHRQ lists that year: an `organization` (PECOS associate id) from the group practice file, or a `hospital`, `nursing_home` or `home_health` agency (CCN), with its `health_sys_id`, NULL when AHRQ places it in no system. Organizations also carry `md_ppas_physicians`, the physicians MD-PPAS assigns to that tax id by plurality of Medicare Part B lines |
+
+`compendium-download` fetches every file AHRQ has published under its compendium directory: the Internet Archive's index of that directory names them, ahrq.gov serves them, and the archive's raw captures stand in when ahrq.gov answers a script with an empty 202 response. It writes `raw/` and a `manifest.csv` with each file's source and sha256. `graph-build` reads the latest revision of each year: the 2016 files as updated in 2020, the 2018 files as updated in 2021, the revised 2020 to 2022 files. The CSVs mix UTF-8 and Latin-1 and some end lines with a bare carriage return; each is decoded and rewritten as UTF-8 before it is read, and every column stays text except the counts.
+
+A group practice file row is a tax id with two or more physicians in that year's MD-PPAS. AHRQ does not publish the tax id; it gives the associate ids, more than one for 0.1% of rows (`^`-separated in the file, one `system_link` row each, sharing a `compendium_id`). AHRQ publishes group practice files for 2016, 2018 and 2020 to 2022 only; hospital files for every edition; nursing home and home health files from 2020. Its outpatient-site files (2022, 2023) carry no associate id or NPI and are not read.
+
+The graph inherits the PPEF's breaks: organization enrollments fall by 40,000 between September 2022 and March 2023, and the April 2026 file is the first with physician assistants' reassignments (155,000 more practitioners with an edge than in January 2026). A reassignment is a billing permission, not employment or ownership, and an associate id is a tax id, not a health system: section 8a's tables are AHRQ's assignment of tax ids and facilities to systems, not the graph's.
 
 ## 9. Releases and editions
 
@@ -115,3 +128,4 @@ Dated entries, newest last. `export --new-edition` requires an entry dated after
 - 2026-10-22 (edition 2): the Medicare Fee-For-Service Public Provider Enrollment (PPEF) quarterly extracts added as the `medicare_*` tables, February 2016 to September 2026, keyed by enrollment id (section 6). No change to the NPPES rules or fingerprints.
 - 2026-10-24 (edition 3): privacy rules rewritten to fail closed (section 2a). The 50 other-identifier slots are no longer published (the `provider_other_identifier` table is gone and the monthly files lose those 200 columns); license numbers with a tax-id token survive only in a known state format; credentials with nine digits are NULL; tax-id tokens in every other free-text column, NPPES and Medicare, become `[REDACTED]`. Exports carry `privacy_audit.csv`. The Medicare practice locations of August 2016 and January 2017 are read with their swapped state and ZIP headers corrected (section 6). Every NPPES version hash that involved an other identifier, a license, a credential or a token changes.
 - 2026-10-25 (edition 3): the CMS Provider of Services files added as the `pos_facility` (QIES) and `pos_facility_iqies` (iQIES) tables, December 2011 to September 2026, keyed by CCN (section 7). No change to the NPPES or Medicare rules or fingerprints.
+- 2026-10-25 (edition 3): `graph-build --compendium` adds the AHRQ Compendium's annual `system` and `system_link` tables to the derived graph (section 8a), and `compendium-download` fetches the Compendium files. The graph is not part of the export; no change to any table or fingerprint.

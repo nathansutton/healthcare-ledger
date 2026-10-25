@@ -19,7 +19,7 @@ VERIFY_ALL ?=
 MONTHLY_FILES ?=
 MONTHLY_FLAG = $(if $(MONTHLY_FILES),--monthly-files)
 
-.PHONY: install test discover probe download check-sources load validate verify export package status monthly backfill-fingerprints ppef-download ppef-load ppef-sources pos-download pos-load pos-sources graph
+.PHONY: install test discover probe download check-sources load validate verify export package status monthly backfill-fingerprints ppef-download ppef-load ppef-sources pos-download pos-load pos-sources graph compendium-download
 
 install:
 	uv sync
@@ -73,9 +73,15 @@ pos-download:
 	uv run nppes-over-time pos-download --dest $(POS_SOURCE) --releases $(RELEASES)
 
 # Derive the provider graph (docs/METHODOLOGY.md section 8) from the NPPES, PPEF and POS tables into $(GRAPH).
+# With COMPENDIUM set (make compendium-download), it also writes the AHRQ system tables (section 8a).
 GRAPH ?= graph
+COMPENDIUM ?=
 graph:
-	uv run nppes-over-time graph-build --db $(DB) --out $(GRAPH) --work $(WORK) $(RES)
+	uv run nppes-over-time graph-build --db $(DB) --out $(GRAPH) --work $(WORK) $(RES) $(if $(COMPENDIUM),--compendium $(COMPENDIUM))
+
+# Fetch every AHRQ Compendium of U.S. Health Systems file into data/ahrq/raw (ahrq.gov, or the Internet Archive).
+compendium-download:
+	uv run nppes-over-time compendium-download --dest data/ahrq
 
 verify:
 	uv run nppes-over-time verify --db $(DB) --source $(SOURCE) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)

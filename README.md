@@ -20,7 +20,8 @@ uv run nppes-over-time validate     # SCD invariants, snapshot reconstruction, p
 uv run nppes-over-time export --csv # write export/
 uv run nppes-over-time ppef-load    # optional: add the Medicare PPEF quarters in data/ppef before export
 uv run nppes-over-time pos-load     # optional: add the Provider of Services quarters in data/pos before export
-uv run nppes-over-time graph-build  # optional: derive the provider graph from NPPES, PPEF and POS (METHODOLOGY section 8)
+uv run nppes-over-time graph-build  # optional: derive the provider graph from NPPES, PPEF and POS (METHODOLOGY section 8);
+                                    # add --compendium data/ahrq after `compendium-download` for AHRQ's health systems
 ```
 
 The `Makefile` has one target for each command. To extend the panel by one month and make a release, use `make monthly`. [MAINTAINING.md](docs/MAINTAINING.md) is the runbook.

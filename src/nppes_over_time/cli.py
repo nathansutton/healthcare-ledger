@@ -3,7 +3,8 @@
 Build and check:  discover, download, load, validate, verify, rollback, status
 Medicare PPEF:    ppef-download, ppef-load, ppef-sources, ppef-reset (quarterly enrollment extracts, docs/MAINTAINING.md)
 POS facilities:   pos-download, pos-load, pos-sources, pos-reset (quarterly Provider of Services files, docs/MAINTAINING.md)
-Derived:          graph-build (practitioner, organization and hospital graph by PPEF quarter, docs/METHODOLOGY.md section 8)
+Derived:          graph-build (practitioner, organization and hospital graph by PPEF quarter, docs/METHODOLOGY.md section 8),
+                  compendium-download (AHRQ Compendium of U.S. Health Systems files for graph-build --compendium)
 Publish:          export, package, backfill-fingerprints, monthly (download, load, validate, verify,
                   continuity check and export in one command; see docs/MAINTAINING.md)
 
@@ -40,6 +41,7 @@ DEFAULT_CHANGELOG = "docs/METHODOLOGY.md"
 DEFAULT_PPEF_SOURCE = "data/ppef"
 DEFAULT_POS_SOURCE = "data/pos"
 DEFAULT_GRAPH = "graph"
+DEFAULT_COMPENDIUM = "data/ahrq"
 
 
 # ----------------------------------------------------------------- input checks
@@ -218,10 +220,23 @@ def cmd_pos_sources(a: argparse.Namespace) -> int:
 
 def cmd_graph_build(a: argparse.Namespace) -> int:
     from .graph import build_graph
+    compendium = None
+    if a.compendium:
+        from .compendium import require_files
+        compendium = Path(a.compendium)
+        require_files(compendium)
     m = build_graph(require_db(a.db), Path(a.out), threads=a.threads, memory_limit=a.memory, work_dir=_work(a),
-                    limit=a.limit)
+                    limit=a.limit, compendium=compendium)
     print(f"{a.out}: {m['quarters']} quarters {m['first_as_of_date']} to {m['last_as_of_date']}; "
           + ", ".join(f"{k} {v['rows']:,} rows" for k, v in m["tables"].items()))
+    return 0
+
+
+def cmd_compendium_download(a: argparse.Namespace) -> int:
+    from .compendium import download
+    rows = download(Path(a.dest))
+    missing = [r["name"] for r in rows if not r["bytes"]]
+    print(f"{a.dest}: {len(rows) - len(missing)} files" + (f"; not found anywhere: {', '.join(missing)}" if missing else ""))
     return 0
 
 
@@ -439,8 +454,15 @@ def build_parser() -> argparse.ArgumentParser:
     gb.add_argument("--out", default=DEFAULT_GRAPH, help=f"output directory for the Parquet tables (default {DEFAULT_GRAPH})")
     gb.add_argument("--work", help="scratch directory for DuckDB temp files (default: <db dir>/work)")
     gb.add_argument("--limit", type=int, help="build only the first N PPEF quarters (for a quick look)")
+    gb.add_argument("--compendium", help="directory from compendium-download; adds the annual system and system_link "
+                                         f"tables (e.g. {DEFAULT_COMPENDIUM})")
     _resources(gb)
     gb.set_defaults(fn=cmd_graph_build)
+
+    cd = sub.add_parser("compendium-download", help="fetch every AHRQ Compendium of U.S. Health Systems file (2016-2023) "
+                                                    "into --dest/raw, from ahrq.gov or the Internet Archive")
+    cd.add_argument("--dest", default=DEFAULT_COMPENDIUM, help=f"output directory (default {DEFAULT_COMPENDIUM})")
+    cd.set_defaults(fn=cmd_compendium_download)
 
     pk = sub.add_parser("package", help="turn a finished export into a Zenodo deposit: one zip per table, metadata, checksums")
     pk.add_argument("--out", default=DEFAULT_OUT, help="the export directory")

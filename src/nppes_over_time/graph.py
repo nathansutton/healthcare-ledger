@@ -31,7 +31,19 @@ Edges
     phone alone (rule 3). Only active POS hospitals are candidates; an enrollment whose best rule ties
     between two CCNs is not linked.
 
-Every table is an interval table on the PPEF quarter dates, with the version semantics of the rest of the
+With ``--compendium``, two annual tables from the AHRQ Compendium of U.S. Health Systems join them
+(nppes_over_time.compendium):
+
+``system``
+    a Compendium health system in a Compendium year (2016, 2018, 2020-2023).
+``system_link``
+    organization (PAC id) or hospital, nursing home or home health agency (CCN) -> its system that year, or
+    NULL when AHRQ lists it outside any system. Organizations come from AHRQ's group practice files, which
+    also give the physicians MD-PPAS puts in each tax id by plurality of Medicare billing.
+
+These are keyed by ``year``, not by quarter: the Compendium describes a calendar year.
+
+The quarterly tables are interval tables on the PPEF quarter dates, with the version semantics of the rest of the
 warehouse: a row holds on date ``d`` when ``effective_date <= d`` and ``end_date`` is NULL or later than
 ``d``. A row starts on the first quarter it is observed with exactly these values and ends on the first
 quarter it is not, so a value that changes, or a relationship that lapses and returns, makes a new row.
@@ -170,8 +182,10 @@ class GraphBuilder:
     """Builds the interval tables one PPEF quarter at a time, in an in-memory DuckDB attached to the warehouse."""
 
     def __init__(self, db: Path, *, threads: int | None = None, memory_limit: str | None = None,
-                 work_dir: Path | None = None):
+                 work_dir: Path | None = None, compendium: Path | None = None):
         self.con = duckdb.connect()
+        self.work_dir = work_dir
+        self.compendium = compendium
         if threads:
             self.con.execute(f"SET threads = {int(threads)}")
         if memory_limit:
@@ -199,6 +213,9 @@ class GraphBuilder:
 
     def build(self, limit: int | None = None) -> list[dict]:
         self._require()
+        if self.compendium:
+            from .compendium import require_files
+            require_files(self.compendium)
         for t in TABLES:
             self.con.execute(f"DROP TABLE IF EXISTS {t.name}_open; DROP TABLE IF EXISTS {t.name}_closed")
         for snapshot_id, d in self.quarters()[:limit]:
@@ -267,6 +284,21 @@ class GraphBuilder:
                 TO '{path}' (FORMAT parquet, COMPRESSION zstd)""")
             n = self.con.execute(f"SELECT count(*) FROM '{path}'").fetchone()[0]
             tables[t.name] = {"rows": n, "key": list(t.key), "description": t.description}
+        compendium_years = None
+        if self.compendium:
+            import tempfile
+
+            from .compendium import system_tables
+            with tempfile.TemporaryDirectory(dir=self.work_dir) as tmp:
+                compendium_years = system_tables(self.con, self.compendium, Path(tmp))
+            for name, key, description in (
+                    ("system", ["year", "health_sys_id"], "AHRQ Compendium health systems, by Compendium year"),
+                    ("system_link", ["year", "node_type", "node_id", "compendium_id"],
+                     "organization (PAC id) or facility (CCN) -> Compendium system, by Compendium year")):
+                path = out / f"{name}.parquet"
+                self.con.execute(f"COPY {name} TO '{path}' (FORMAT parquet, COMPRESSION zstd)")
+                n = self.con.execute(f"SELECT count(*) FROM '{path}'").fetchone()[0]
+                tables[name] = {"rows": n, "key": key, "description": description, "annual": True}
         with open(out / "quarters.csv", "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(self.stats[0]))
             w.writeheader()
@@ -282,6 +314,8 @@ class GraphBuilder:
             "facility_types": list(FACILITY_TYPES),
             "tables": tables,
         }
+        if compendium_years:
+            manifest["compendium"] = {"source": "AHRQ Compendium of U.S. Health Systems", "years": compendium_years}
         (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
         return manifest
 
@@ -289,8 +323,8 @@ class GraphBuilder:
         self.con.close()
 
 
-def build_graph(db: Path, out: Path, *, limit: int | None = None, **kw) -> dict:
-    g = GraphBuilder(db, **kw)
+def build_graph(db: Path, out: Path, *, limit: int | None = None, compendium: Path | None = None, **kw) -> dict:
+    g = GraphBuilder(db, compendium=compendium, **kw)
     try:
         g.build(limit)
         return g.write(out, db)
