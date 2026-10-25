@@ -90,7 +90,7 @@ A quarter loads once. There is no rollback for POS quarters: to replace a quarte
 make graph DB=data/nppes.e3.duckdb GRAPH=graph    # or: uv run nppes-over-time graph-build --db ... --out graph
 ```
 
-The graph is derived from the NPPES, PPEF and POS tables (METHODOLOGY section 8) and is rebuilt from scratch each time, in about two minutes; run it after loading new PPEF or POS quarters. It needs all three sources in the warehouse and stops with a message naming the missing table otherwise. The research notebook in `research/provider-networks/` reads it from `$NPPES_GRAPH`. It is not part of the export.
+The graph is derived from the NPPES, PPEF and POS tables (METHODOLOGY section 8) and is rebuilt from scratch each time, in about two minutes; run it after loading new PPEF or POS quarters. It needs all three sources in the warehouse and stops with a message naming the missing table otherwise; without the iQIES POS table (`pos_facility_iqies`) it still builds, but home health agencies drop out of `facility` after December 2023 and nursing homes after September 2025, when CMS moved them there. The research notebook in `research/provider-networks/` reads it from `$NPPES_GRAPH`. It is not part of the export.
 
 The notebook's section 6 also needs the AHRQ Compendium of U.S. Health Systems tables (METHODOLOGY section 8a):
 

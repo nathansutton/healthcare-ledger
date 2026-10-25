@@ -42,6 +42,9 @@ def warehouse(tmp_path: Path) -> Path:
         # an organization that changes provider type in Q2 -> two organization rows
         ("OX1", Q[0], Q[2], "5000000001", "X", "12-70", "MA"),
         ("OX1", Q[2], None, "5000000001", "X", "12-Z1", "MA"),
+        # a skilled nursing facility at the hospital's address, and a home health agency
+        ("OS1", Q[0], None, "6000000001", "S", "00-18", "MA"),
+        ("OA1", Q[0], None, "7000000001", "A", "00-06", "MA"),
     ]
     con.executemany("INSERT INTO medicare_enrollment_version VALUES (?, ?, ?, ?, ?, ?, ?)", enr)
     con.execute("""CREATE TABLE medicare_reassignment_version (enrollment_id VARCHAR, effective_date DATE, end_date DATE,
@@ -64,6 +67,8 @@ def warehouse(tmp_path: Path) -> Path:
         ("3000000001", "2019-01-01", None, "GENERAL HOSPITAL", None, "100 HOSPITAL RD", "02114", "MA", "(617) 555-0100"),
         ("4000000001", "2019-01-01", None, "TWIN HOSPITAL", None, "7 RIVER RD", "01001", "MA", None),
         ("5000000001", "2019-01-01", None, "X LLC", None, "8 HILL ST", "01002", "MA", None),
+        ("6000000001", "2019-01-01", None, "A NURSING HOME", None, "100 HOSPITAL RD", "02114", "MA", "6175550100"),
+        ("7000000001", "2019-01-01", None, "HOME CARE A", None, "3 OAK ST", "01003", "MA", "4135550000"),
     ])
     con.execute("""CREATE TABLE pos_facility_version (ccn VARCHAR, effective_date DATE, end_date DATE, prvdr_ctgry_cd VARCHAR,
                    pgm_trmntn_cd VARCHAR, fac_name VARCHAR, prvdr_ctgry_sbtyp_cd VARCHAR, state_cd VARCHAR, zip_cd VARCHAR,
@@ -76,7 +81,16 @@ def warehouse(tmp_path: Path) -> Path:
         ("221001", "2019-12-31", None, "01", "00", "TWIN A", "01", "MA", "01001", "25", "013", 50, "04", None, "7 RIVER RD"),
         ("221002", "2019-12-31", None, "01", "00", "TWIN B", "11", "MA", "01001", "25", "013", 25, "04", None, "7 RIVER RD"),
         ("225000", "2019-12-31", None, "04", "00", "A NURSING HOME", None, "MA", "02114", "25", "025", 90, "04", "6175550100", "100 HOSPITAL RD"),
+        # a home health agency that CMS moves to the iQIES file in Q2
+        ("227001", "2019-12-31", Q[2], "05", "00", "HOME CARE A", "01", "MA", "01003", "25", "015", None, "04", "4135550000", "3 OAK ST"),
     ])
+    con.execute("""CREATE TABLE pos_facility_iqies_version (ccn VARCHAR, effective_date DATE, end_date DATE, prvdr_type_id VARCHAR,
+                   prvdr_sbtyp_id VARCHAR, pgm_trmntn_cd VARCHAR, fac_name VARCHAR, state_cd VARCHAR, zip_cd VARCHAR,
+                   fips_state_cd VARCHAR, fips_cnty_cd VARCHAR, crtfd_bed_cnt DOUBLE, gnrl_cntl_type_cd VARCHAR,
+                   phne_num VARCHAR, st_adr VARCHAR)""")
+    # the first iQIES file leaves the termination code of active agencies blank
+    con.execute("INSERT INTO pos_facility_iqies_version VALUES ('227001', ?, NULL, '3', NULL, NULL, 'HOME CARE A', 'MA', "
+                "'01003', '25', '015', NULL, NULL, '4135550000', '3 OAK ST')", [Q[2]])
     con.close()
     return db
 
@@ -140,7 +154,7 @@ def test_quarter_counts_and_dropped_rows(warehouse, tmp_path):
     assert [r[1:] for r in q] == [(3, 6, 2), (2, 5, 2), (3, 6, 2)]
     assert m["quarters"] == 3 and m["last_as_of_date"] == Q[2]
     # every table reproduces each quarter's count from its intervals
-    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link"):
+    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link", "facility", "facility_link"):
         got = duckdb.sql(f"""SELECT count(t.effective_date) FROM read_csv('{out}/quarters.csv') s
                              LEFT JOIN '{out}/{t}.parquet' t ON t.effective_date <= s.as_of_date
                               AND (t.end_date IS NULL OR t.end_date > s.as_of_date)
@@ -176,6 +190,23 @@ def test_hospital_link_uses_active_hospitals_and_drops_ties(warehouse, tmp_path)
     assert links == [("OH1", "H", "220001", 1, date.fromisoformat(Q[0]), None)]
     hosp = duckdb.sql(f"SELECT ccn FROM '{out}/hospital.parquet' ORDER BY 1").fetchall()
     assert hosp == [("220001",), ("221001",), ("221002",)]
+
+
+def test_facility_nodes_follow_the_move_to_iqies(warehouse, tmp_path):
+    out = tmp_path / "g"
+    build_graph(warehouse, out)
+    q = [date.fromisoformat(d) for d in Q]
+    per_quarter = duckdb.sql(f"""SELECT s.as_of_date, f.ccn, f.facility_type FROM read_csv('{out}/quarters.csv') s
+                                 JOIN '{out}/facility.parquet' f ON f.effective_date <= s.as_of_date
+                                  AND (f.end_date IS NULL OR f.end_date > s.as_of_date) ORDER BY ALL""").fetchall()
+    # the agency is a node in every quarter: QIES until Q2, iQIES (blank termination code) from Q2
+    assert per_quarter == [(d, c, t) for d in q for c, t in (("225000", "nursing_home"), ("227001", "home_health"))]
+    subtypes = duckdb.sql(f"SELECT subtype FROM '{out}/facility.parquet' WHERE ccn = '227001' ORDER BY effective_date").fetchall()
+    assert subtypes == [("05-01",), ("iqies 3-",)]
+    links = duckdb.sql(f"""SELECT enrollment_id, organization_pac_id, ccn, facility_type, match_rule, end_date
+                           FROM '{out}/facility_link.parquet' ORDER BY 1""").fetchall()
+    # the nursing home shares the hospital's address and phone; only facilities of the enrollment's type are candidates
+    assert links == [("OA1", "A", "227001", "home_health", 1, None), ("OS1", "S", "225000", "nursing_home", 1, None)]
 
 
 def test_cli_graph_build(warehouse, tmp_path, capsys):
@@ -214,6 +245,9 @@ def test_compendium_tables(warehouse, compendium, tmp_path):
     ids = duckdb.sql(f"""SELECT count(DISTINCT compendium_id) FROM '{out}/system_link.parquet'
                          WHERE year = 2022 AND node_id IN ('Y', 'Z')""").fetchone()
     assert ids == (1,)
+    carried = duckdb.sql(f"""SELECT node_id, health_sys_id, via, md_ppas_physicians FROM '{out}/system_link.parquet'
+                             WHERE year = 2023 AND node_type = 'organization' ORDER BY 1""").fetchall()
+    assert carried[:2] == [("G", None, "carried forward from 2022", None), ("H", "HSI1", "carried forward from 2022", None)]
     years = duckdb.sql(f"SELECT DISTINCT year FROM '{out}/system_link.parquet' WHERE node_type = 'nursing_home' ORDER BY 1").fetchall()
     assert years == [(2020,), (2021,), (2022,), (2023,)]
 
@@ -268,10 +302,12 @@ def test_notebook_sql_runs_on_a_fixture_graph(warehouse, compendium, tmp_path):
     out = tmp_path / "g"
     build_graph(warehouse, out, compendium=compendium)
     con = study_con(STUDY)
-    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link", "system", "system_link"):
+    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link", "facility", "facility_link",
+              "system", "system_link"):
         con.execute(f"CREATE VIEW {t} AS SELECT * FROM read_parquet('{out}/{t}.parquet')")
     con.execute(f"CREATE VIEW quarters AS SELECT * FROM read_csv('{out}/quarters.csv')")
     con.execute("CREATE TABLE hrr AS SELECT * FROM read_csv('data/zip_hrr_2019.csv', all_varchar = true)")
+    con.execute("CREATE TABLE cbsa AS SELECT * FROM read_csv('data/zip_cbsa_2015.csv', all_varchar = true)")
     # 2019 Medicaid: P2 (NPI 1000000002) bills more through H's group NPI than through G's; self-billing is ignored
     con.execute("CREATE TABLE medicaid_spending (billing_npi VARCHAR, servicing_npi VARCHAR, month DATE, paid DOUBLE)")
     con.executemany("INSERT INTO medicaid_spending VALUES (?, ?, ?, ?)", [
@@ -301,7 +337,11 @@ def test_notebook_sql_runs_on_a_fixture_graph(warehouse, compendium, tmp_path):
     # section 6: each Compendium year reads the nearest quarter; H is in a system through its own tax id and,
     # through its hospital enrollment's CCN, through the hospital file too; G is not
     routes = con.execute("SELECT DISTINCT pac_id, route FROM system_org ORDER BY ALL").fetchall()
-    assert routes == [("H", "group practice file"), ("H", "hospital file")]
+    assert routes == [("H", "carried forward from 2022"), ("H", "group practice file"), ("H", "hospital file")]
+    # section 7: with systems as firms, H's physicians belong to HSI1; G stays its own tax id
+    firms = con.execute("SELECT DISTINCT firm_tax_id, firm_system FROM firm_share WHERE year = 2022 ORDER BY 1").fetchall()
+    assert firms == [("G", "G"), ("H", "HSI1")]
+    assert con.execute("SELECT count(*) FROM hrr_hhi WHERE firm_def = 'system'").fetchone()[0] > 0
     shares = con.execute("""SELECT practitioner_pac_id, health_sys_id FROM ahrq_edge
                             WHERE year = 2022 ORDER BY ALL""").fetchall()
     assert shares == [("P1", None), ("P2", "HSI1"), ("P2", None)]
@@ -315,3 +355,9 @@ def test_reference_data():
     enr = study_rows(STUDY, "hospital_enrollments_2026-09-29.csv")
     assert len({r["enrollment_id"] for r in enr}) == len(enr) > 9_000
     assert {r["provider_type_code"] for r in enr} == {"00-09", "00-85", "00-24"}
+    for name, code, n in (("snf_enrollments_2026-09-29.csv", "00-18", 14_000), ("hha_enrollments_2026-09-29.csv", "00-06", 11_000)):
+        rows = study_rows(STUDY, name)
+        assert len({r["enrollment_id"] for r in rows}) == len(rows) > n and {r["provider_type_code"] for r in rows} == {code}
+    cbsa = study_rows(STUDY, "zip_cbsa_2015.csv")
+    metros = {r["cbsa"] for r in cbsa if r["cbsa_type"] == "metro" and not r["county_fips"].startswith("72")}
+    assert len(metros) == 382 and all(len(r["zip5"]) == 5 for r in cbsa)

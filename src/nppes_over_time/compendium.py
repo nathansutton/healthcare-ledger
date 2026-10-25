@@ -16,7 +16,11 @@ the archive's raw capture when ahrq.gov answers with an empty 202, which it does
 ``system_link``
     one row per linked entity and year: an organization (PECOS associate id, from the group practice file),
     a hospital, nursing home or home health agency (CCN), with its system id, or NULL when AHRQ lists the
-    entity as not in a system.
+    entity as not in a system. ``via`` names the file. For an edition with no group practice file (2023),
+    the organizations of the latest earlier file are carried forward (``via`` 'carried forward from <year>'),
+    keeping a system id only if that system is in the edition's list: an associate id keeps its label from
+    one edition to the next 96% of the time, which AHRQ's outpatient-site files, matched by address and name,
+    do not approach (docs/METHODOLOGY.md section 8a).
 """
 
 from __future__ import annotations
@@ -77,6 +81,7 @@ LINKS = {
     "nursing_home": ("nursing_home", "compendium_nh_id", "ccn", "nursing_home_name"),
     "home_health": ("home_health", "compendium_hh_id", "ccn", "home_health_care_org_name"),
 }
+VIA = {"hospital": "hospital file", "nursing_home": "nursing home file", "home_health": "home health file"}
 
 
 def _get(url: str, timeout: int = 300) -> tuple[int, bytes]:
@@ -181,7 +186,7 @@ def system_tables(con: duckdb.DuckDBPyConnection, compendium: Path, work: Path) 
         FROM ahrq_system WHERE health_sys_id IS NOT NULL ORDER BY year, health_sys_id""")
     facility = " UNION ALL ".join(f"""
         SELECT year, '{node}' AS node_type, {node_id} AS node_id, {row_id} AS compendium_id, {name} AS name,
-               health_sys_id, NULL::INTEGER AS md_ppas_physicians
+               health_sys_id, NULL::INTEGER AS md_ppas_physicians, '{VIA[kind]}' AS via
         FROM ahrq_{kind} WHERE {node_id} IS NOT NULL""" for kind, (node, row_id, node_id, name) in LINKS.items())
     con.execute(f"""
         CREATE OR REPLACE TABLE system_link AS
@@ -189,8 +194,21 @@ def system_tables(con: duckdb.DuckDBPyConnection, compendium: Path, work: Path) 
                              AS compendium_id
                    FROM ahrq_group_practice)
         SELECT year, 'organization' AS node_type, unnest(string_split(pecos_pac_ids, '^')) AS node_id, compendium_id,
-               tin_name AS name, health_sys_id, TRY_CAST(md_do_md_ppas AS INTEGER) AS md_ppas_physicians
+               tin_name AS name, health_sys_id, TRY_CAST(md_do_md_ppas AS INTEGER) AS md_ppas_physicians,
+               'group practice file' AS via
         FROM g WHERE pecos_pac_ids IS NOT NULL
         UNION ALL {facility}""")
+    # editions without a group practice file inherit the latest earlier one's organizations
+    gp_years = sorted(FILES["group_practice"])
+    for year in sorted(FILES["system"]):
+        if year in gp_years or year < gp_years[0]:
+            continue
+        src = max(y for y in gp_years if y < year)
+        con.execute(f"""
+            INSERT INTO system_link
+            SELECT {year}, node_type, node_id, compendium_id, name,
+                   CASE WHEN health_sys_id IN (SELECT health_sys_id FROM system WHERE year = {year}) THEN health_sys_id END,
+                   NULL, 'carried forward from {src}'
+            FROM system_link WHERE year = {src} AND node_type = 'organization'""")
     con.execute("CREATE OR REPLACE TABLE system_link AS SELECT * FROM system_link ORDER BY year, node_type, node_id")
     return {kind: sorted(files) for kind, files in FILES.items()}

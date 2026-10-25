@@ -19,6 +19,10 @@ Nodes
     hospital department enrollment.
 ``hospital``
     a POS hospital (category 01, active), keyed by CCN, with its location, subtype, beds and control type.
+``facility``
+    an active POS nursing home (skilled nursing and nursing facilities) or home health agency, keyed by CCN,
+    from the QIES file and, once CMS moved the type there, the iQIES file (home health from December 2023,
+    nursing homes from September 2025).
 
 Edges
 
@@ -30,6 +34,9 @@ Edges
     the same state by NPPES phone and street number (rule 1), street number within the ZIP (rule 2) or
     phone alone (rule 3). Only active POS hospitals are candidates; an enrollment whose best rule ties
     between two CCNs is not linked.
+``facility_link``
+    organization enrollment -> facility CCN: a skilled nursing facility or home health agency enrollment
+    matched by the same three rules to an active POS facility of the same type.
 
 With ``--compendium``, two annual tables from the AHRQ Compendium of U.S. Health Systems join them
 (nppes_over_time.compendium):
@@ -68,6 +75,15 @@ log = logging.getLogger(__name__)
 HOSPITAL_TYPES = ("00-09", "00-85", "00-24", "12-Z1")
 # the subset that is certified as a facility and therefore has a CCN in the POS hospital file
 FACILITY_TYPES = ("00-09", "00-85", "00-24")
+# PPEF provider types linked to POS nursing homes and home health agencies
+NURSING_HOME_TYPES = ("00-18",)
+HOME_HEALTH_TYPES = ("00-06",)
+# POS codes of those facilities: QIES category (02 SNF/NF, 03 distinct part, 04 SNF, 10 NF; 05 HHA) and the iQIES
+# type and subtype that replaced them (20 with subtypes 16-19; 3)
+POS_NURSING_HOME = ("02", "03", "04", "10")
+IQIES_NURSING_HOME = ("20",)
+POS_HOME_HEALTH = ("05",)
+IQIES_HOME_HEALTH = ("3",)
 
 
 @dataclass(frozen=True)
@@ -93,10 +109,44 @@ TABLES = (
           "practitioner reassigns Medicare benefits to organization"),
     Table("hospital_link", ("enrollment_id",), ("organization_pac_id", "npi", "ccn", "match_rule"),
           "hospital-type enrollment matched to its POS CCN"),
+    Table("facility", ("ccn",),
+          ("facility_type", "fac_name", "subtype", "state", "zip5", "county_fips", "beds", "control_type"),
+          "active POS nursing homes and home health agencies (QIES, then iQIES)"),
+    Table("facility_link", ("enrollment_id",), ("organization_pac_id", "npi", "ccn", "facility_type", "match_rule"),
+          "skilled nursing facility or home health enrollment matched to its POS CCN"),
 )
 
 
-def _quarter_sql(d: str) -> dict[str, str]:
+def _q(values: tuple[str, ...]) -> str:
+    return ", ".join(f"'{v}'" for v in values)
+
+
+def _link_sql(enrollment_types: str, candidates: str, same_type: str = "") -> str:
+    """Match enrollments of the given provider types to candidate facilities by NPPES phone and street number.
+
+    Rule 1: same ten-digit phone and street number; rule 2: same street number and ZIP; rule 3: same phone; all
+    within the state. The best rule wins and an enrollment whose best rule hits two or more CCNs is not linked.
+    """
+    return f"""
+            WITH h AS (
+                SELECT e.enrollment_id, e.pac_id, e.npi, e.provider_type_code, n.zip5, n.practice_state AS state,
+                       n.phone, n.street_number
+                FROM enr e JOIN nppes n ON n.npi = e.npi
+                WHERE e.provider_type_code IN ({enrollment_types})),
+            cand AS (
+                SELECT h.enrollment_id, h.pac_id, h.npi, f.*,
+                       CASE WHEN length(h.phone) = 10 AND h.phone = f.phone AND h.street_number = f.street_number THEN 1
+                            WHEN h.street_number = f.street_number AND h.zip5 = f.zip5 THEN 2
+                            ELSE 3 END AS match_rule
+                FROM h JOIN {candidates} f ON f.state = h.state {same_type}
+                 AND ((length(h.phone) = 10 AND h.phone = f.phone)
+                      OR (h.street_number = f.street_number AND h.zip5 = f.zip5))),
+            best AS (
+                SELECT *, count(*) OVER (PARTITION BY enrollment_id) AS n_best
+                FROM cand QUALIFY match_rule = min(match_rule) OVER (PARTITION BY enrollment_id))"""
+
+
+def _quarter_sql(d: str, iqies: bool = True) -> dict[str, str]:
     """The SELECT that gives each table's rows on date d (an ISO date literal)."""
     def asof(alias: str = "") -> str:
         a = f"{alias}." if alias else ""
@@ -151,23 +201,37 @@ def _quarter_sql(d: str) -> dict[str, str]:
             JOIN enr o ON o.enrollment_id = r.receiving_enrollment_id
             WHERE {asof('r')}
               AND o.enrollment_id LIKE 'O%' AND i.pac_id IS NOT NULL AND o.pac_id IS NOT NULL""",
-        "hospital_link": f"""
-            WITH h AS (
-                SELECT e.enrollment_id, e.pac_id, e.npi, n.zip5, n.practice_state AS state, n.phone, n.street_number
-                FROM enr e JOIN nppes n ON n.npi = e.npi
-                WHERE e.provider_type_code IN ({facility_types})),
-            cand AS (
-                SELECT h.enrollment_id, h.pac_id, h.npi, f.ccn,
-                       CASE WHEN length(h.phone) = 10 AND h.phone = f.phone AND h.street_number = f.street_number THEN 1
-                            WHEN h.street_number = f.street_number AND h.zip5 = f.zip5 THEN 2
-                            ELSE 3 END AS match_rule
-                FROM h JOIN hospital f ON f.state = h.state
-                 AND ((length(h.phone) = 10 AND h.phone = f.phone)
-                      OR (h.street_number = f.street_number AND h.zip5 = f.zip5))),
-            best AS (
-                SELECT *, count(*) OVER (PARTITION BY enrollment_id) AS n_best
-                FROM cand QUALIFY match_rule = min(match_rule) OVER (PARTITION BY enrollment_id))
+        "hospital_link": _link_sql(facility_types, "hospital") + """
             SELECT enrollment_id, pac_id AS organization_pac_id, npi, ccn, match_rule
+            FROM best WHERE n_best = 1""",
+        "facility": f"""
+            SELECT ccn, CASE WHEN prvdr_ctgry_cd = '05' THEN 'home_health' ELSE 'nursing_home' END AS facility_type,
+                   fac_name, prvdr_ctgry_cd || '-' || coalesce(prvdr_ctgry_sbtyp_cd, '') AS subtype,
+                   state_cd AS state, left(zip_cd, 5) AS zip5, fips_state_cd || fips_cnty_cd AS county_fips,
+                   crtfd_bed_cnt AS beds, gnrl_cntl_type_cd AS control_type,
+                   nullif(regexp_replace(phne_num, '[^0-9]', '', 'g'), '') AS phone,
+                   nullif(regexp_extract(st_adr, '^\\s*(\\d+)', 1), '') AS street_number
+            FROM wh.pos_facility_version
+            WHERE {asof()} AND prvdr_ctgry_cd IN ({_q(POS_NURSING_HOME + POS_HOME_HEALTH)}) AND pgm_trmntn_cd = '00'
+            """ + (f"""
+            UNION ALL BY NAME
+            SELECT ccn, CASE WHEN prvdr_type_id IN ({_q(IQIES_HOME_HEALTH)}) THEN 'home_health' ELSE 'nursing_home' END
+                       AS facility_type,
+                   fac_name, 'iqies ' || prvdr_type_id || '-' || coalesce(prvdr_sbtyp_id, '') AS subtype,
+                   state_cd AS state, left(zip_cd, 5) AS zip5, fips_state_cd || fips_cnty_cd AS county_fips,
+                   crtfd_bed_cnt AS beds, gnrl_cntl_type_cd AS control_type,
+                   nullif(regexp_replace(phne_num, '[^0-9]', '', 'g'), '') AS phone,
+                   nullif(regexp_extract(st_adr, '^\\s*(\\d+)', 1), '') AS street_number
+            FROM wh.pos_facility_iqies_version
+            -- the first iQIES file (2023-Q4) leaves the termination code blank for active agencies
+            WHERE {asof()} AND prvdr_type_id IN ({_q(IQIES_NURSING_HOME + IQIES_HOME_HEALTH)})
+              AND coalesce(pgm_trmntn_cd, '00') = '00'
+            """ if iqies else ""),
+        "facility_link": _link_sql(
+            _q(NURSING_HOME_TYPES + HOME_HEALTH_TYPES), "facility",
+            f"AND f.facility_type = CASE WHEN h.provider_type_code IN ({_q(HOME_HEALTH_TYPES)}) "
+            f"THEN 'home_health' ELSE 'nursing_home' END") + """
+            SELECT enrollment_id, pac_id AS organization_pac_id, npi, ccn, facility_type, match_rule
             FROM best WHERE n_best = 1""",
     }
 
@@ -206,6 +270,9 @@ class GraphBuilder:
         need = {"ppef_snapshot", "medicare_enrollment_version", "medicare_reassignment_version",
                 "provider_version", "pos_facility_version"}
         missing = sorted(need - have)
+        # CMS moved nursing homes and home health agencies to the iQIES POS file; a warehouse without it has them
+        # only until they moved
+        self.iqies = "pos_facility_iqies_version" in have
         if missing:
             from .errors import UserError
             raise UserError(f"the warehouse lacks {', '.join(missing)}; the graph needs the NPPES, PPEF and POS tables "
@@ -227,7 +294,7 @@ class GraphBuilder:
         return self.stats
 
     def _quarter(self, snapshot_id: int, d: str) -> None:
-        sql = _quarter_sql(d)
+        sql = _quarter_sql(d, iqies=self.iqies)
         con = self.con
         con.execute(f"CREATE OR REPLACE TEMP TABLE enr AS {sql['enr']}")
         con.execute(f"CREATE OR REPLACE TEMP TABLE nppes AS {sql['nppes']}")
