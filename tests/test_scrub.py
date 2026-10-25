@@ -29,6 +29,11 @@ def _org(npi="1000000001", **over):
         license_number_11="123.456780", license_state_11="IL",     # not a token, but the same nine digits
         license_number_12="1234-56780", license_state_12="IN",     # under two states -> both NULL
         license_number_13="222.333444", license_state_13="WI",     # not a token, one state -> kept
+        license_number_14="123.45.6789", license_state_14="IL",    # SSN grouping with dots -> NULL
+        ao_credential="CPA 123.456789",                            # nine digits however separated -> NULL
+        other_org_name="ACME 123.45-6789",                         # SSN grouping, mixed separators -> redacted
+        ao_last_name="SMITH 123-456-789",                          # nine digits in a name, however grouped -> redacted
+        practice_address_2="PO BOX 1234 60611",                    # box number + ZIP in an address: kept
         credential="MD 123456789",                                 # number in a credential -> NULL
         other_credential="M.D.",                                   # kept
         parent_org_name="123456789",                               # the parent's TIN typed as its name -> redacted
@@ -67,7 +72,9 @@ def test_rules_apply_at_staging(source, tmp_path):
     assert _slots(con, ("license_number", "license_state"), 15) == {
         (None, "OH"), ("036123456", "IL"), ("041.123456", "IL"), (None, "NY"), (None, "TN"),
         ("RBT-12-3456789", "FL"), (None, "CA"), (None, "DC"), ("A12345", "CO"), (None, "CO"),
-        (None, "IL"), (None, "IN"), ("222.333444", "WI")}
+        (None, "IL"), (None, "IN"), ("222.333444", "WI"), (None, "IL")}
+    assert con.execute("SELECT ao_credential, other_org_name, ao_last_name, practice_address_2 FROM provider_version").fetchone() == (
+        None, "ACME [REDACTED]", "SMITH [REDACTED]", "PO BOX 1234 60611")
     assert privacy_problems(con) == []
 
 
@@ -105,7 +112,7 @@ def test_validate_and_export_refuse_a_planted_tax_id(source, tmp_path):
     con.close()
     assert sorted(p.split(":")[1].strip() for p in problems) == sorted([
         "ein is populated", "other_id_issuer_12 is populated", "license_number_1 is a possible SSN or tax id",
-        "credential holds a tax-id token", "ao_title holds a tax-id token"])
+        "credential holds nine digits", "ao_title holds a tax-id token"])
     assert main(["validate", "--db", str(db)]) == 1
     with pytest.raises(RuntimeError, match="privacy"):
         export_all(db, tmp_path / "export")

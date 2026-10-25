@@ -438,7 +438,7 @@ class PpefWarehouse:
             if col.name in PERSON_NAME_COLUMNS:
                 expr = f"CASE WHEN regexp_matches({expr}, '[0-9]') THEN NULL ELSE {expr} END"
             elif col.name in free_text:
-                expr = redact_expr(expr)
+                expr = redact_expr(expr, col.name)
             if col.name == "pac_id":
                 # CMS's historical zips wrote the 10-digit PAC id from a number, dropping leading zeros (10% of
                 # ids in 2016 to 2022); the current files keep them. Restore the width so ids match across quarters.
@@ -567,7 +567,7 @@ def recompute_fingerprints(con: duckdb.DuckDBPyConnection) -> dict[tuple[int, st
 # -------------------------------------------------------------------- checks
 def privacy_checks(s: PpefStream) -> list[tuple[str, str]]:
     """(description, predicate) pairs that must count 0 in ``s``'s version table (METHODOLOGY 2a and 6)."""
-    checks = [(f"{s.name}.{n} holds a tax-id token", has_token(n)) for n in free_text_columns(s)]
+    checks = [(f"{s.name}.{n} holds a tax-id token", has_token(n, n)) for n in free_text_columns(s)]
     checks += [(f"{s.name}.{n} contains a digit", f"regexp_matches({n}, '[0-9]')")
                for n in s.data_columns if n in PERSON_NAME_COLUMNS]
     return checks

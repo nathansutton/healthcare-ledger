@@ -9,7 +9,8 @@ Every text column of every table under ``parquet/`` is scanned for tax-id tokens
 a formatted SSN, a formatted EIN or nine bare digits, bounded by non-digits). Columns that hold
 numbers by design are *exempt* and only counted: postal codes (nine-digit ZIP+4), telephone and fax
 numbers, code columns (a taxonomy code such as ``390200000X`` holds nine digits) and the hash and id
-columns. ``license_number`` is held to rule 2 of scrub.py: every hit must
+columns. Credentials and name columns may hold no nine digits, however separated (rules 3 and 4), and
+``license_number`` is held to rule 2 of scrub.py: every hit must
 be a known license format of its state, and no bare nine may appear under two states in one version.
 Any other hit fails the audit. The result is written as ``privacy_audit.csv``, one row per
 (table, column) with counts only, never a value.
@@ -25,7 +26,7 @@ from pathlib import Path
 
 import duckdb
 
-from .scrub import BARE_NINE_RE, BOUNDED_TOKEN_RE, license_bad
+from .scrub import BARE_NINE_RE, CREDENTIAL_COLUMNS, NINE_RUN_RE, license_bad, token_re
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ AUDIT_FILE = "privacy_audit.csv"
 EXEMPT_RE = re.compile(r"(^|_)(postal_code|zip|phone|phone_ext|fax)$|^(version_hash|npi|enrollment_id|pac_id|receiving_enrollment_id)$"
                        # code columns: a taxonomy code such as 390200000X holds nine digits by design
                        r"|(^|_)(code|state|country|type|group|flag|sex)$|^primary_taxonomy$")
-SSN_FMT = r"(^|[^0-9])[0-9]{3}[- ][0-9]{2}[- ][0-9]{4}([^0-9]|$)"
+SSN_FMT = r"(^|[^0-9])[0-9]{3}[ .-][0-9]{2}[ .-][0-9]{4}([^0-9]|$)"
 EIN_FMT = r"(^|[^0-9])[0-9]{2}-[0-9]{7}([^0-9]|$)"
 NINE = r"(^|[^0-9])[0-9]{9}([^0-9]|$)"
 
@@ -94,7 +95,9 @@ def audit(out: Path) -> list[AuditRow]:
             parts = ["count(*)"]
             for c in cols:
                 parts += [f"count(*) FILTER (WHERE regexp_matches({c}, {_lit(p)}))" for p in (SSN_FMT, EIN_FMT, NINE)]
-                parts.append(f"count(*) FILTER (WHERE regexp_matches({c}, {_lit(BOUNDED_TOKEN_RE)}))")
+                # credentials (rule 3) and names (rule 4) hold no nine digits, however separated
+                hit = NINE_RUN_RE if c in CREDENTIAL_COLUMNS else token_re(c)
+                parts.append(f"count(*) FILTER (WHERE regexp_matches({c}, {_lit(hit)}))")
             log.info("auditing %s (%d text columns)", table, len(cols))
             res = con.execute(f"SELECT {', '.join(parts)} FROM {src}").fetchone()
             n = res[0]

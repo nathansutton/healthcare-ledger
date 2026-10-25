@@ -14,7 +14,8 @@ export. ``privacy_problems`` re-checks a built warehouse and is run by ``validat
 gate, by ``export``; ``audit.py`` checks the exported files a second time, independently.
 
 A *tax-id token* (``TOKEN_RE``) is a run of digits, bounded by non-digits, that is a formatted SSN
-(``NNN-NN-NNNN`` or ``NNN NN NNNN``), a formatted EIN (``NN-NNNNNNN``) or nine bare digits.
+(``NNN-NN-NNNN``, with any of space, dot or dash between the groups), a formatted EIN
+(``NN-NNNNNNN``) or nine bare digits.
 
 Rules (column names are the canonical short names in ``schema.py``):
 
@@ -30,10 +31,14 @@ Rules (column names are the canonical short names in ``schema.py``):
    wherever the provider goes). The format
    of a bare nine is its first three digits followed by ``999999``; the format of any other value is
    the value in upper case with every digit replaced by ``9``.
-3. ``credential``, ``other_credential`` and ``ao_credential`` are NULL when they contain a
-   tax-id token. A credential is letters ("MD", "LCSW"); a number in it is something else.
+3. ``credential``, ``other_credential`` and ``ao_credential`` are NULL when they contain nine
+   digits, however separated (``NINE_RUN_RE``). A credential is letters ("MD", "LCSW"); a number
+   in it is something else.
 4. In every other free-text column of every stream (names, addresses, titles, endpoint text),
-   each tax-id token is replaced by ``[REDACTED]``. Code columns, dates, postal codes, telephone
+   each tax-id token is replaced by ``[REDACTED]``; in a name column (``*name``) so is any nine
+   digits however separated (``NINE_RUN_RE``), since a name has no use for them. Address lines
+   and endpoint text keep other groupings of nine digits (street number plus ZIP code, suite
+   codes, dotted OIDs). Code columns, dates, postal codes, telephone
    and fax numbers and the NPI-valued columns are not free text and are left alone.
 
 ``license_formats.csv`` lists every (state, format) pair of a license number with a tax-id token
@@ -57,11 +62,16 @@ OTHER_ID_FIELDS = ("other_id", "other_id_type", "other_id_state", "other_id_issu
 OTHER_ID_COLUMNS: tuple[str, ...] = tuple(f"{f}_{i}" for i in range(1, 51) for f in OTHER_ID_FIELDS)
 SUPPRESSED_COLUMNS: tuple[str, ...] = ("ein", "parent_org_tin") + OTHER_ID_COLUMNS
 
+# an SSN grouping with any separators: 123-45-6789, 123 45 6789, 123.45.6789, 123-45 6789
+SSN_RE = r"[0-9]{3}[ .-][0-9]{2}[ .-][0-9]{4}"
 # a tax-id token, without its boundaries (RE2 syntax)
-TOKEN_RE = r"[0-9]{3}-[0-9]{2}-[0-9]{4}|[0-9]{3} [0-9]{2} [0-9]{4}|[0-9]{2}-[0-9]{7}|[0-9]{9}"
+TOKEN_RE = rf"{SSN_RE}|[0-9]{{2}}-[0-9]{{7}}|[0-9]{{9}}"
 # the token bounded by non-digits; groups 1 and 3 are the boundaries
 BOUNDED_TOKEN_RE = rf"(^|[^0-9])({TOKEN_RE})([^0-9]|$)"
-SSN_TOKEN_RE = r"(^|[^0-9])[0-9]{3}[- ][0-9]{2}[- ][0-9]{4}([^0-9]|$)"
+SSN_TOKEN_RE = rf"(^|[^0-9]){SSN_RE}([^0-9]|$)"
+# nine digits with any single separators between them (123.456789, 1234-56789), bounded like a
+# token (groups 1 and 3): the credential rule, and the token rule of name columns
+NINE_RUN_RE = r"(^|[^0-9])([0-9](?:[ .-]?[0-9]){8})([^0-9]|$)"
 EIN_EXACT_RE = r"^[0-9]{2}-[0-9]{7}$"
 BARE_NINE_RE = r"^[0-9][0-9 .-]*[0-9]$"   # plus: exactly nine digits
 REDACTED = "[REDACTED]"
@@ -96,15 +106,30 @@ def free_text_columns(stream: Stream) -> list[str]:
             and c.name not in SUPPRESSED_COLUMNS and c.name not in LICENSE_COLUMNS and c.name not in CREDENTIAL_COLUMNS]
 
 
-def redact_expr(expr: str) -> str:
-    """``expr`` with every tax-id token replaced by [REDACTED]. Two passes: a match consumes the
-    boundary character after it, so a token right behind another one is only found the second time."""
-    once = lambda e: f"regexp_replace({e}, {_lit(BOUNDED_TOKEN_RE)}, '\\1{REDACTED}\\3', 'g')"  # noqa: E731
+def is_name_column(col: str) -> bool:
+    return col.endswith("name")
+
+
+def token_re(col: str | None = None) -> str:
+    """The token pattern of rule 4 for column ``col``: in a name, nine digits however separated."""
+    return NINE_RUN_RE if col is not None and is_name_column(col) else BOUNDED_TOKEN_RE
+
+
+def redact_expr(expr: str, col: str | None = None) -> str:
+    """``expr`` (the value of column ``col``) with every token replaced by [REDACTED]. Two passes: a
+    match consumes the boundary character after it, so a token right behind another one is only
+    found the second time."""
+    once = lambda e: f"regexp_replace({e}, {_lit(token_re(col))}, '\\1{REDACTED}\\3', 'g')"  # noqa: E731
     return once(once(expr))
 
 
-def has_token(expr: str) -> str:
-    return f"regexp_matches({expr}, {_lit(BOUNDED_TOKEN_RE)})"
+def has_token(expr: str, col: str | None = None) -> str:
+    return f"regexp_matches({expr}, {_lit(token_re(col))})"
+
+
+def credential_bad(col: str) -> str:
+    """True when credential ``col`` must be NULL (rule 3): nine digits, however separated."""
+    return f"regexp_matches({col}, {_lit(NINE_RUN_RE)})"
 
 
 def _digits(col: str) -> str:
@@ -159,9 +184,9 @@ def scrub_expr(name: str) -> str | None:
     if m:
         return f"CASE WHEN {_license_bad(int(m.group(1)))} THEN NULL ELSE {name} END"
     if name in CREDENTIAL_COLUMNS:
-        return f"CASE WHEN {has_token(name)} THEN NULL ELSE {name} END"
+        return f"CASE WHEN {credential_bad(name)} THEN NULL ELSE {name} END"
     if name in free_text_columns(PROVIDER):
-        return redact_expr(name)
+        return redact_expr(name, name)
     return None
 
 
@@ -172,7 +197,7 @@ def scrub_select(stream: Stream, source_table: str) -> str | None:
         repl = [f"{e} AS {c.name}" for c in stream.columns if (e := scrub_expr(c.name)) is not None]
         return (f"SELECT * EXCLUDE ({LIC9}) REPLACE ({', '.join(repl)}) "
                 f"FROM (SELECT *, {_lic9_list()} AS {LIC9} FROM {source_table})")
-    repl = [f"{redact_expr(n)} AS {n}" for n in free_text_columns(stream)]
+    repl = [f"{redact_expr(n, n)} AS {n}" for n in free_text_columns(stream)]
     if not repl:
         return None
     return f"SELECT * REPLACE ({', '.join(repl)}) FROM {source_table}"
@@ -185,14 +210,16 @@ def privacy_checks() -> list[tuple[str, str]]:
         checks.append((f"{c} is populated", f"{c} IS NOT NULL"))
     for i in range(1, 16):
         checks.append((f"license_number_{i} is a possible SSN or tax id", _license_bad(i)))
-    for c in CREDENTIAL_COLUMNS + tuple(free_text_columns(PROVIDER)):
-        checks.append((f"{c} holds a tax-id token", has_token(c)))
+    for c in CREDENTIAL_COLUMNS:
+        checks.append((f"{c} holds nine digits", credential_bad(c)))
+    for c in free_text_columns(PROVIDER):
+        checks.append((f"{c} holds a tax-id token", has_token(c, c)))
     return checks
 
 
 def stream_privacy_checks(stream: Stream) -> list[tuple[str, str]]:
     """Checks for a supplemental stream (rule 4), same shape as ``privacy_checks``."""
-    return [(f"{stream.name}.{n} holds a tax-id token", has_token(n)) for n in free_text_columns(stream)]
+    return [(f"{stream.name}.{n} holds a tax-id token", has_token(n, n)) for n in free_text_columns(stream)]
 
 
 def _run(con, table: str, checks: list[tuple[str, str]], batch: int = 60, extra: str = "") -> list[str]:
