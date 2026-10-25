@@ -5,6 +5,7 @@ DB       ?= data/nppes.duckdb
 WORK     ?= data/work
 OUT      ?= export
 RELEASES ?= releases
+PPEF_SOURCE ?= data/ppef    # one directory per quarter of Medicare PPEF extracts (docs/MAINTAINING.md)
 # DuckDB resource limits. Unset = DuckDB's defaults (all cores, 80% of RAM). Set e.g. THREADS=8 MEMORY=24GB.
 THREADS  ?=
 MEMORY   ?=
@@ -17,7 +18,7 @@ VERIFY_ALL ?=
 MONTHLY_FILES ?=
 MONTHLY_FLAG = $(if $(MONTHLY_FILES),--monthly-files)
 
-.PHONY: install test discover probe download check-sources load validate verify export status monthly backfill-fingerprints
+.PHONY: install test discover probe download check-sources load validate verify export package status monthly backfill-fingerprints ppef-download ppef-load ppef-sources
 
 install:
 	uv sync
@@ -46,11 +47,28 @@ load:
 validate:
 	uv run nppes-over-time validate --db $(DB)
 
+# Medicare PPEF quarters (optional): load every quarter directory in $(PPEF_SOURCE) not yet in the warehouse, then
+# record file sizes and sha256s in releases/ppef_sources.csv (fill in the urls before exporting).
+ppef-load:
+	uv run nppes-over-time ppef-load --source $(PPEF_SOURCE) --db $(DB) --work $(WORK) $(RES)
+
+ppef-sources:
+	uv run nppes-over-time ppef-sources --db $(DB) --releases $(RELEASES)
+
+# Fetch every PPEF file releases/ppef_sources.csv records into $(PPEF_SOURCE)/<quarter>/, sha256-checked.
+ppef-download:
+	uv run nppes-over-time ppef-download --dest $(PPEF_SOURCE) --releases $(RELEASES)
+
 verify:
 	uv run nppes-over-time verify --db $(DB) --source $(SOURCE) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)
 
 export:
 	uv run nppes-over-time export --db $(DB) --out $(OUT) --csv --releases $(RELEASES) $(MONTHLY_FLAG) $(RES)
+
+# Turn the export into a Zenodo deposit (docs/MAINTAINING.md, "Publish on Zenodo").
+DEPOSIT ?= deposit
+package:
+	uv run nppes-over-time package --out $(OUT) --dest $(DEPOSIT)
 
 status:
 	uv run nppes-over-time status --db $(DB)

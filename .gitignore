@@ -1,6 +1,7 @@
 # data never belongs in git: raw CMS zips, the DuckDB warehouse, exports, scratch
 /data/
 /export/
+/deposit/
 /work/
 *.duckdb
 *.duckdb.wal

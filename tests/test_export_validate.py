@@ -28,7 +28,7 @@ def test_cli_round_trip(source, tmp_path):
     assert main(["export", "--db", str(db), "--out", str(out), "--csv"]) == 0
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["snapshots"] == 2 and manifest["distinct_npis"] == 2
-    assert manifest["row_counts"] == {"provider": 3, "provider_taxonomy": 3, "provider_other_identifier": 2,
+    assert manifest["row_counts"] == {"provider": 3, "provider_taxonomy": 3,
                                       "practice_location": 0, "other_name": 0, "endpoint": 0}
     con = duckdb.connect()
     tax = con.execute(f"SELECT npi, effective_date, slot, taxonomy_code FROM read_parquet('{out}/parquet/provider_taxonomy/*/*.parquet') ORDER BY 1,2,3").fetchall()
@@ -52,9 +52,8 @@ def test_reexport_removes_stale_partitions_and_keeps_sparse_slots(source, tmp_pa
     out = tmp_path / "export"
     export_all(db, out)
     con = duckdb.connect()
-    # a slot populated only in license_state / issuer is kept
+    # a slot populated only in license_state is kept
     assert con.execute(f"SELECT list(license_state ORDER BY effective_date) FROM read_parquet('{out}/parquet/provider_taxonomy/*/*.parquet')").fetchone() == (["CO", "TX"],)
-    assert con.execute(f"SELECT count(*) FROM read_parquet('{out}/parquet/provider_other_identifier/*/*.parquet')").fetchone() == (2,)
     # rebuild with only the 2020 snapshot, re-export to the same dir: the 2019 partition must vanish
     shutil.rmtree(tmp_path / "work", ignore_errors=True)
     (source / "NPPES_Data_Dissemination_20190101.zip").unlink()
@@ -223,7 +222,7 @@ def test_monthly_files_one_per_snapshot(source, tmp_path):
     # wide, in CMS column order, one value of snapshot_id per file
     cols = [r[0] for r in con.execute(f"DESCRIBE SELECT * FROM '{d}/provider_2020-01.parquet'").fetchall()]
     assert cols[:5] == ["snapshot_id", "as_of_date", "npi", "effective_date", "entity_type"]
-    assert "taxonomy_code_15" in cols and "other_id_issuer_50" in cols and len(cols) == 333
+    assert "taxonomy_code_15" in cols and "other_id_1" not in cols and len(cols) == 133
     # each month equals the as-of query over the version table
     for m, as_of in (("2020-01", "2020-01-12"), ("2020-02", "2020-02-09"), ("2020-03", "2020-03-08")):
         asof = con.execute(f"SELECT npi, version_hash FROM read_parquet('{out}/parquet/provider/*/*.parquet') "
