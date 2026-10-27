@@ -1,0 +1,48 @@
+[project]
+name = "healthcare-ledger"
+version = "0.1.0"
+description = "Dated histories of the U.S. health care provider registries (NPPES, Medicare PPEF, POS, AHRQ Compendium, HHS Medicaid spending) and the links between them, built with DuckDB."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+authors = [{ name = "Nathan Sutton", email = "nasutton@gmail.com" }]
+keywords = ["NPPES", "NPI", "CMS", "Medicare", "PECOS", "health systems", "healthcare", "providers", "SCD2", "panel data", "DuckDB"]
+dependencies = [
+    "duckdb>=1.5.6",
+    "openpyxl>=3.1.5",
+    "pyarrow>=26.0.0",
+]
+
+[project.scripts]
+healthcare-ledger = "healthcare_ledger.cli:main"
+
+[project.urls]
+Repository = "https://github.com/nathansutton/healthcare-ledger"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pandas>=2.2",
+    "pytest-xdist>=3.8.0",
+]
+research = [
+    "differences>=0.3.0",
+    "ipykernel>=7.4.0",
+    "jupyterlab>=4.6.4",
+    "matplotlib>=3.11.2",
+    "nbconvert>=7.17.2",
+    "nbformat>=5.11.1",
+    "pandas>=3.0.6",
+    "pyfixest>=0.60.0",
+    "xlrd>=2.0.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/healthcare_ledger"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

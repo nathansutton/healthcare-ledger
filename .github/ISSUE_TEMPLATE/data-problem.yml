@@ -1,0 +1,61 @@
+name: Data problem
+description: A value, version or snapshot in a published release looks wrong
+title: "[data] "
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for checking. Please do not paste tax ids or SSNs here; if you found one in the data, say so and give the NPI, column and snapshot only.
+  - type: input
+    id: release
+    attributes:
+      label: Release id
+      description: From `manifest.json`, `README.md` or `CITATION.cff` in the directory you downloaded, e.g. `e1-20261011-3fa9c2d1`.
+      placeholder: e1-20261011-3fa9c2d1
+    validations:
+      required: true
+  - type: input
+    id: npi
+    attributes:
+      label: NPI
+      description: The provider affected, if the problem concerns one or a few providers.
+      placeholder: "1144225327"
+  - type: input
+    id: snapshot
+    attributes:
+      label: Snapshot date
+      description: The as-of date (from `snapshots.csv`) or `effective_date` where you see the problem.
+      placeholder: 2026-10-11
+  - type: dropdown
+    id: table
+    attributes:
+      label: Table
+      options:
+        - provider
+        - provider_taxonomy
+        - provider_other_identifier
+        - practice_location
+        - other_name
+        - endpoint
+        - snapshots.csv / data_dictionary.csv / manifest
+        - not sure
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: What the CMS file, the NPPES registry or another source says.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What you got
+      description: The rows or values in the release, and the query you ran if you have one.
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: How you read the data
+      description: DuckDB, Python, R, Stata, something else, and the version.

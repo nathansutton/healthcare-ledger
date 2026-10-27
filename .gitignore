@@ -1,0 +1,35 @@
+# data never belongs in git: raw CMS zips, the DuckDB warehouse, exports, scratch
+/data/
+/export/
+/deposit/
+/work/
+/graph/
+*.duckdb
+*.duckdb.wal
+*.parquet
+*.csv.gz
+
+# python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# secrets, just in case
+.env
+*.env
+.kata.local.toml
+
+# private: planning notes and local tool config
+docs/designs/
+plans/
+.kata.toml
+
+# notebook scratch
+.ipynb_checkpoints/
+
+# Claude Code scratch
+.claude/

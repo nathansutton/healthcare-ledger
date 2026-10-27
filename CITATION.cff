@@ -1,0 +1,56 @@
+cff-version: 1.2.0
+message: "If you use this software or the data it produces, please cite it, and cite CMS NPPES and the other registries you use as the underlying sources."
+type: software
+title: "healthcare-ledger: dated histories of the U.S. health care provider registries and the links between them"
+version: 0.1.0
+date-released: 2026-10-13
+license: Apache-2.0
+repository-code: https://github.com/nathansutton/healthcare-ledger
+authors:
+  - family-names: Sutton
+    given-names: Nathan
+    email: nasutton@gmail.com
+keywords:
+  - NPPES
+  - NPI
+  - CMS
+  - Medicare
+  - PECOS
+  - Provider of Services
+  - health systems
+  - Medicaid
+  - healthcare providers
+  - panel data
+  - slowly changing dimension
+  - DuckDB
+references:
+  - type: data
+    title: "NPPES Data Dissemination"
+    authors:
+      - name: "Centers for Medicare & Medicaid Services"
+    url: https://download.cms.gov/nppes/NPI_Files.html
+  - type: data
+    title: "NPI/NPPES Cumulative Collection (preliminary)"
+    authors:
+      - name: "National Bureau of Economic Research"
+    url: https://www.nber.org/research/data/npinppes-cumulative-collection-preliminary
+  - type: data
+    title: "Medicare Fee-For-Service Public Provider Enrollment"
+    authors:
+      - name: "Centers for Medicare & Medicaid Services"
+    url: https://data.cms.gov/provider-characteristics/medicare-provider-supplier-enrollment/medicare-fee-for-service-public-provider-enrollment
+  - type: data
+    title: "Provider of Services File"
+    authors:
+      - name: "Centers for Medicare & Medicaid Services"
+    url: https://data.cms.gov/provider-characteristics/hospitals-and-other-facilities/provider-of-services-file-quality-improvement-and-evaluation-system
+  - type: data
+    title: "Compendium of U.S. Health Systems"
+    authors:
+      - name: "Agency for Healthcare Research and Quality"
+    url: https://www.ahrq.gov/chsp/data-resources/compendium.html
+  - type: data
+    title: "Medicaid Provider Spending"
+    authors:
+      - name: "U.S. Department of Health and Human Services"
+    url: https://opendata.hhs.gov/datasets/medicaid-provider-spending

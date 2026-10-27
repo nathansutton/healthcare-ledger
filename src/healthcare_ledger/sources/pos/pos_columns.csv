@@ -1,0 +1,780 @@
+stream,name,cms_header,kind,hash_optional,first_quarter,last_quarter,files,description
+qies,prvdr_ctgry_sbtyp_cd,PRVDR_CTGRY_SBTYP_CD,text,,2011-Q4,2026-Q3,39,Provider Category Subtype Code
+qies,prvdr_ctgry_cd,PRVDR_CTGRY_CD,text,,2011-Q4,2026-Q3,39,Provider Category Code
+qies,chow_cnt,CHOW_CNT,number,,2011-Q4,2026-Q3,39,CHOW Count
+qies,chow_dt,CHOW_DT,date,,2011-Q4,2026-Q3,39,CHOW Date
+qies,city_name,CITY_NAME,text,,2011-Q4,2026-Q3,39,Address: City
+qies,acptbl_poc_sw,ACPTBL_POC_SW,text,,2011-Q4,2026-Q3,39,Compliance: Acceptable POC
+qies,cmplnc_stus_cd,CMPLNC_STUS_CD,text,,2011-Q4,2026-Q3,39,Compliance: Status
+qies,ssa_cnty_cd,SSA_CNTY_CD,text,,2011-Q4,2026-Q3,39,SSA County Code
+qies,cross_ref_provider_number,CROSS_REF_PROVIDER_NUMBER,text,,2011-Q4,2026-Q3,39,Cross Ref Provider Number
+qies,crtfctn_dt,CRTFCTN_DT,date,,2011-Q4,2026-Q3,39,Certification Date
+qies,elgblty_sw,ELGBLTY_SW,text,,2011-Q4,2026-Q3,39,Eligibility Indicator
+qies,fac_name,FAC_NAME,text,,2011-Q4,2026-Q3,39,Facility Name
+qies,intrmdry_carr_cd,INTRMDRY_CARR_CD,text,,2011-Q4,2026-Q3,39,Medicare Administrative Contractor (MAC) or
+qies,mdcd_vndr_num,MDCD_VNDR_NUM,text,,2011-Q4,2026-Q3,39,Medicaid Vendor Number
+qies,orgnl_prtcptn_dt,ORGNL_PRTCPTN_DT,date,,2011-Q4,2026-Q3,39,Original Participation Date
+qies,chow_prior_dt,CHOW_PRIOR_DT,date,,2011-Q4,2026-Q3,39,Prior CHOW Date
+qies,intrmdry_carr_prior_cd,INTRMDRY_CARR_PRIOR_CD,text,,2011-Q4,2026-Q3,39,Prior CHOW Date
+qies,rec_stus_cd,REC_STUS_CD,text,yes,2011-Q4,2012-Q4,2,Record Status Code
+qies,rgn_cd,RGN_CD,text,,2011-Q4,2026-Q3,39,Region Code
+qies,skltn_rec_sw,SKLTN_REC_SW,text,,2011-Q4,2026-Q3,39,Skeleton Record Indicator
+qies,state_cd,STATE_CD,text,,2011-Q4,2026-Q3,39,State Abbreviation
+qies,ssa_state_cd,SSA_STATE_CD,text,,2011-Q4,2026-Q3,39,SSA State Code
+qies,state_rgn_cd,STATE_RGN_CD,text,,2011-Q4,2026-Q3,39,State Region Code
+qies,st_adr,ST_ADR,text,,2011-Q4,2026-Q3,39,Address: Street
+qies,phne_num,PHNE_NUM,text,,2011-Q4,2026-Q3,39,Telephone Number
+qies,pgm_trmntn_cd,PGM_TRMNTN_CD,text,,2011-Q4,2026-Q3,39,Termination Code
+qies,trmntn_exprtn_dt,TRMNTN_EXPRTN_DT,date,,2011-Q4,2026-Q3,39,Termination or Expiration Date
+qies,srvy_prpse_cd,SRVY_PRPSE_CD,text,yes,2011-Q4,2012-Q4,2,Type of Action
+qies,gnrl_cntl_type_cd,GNRL_CNTL_TYPE_CD,text,,2011-Q4,2026-Q3,39,Ownership Type Code
+qies,zip_cd,ZIP_CD,text,,2011-Q4,2026-Q3,39,Address: ZIP Code
+qies,fips_state_cd,FIPS_STATE_CD,text,,2011-Q4,2026-Q3,39,FIPS State Code
+qies,fips_cnty_cd,FIPS_CNTY_CD,text,,2011-Q4,2026-Q3,39,FIPS County Code
+qies,cbsa_urbn_rrl_ind,CBSA_URBN_RRL_IND,text,,2011-Q4,2026-Q3,39,CBSA Urban Rural Indicator
+qies,acrdtn_efctv_dt,ACRDTN_EFCTV_DT,date,,2011-Q4,2026-Q3,39,Accreditation Effective Date
+qies,acrdtn_exprtn_dt,ACRDTN_EXPRTN_DT,date,,2011-Q4,2026-Q3,39,Accreditation Expiration Date
+qies,acrdtn_type_cd,ACRDTN_TYPE_CD,text,,2011-Q4,2026-Q3,39,Accreditation Expiration Date
+qies,actvty_profnl_cntrct_cnt,ACTVTY_PROFNL_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Qualified Activities Professional -
+qies,actvty_profnl_fltm_cnt,ACTVTY_PROFNL_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Qualified Activities Professional -
+qies,actvty_profnl_prtm_cnt,ACTVTY_PROFNL_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Qualified Activities Professional -
+qies,actvty_stf_othr_cntrct_cnt,ACTVTY_STF_OTHR_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Activities - Contract
+qies,actvty_stf_othr_fltm_cnt,ACTVTY_STF_OTHR_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Activities - Full-Time
+qies,actvty_stf_othr_prtm_cnt,ACTVTY_STF_OTHR_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Activities - Part-Time
+qies,acute_resp_care_cd,ACUTE_RESP_CARE_CD,text,,2011-Q4,2026-Q3,39,Short Term Inpatient Acute/Respite Care Code
+qies,profnl_admin_cntrct_cnt,PROFNL_ADMIN_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Administrative Staff - Contract
+qies,profnl_admin_fltm_cnt,PROFNL_ADMIN_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Administrative Staff - Full-Time
+qies,profnl_admin_prtm_cnt,PROFNL_ADMIN_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Administrative Staff - Part-Time
+qies,admsn_suspnsn_dt,ADMSN_SUSPNSN_DT,date,yes,2011-Q4,2012-Q4,2,Admission Suspension Date
+qies,admsn_suspnsn_prior_dt,ADMSN_SUSPNSN_PRIOR_DT,date,yes,2011-Q4,2012-Q4,2,Admission Suspension Prior Date
+qies,hha_trng_pgm_cd,HHA_TRNG_PGM_CD,text,yes,2011-Q4,2012-Q4,2,Aide Training / Competency Programs
+qies,mr_bed_cnt,MR_BED_CNT,number,yes,2011-Q4,2012-Q4,2,Beds - ICF / MR
+qies,mdcr_snf_bed_cnt,MDCR_SNF_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Medicare SNF
+qies,mdcd_snf_bed_cnt,MDCD_SNF_BED_CNT,number,yes,2011-Q4,2012-Q4,2,Beds - Nursing Facility
+qies,mdcr_mdcd_snf_bed_cnt,MDCR_MDCD_SNF_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Medicare/Medicaid SNF
+qies,crtfd_bed_cnt,CRTFD_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Certified
+qies,bed_cnt,BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Total
+qies,brnch_oprtn_sw,BRNCH_OPRTN_SW,text,,2011-Q4,2026-Q3,39,Branch Operation Indicator
+qies,brnch_cnt,BRNCH_CNT,number,,2011-Q4,2026-Q3,39,Branch Count
+qies,clia_id_number_1,CLIA_ID_NUMBER_1,text,,2011-Q4,2026-Q3,39,CLIA ID Number 1
+qies,clia_id_number_2,CLIA_ID_NUMBER_2,text,,2011-Q4,2026-Q3,39,CLIA ID Number 2
+qies,clia_id_number_3,CLIA_ID_NUMBER_3,text,,2011-Q4,2026-Q3,39,CLIA ID Number 3
+qies,clia_id_number_4,CLIA_ID_NUMBER_4,text,,2011-Q4,2026-Q3,39,CLIA ID Number 4
+qies,clia_id_number_5,CLIA_ID_NUMBER_5,text,,2011-Q4,2026-Q3,39,CLIA ID Number 5
+qies,nrs_aide_cntrct_cnt,NRS_AIDE_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Certified Nurse Aide - Contract
+qies,nrs_aide_fltm_cnt,NRS_AIDE_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Certified Nurse Aide - Full-Time
+qies,nrs_aide_prtm_cnt,NRS_AIDE_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Certified Nurse Aide - Part-Time
+qies,crna_cnt,CRNA_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: CRNA
+qies,chow_sw,CHOW_SW,text,,2011-Q4,2026-Q3,39,CHOW Indicator
+qies,rn_24_hr_wvr_sw,RN_24_HR_WVR_SW,text,,2011-Q4,2026-Q3,39,Compliance: 24-Hour RN Waiver Indicator
+qies,rn_7_day_wvr_sw,RN_7_DAY_WVR_SW,text,,2011-Q4,2026-Q3,39,Compliance: 7-Day RN Waiver Indicator
+qies,bed_per_room_wvr_sw,BED_PER_ROOM_WVR_SW,text,,2011-Q4,2026-Q3,39,Compliance: Beds Per Room Waiver Indicator
+qies,lsc_wvr_sw,LSC_WVR_SW,text,,2011-Q4,2026-Q3,39,Compliance: LSC Waiver Indicator
+qies,room_size_wvr_sw,ROOM_SIZE_WVR_SW,text,,2011-Q4,2026-Q3,39,Compliance: Patient Room Size Waiver Indicator
+qies,scope_of_srvc_wvr_sw,SCOPE_OF_SRVC_WVR_SW,text,yes,2011-Q4,2013-Q4,3,Compliance: Scope of Service Waiver
+qies,tchncl_prsnel_wvr_sw,TCHNCL_PRSNEL_WVR_SW,text,yes,2011-Q4,2013-Q4,3,Compliance: Technical Personnel Waiver
+qies,cnslr_emplee_cnt,CNSLR_EMPLEE_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Counselor - Employee
+qies,cnslr_vlntr_cnt,CNSLR_VLNTR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Counselor - Volunteer
+qies,srvy_ever_acrdtd_sw,SRVY_EVER_ACRDTD_SW,text,yes,2011-Q4,2012-Q4,2,Current Survey Ever Accredited
+qies,srvy_ever_nacrdtd_sw,SRVY_EVER_NACRDTD_SW,text,yes,2011-Q4,2012-Q4,2,Current Survey Ever Non-Accredited
+qies,srvy_ever_sb_sw,SRVY_EVER_SB_SW,text,yes,2011-Q4,2013-Q4,3,Current Survey Ever Swing Bed Indicator
+qies,asc_bgn_srvc_dt,ASC_BGN_SRVC_DT,date,,2011-Q4,2026-Q3,39,ASC Begin Service Date
+qies,vldtn_srvy_dt,VLDTN_SRVY_DT,date,yes,2011-Q4,2013-Q4,3,Validation Survey Date * indicated variables have notes
+qies,dntst_cntrct_cnt,DNTST_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Dentist - Contract
+qies,dntst_fltm_cnt,DNTST_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Dentist - Full-Time
+qies,dntst_prtm_cnt,DNTST_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Dentist - Part-Time
+qies,dietn_cnt,DIETN_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Dietitian
+qies,dietn_cntrct_cnt,DIETN_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Dietitian - Contract
+qies,dietn_fltm_cnt,DIETN_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Dietitian - Full-Time
+qies,dietn_prtm_cnt,DIETN_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Dietitian - Part-Time
+qies,drct_care_prsnel_cnt,DRCT_CARE_PRSNEL_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Direct Care
+qies,drctr_qualn_cd,DRCTR_QUALN_CD,text,yes,2011-Q4,2013-Q4,3,Director Qualification Code
+qies,esrd_ntwrk_num,ESRD_NTWRK_NUM,text,,2011-Q4,2026-Q3,39,ESRD Network Number
+qies,exprmt_rsrch_cndctd_sw,EXPRMT_RSRCH_CNDCTD_SW,text,,2011-Q4,2026-Q3,39,Experimental Research Conducted Indicator
+qies,fqhc_approved_rhc_provider_num,FQHC_APPROVED_RHC_PROVIDER_NUM,text,,2011-Q4,2026-Q3,39,FQHC Approved RHC Provider Num
+qies,fax_phne_num,FAX_PHNE_NUM,text,,2011-Q4,2026-Q3,39,Fax Phone Number
+qies,fed_pgm_sprt_sw,FED_PGM_SPRT_SW,text,yes,2011-Q4,2012-Q4,2,Federal Program Support
+qies,fed_fundd_fqhc_sw,FED_FUNDD_FQHC_SW,text,,2011-Q4,2026-Q3,39,FQHC Federally Funded Indicator
+qies,fy_end_mo_day_cd,FY_END_MO_DAY_CD,text,,2011-Q4,2026-Q3,39,Fiscal Year End Date (MMDD)
+qies,food_srvc_cntrct_cnt,FOOD_SRVC_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Food Service Worker - Contract
+qies,food_srvc_fltm_cnt,FOOD_SRVC_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Food Service Worker - Full-Time
+qies,food_srvc_prtm_cnt,FOOD_SRVC_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Food Service Worker - Part-Time
+qies,fqhc_aprvd_rhc_sw,FQHC_APRVD_RHC_SW,text,,2011-Q4,2026-Q3,39,Part of RHC Indicator
+qies,hha_qlfyd_opt_spch_sw,HHA_QLFYD_OPT_SPCH_SW,text,,2011-Q4,2026-Q3,39,HHA Qualified For OPT Indicator
+qies,hh_aide_cnt,HH_AIDE_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Home Health Aide
+qies,hh_aide_vlntr_cnt,HH_AIDE_VLNTR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Aide - Volunteer
+qies,hmmkr_emplee_cnt,HMMKR_EMPLEE_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Homemaker - Employee
+qies,hmmkr_vlntr_cnt,HMMKR_VLNTR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Homemaker - Volunteer
+qies,mdcr_hospc_sw,MDCR_HOSPC_SW,text,,2011-Q4,2026-Q3,39,Hospice Indicator
+qies,hosp_bsd_sw,HOSP_BSD_SW,text,,2011-Q4,2026-Q3,39,Hospital Based Indicator
+qies,hsekpng_cntrct_cnt,HSEKPNG_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Housekeeping - Contract
+qies,hsekpng_fltm_cnt,HSEKPNG_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Housekeeping - Full-Time
+qies,hsekpng_prtm_cnt,HSEKPNG_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Housekeeping - Part-Time
+qies,ltc_cross_ref_provider_number,LTC_CROSS_REF_PROVIDER_NUMBER,text,,2011-Q4,2026-Q3,39,LTC Cross Ref Provider Number
+qies,lpn_lvn_cnt,LPN_LVN_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: LPN/LVN - Employee
+qies,lpn_lvn_cntrct_cnt,LPN_LVN_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: LPN/LVN - Contract
+qies,lpn_lvn_fltm_cnt,LPN_LVN_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: LPN/LVN - Full-Time
+qies,lpn_lvn_prtm_cnt,LPN_LVN_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: LPN/LVN - Part-Time
+qies,lpn_lvn_vlntr_cnt,LPN_LVN_VLNTR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: LPN/LVN - Volunteer
+qies,agrmt_bgn_dt,AGRMT_BGN_DT,date,yes,2011-Q4,2012-Q4,2,LTC Agreement Beginning Date
+qies,agrmt_end_dt,AGRMT_END_DT,date,yes,2011-Q4,2012-Q4,2,LTC Agreement Ending Date
+qies,agrmt_extnsn_dt,AGRMT_EXTNSN_DT,date,yes,2011-Q4,2012-Q4,2,LTC Agreement Extension Date
+qies,medicare_hospice_provider_num,MEDICARE_HOSPICE_PROVIDER_NUM,text,,2011-Q4,2026-Q3,39,Medicare Hospice Provider Num
+qies,medicare_medicaid_prvdr_number,MEDICARE_MEDICAID_PRVDR_NUMBER,text,,2011-Q4,2026-Q3,39,Medicare Medicaid Prvdr Number
+qies,mdcl_drctr_cntrct_cnt,MDCL_DRCTR_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Medical Director - Contract
+qies,mdcl_drctr_fltm_cnt,MDCL_DRCTR_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Medical Director - Full-Time
+qies,mdcl_drctr_prtm_cnt,MDCL_DRCTR_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Medical Director - Part-Time
+qies,mdcl_schl_afltn_cd,MDCL_SCHL_AFLTN_CD,text,,2011-Q4,2026-Q3,39,Medical School Affiliation Code
+qies,mdcl_scl_workr_cnt,MDCL_SCL_WORKR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Medical Social Worker - Employee
+qies,mdcl_scl_workr_vlntr_cnt,MDCL_SCL_WORKR_VLNTR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Medical Social Worker - Volunteer
+qies,mdcl_tchnlgst_cnt,MDCL_TCHNLGST_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Medical Technologist
+qies,mdcd_mdcr_prtcptg_prvdr_sw,MDCD_MDCR_PRTCPTG_PRVDR_SW,text,,2011-Q4,2026-Q3,39,Medical School Affiliation Code
+qies,mdctn_aide_cntrct_cnt,MDCTN_AIDE_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Medical Director - Part-Time
+qies,mdctn_aide_fltm_cnt,MDCTN_AIDE_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Medical Director - Part-Time
+qies,mdctn_aide_prtm_cnt,MDCTN_AIDE_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Medical Director - Part-Time
+qies,meet_1861_sw,MEET_1861_SW,text,,2011-Q4,2026-Q3,39,Necessary Provider Lost Designation Date
+qies,mentl_hlth_srvc_cntrct_cnt,MENTL_HLTH_SRVC_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Mental Health Services - Contract
+qies,mentl_hlth_srvc_fltm_cnt,MENTL_HLTH_SRVC_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Mental Health Services - Full-Time
+qies,mentl_hlth_srvc_prtm_cnt,MENTL_HLTH_SRVC_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Mental Health Services - Part-Time
+qies,mlt_fac_org_name,MLT_FAC_ORG_NAME,text,,2011-Q4,2026-Q3,39,Multiple Facility Organization Name
+qies,mlt_ownd_fac_org_sw,MLT_OWND_FAC_ORG_SW,text,,2011-Q4,2026-Q3,39,Multiple Facility Organization Owned Indicator
+qies,nuclr_mdcn_tchncn_cnt,NUCLR_MDCN_TCHNCN_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Nuclear Medicine Technician
+qies,shift_4_tue_ptnt_cnt,SHIFT_4_TUE_PTNT_CNT,number,yes,2011-Q4,2012-Q4,2,
+qies,nat_cntrct_cnt,NAT_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Nurse Aide in Training - Contract
+qies,nat_fltm_cnt,NAT_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Nurse Aide in Training - Full-Time
+qies,nat_prtm_cnt,NAT_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Nurse Aide in Training - Part-Time
+qies,nrs_prctnr_cnt,NRS_PRCTNR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Nurse Practitioner
+qies,nrs_adminv_cntrct_cnt,NRS_ADMINV_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Nurse With Administrative Duties -
+qies,nrs_adminv_fltm_cnt,NRS_ADMINV_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Nurse With Administrative Duties -
+qies,nrs_adminv_prtm_cnt,NRS_ADMINV_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Nurse With Administrative Duties -
+qies,ocptnl_thrpst_cntrct_cnt,OCPTNL_THRPST_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: OT - Arrangement
+qies,ocptnl_thrpst_fltm_cnt,OCPTNL_THRPST_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: OT - Full-Time
+qies,ocptnl_thrpst_prtm_cnt,OCPTNL_THRPST_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: OT - Part-Time
+qies,ocptnl_thrpst_cnt,OCPTNL_THRPST_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: OT - Total
+qies,ot_aide_cntrct_cnt,OT_AIDE_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: OT Aide - Contract
+qies,ot_aide_fltm_cnt,OT_AIDE_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: OT Aide - Full-Time
+qies,ot_aide_prtm_cnt,OT_AIDE_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: OT Aide - Part-Time
+qies,ot_astnt_aide_cntrct_cnt,OT_ASTNT_AIDE_CNTRCT_CNT,number,yes,2011-Q4,2012-Q4,2,Occupational Therapy Assistant - Contract
+qies,ot_astnt_aide_fltm_cnt,OT_ASTNT_AIDE_FLTM_CNT,number,yes,2011-Q4,2012-Q4,2,Occupational Therapy Assistant - Full-Time
+qies,ot_astnt_aide_prtm_cnt,OT_ASTNT_AIDE_PRTM_CNT,number,yes,2011-Q4,2012-Q4,2,Occupational Therapy Assistant - Part-Time
+qies,oprtg_room_cnt,OPRTG_ROOM_CNT,number,,2011-Q4,2026-Q3,39,Operating Room Count
+qies,orgnz_fmly_mbr_grp_sw,ORGNZ_FMLY_MBR_GRP_SW,text,,2011-Q4,2026-Q3,39,Organized Family Group Indicator
+qies,orgnz_rsdnt_grp_sw,ORGNZ_RSDNT_GRP_SW,text,,2011-Q4,2026-Q3,39,Organized Resident Group Indicator
+qies,orthtc_prsthtc_srvc_cd,ORTHTC_PRSTHTC_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Orthotic/Prosthetic Service Code
+qies,stf_othr_cntrct_cnt,STF_OTHR_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Staff - Contract
+qies,stf_othr_fltm_cnt,STF_OTHR_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Staff - Full-Time
+qies,stf_othr_prtm_cnt,STF_OTHR_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Staff - Part-Time
+qies,prsnel_othr_cnt,PRSNEL_OTHR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Personnel
+qies,physn_othr_cntrct_cnt,PHYSN_OTHR_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Physician - Contract
+qies,physn_othr_fltm_cnt,PHYSN_OTHR_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Physician - Full-Time
+qies,physn_othr_prtm_cnt,PHYSN_OTHR_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Physician - Part-Time
+qies,scl_srvc_othr_stf_cntrct_cnt,SCL_SRVC_OTHR_STF_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Social Services - Contract
+qies,scl_srvc_othr_stf_fltm_cnt,SCL_SRVC_OTHR_STF_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Social Services - Full-Time
+qies,scl_srvc_othr_stf_prtm_cnt,SCL_SRVC_OTHR_STF_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other Social Services - Part-Time
+qies,parent_provider_number,PARENT_PROVIDER_NUMBER,text,,2011-Q4,2026-Q3,39,Parent Provider Number
+qies,mdcr_prtcptn_op_pt_spch_sw,MDCR_PRTCPTN_OP_PT_SPCH_SW,text,,2011-Q4,2026-Q3,39,Participation Medicare OPT/SP Indicator
+qies,phrmcst_cntrct_cnt,PHRMCST_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Pharmacist - Contract
+qies,phrmcst_fltm_cnt,PHRMCST_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Pharmacist - Full-Time
+qies,phrmcst_prtm_cnt,PHRMCST_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Pharmacist - Part-Time
+qies,phys_thrpst_arngmt_cnt,PHYS_THRPST_ARNGMT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: PT - Arrangement
+qies,phys_thrpst_cnt,PHYS_THRPST_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: PT
+qies,phys_thrpst_cntrct_cnt,PHYS_THRPST_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physical Therapist - Contract
+qies,phys_thrpst_fltm_cnt,PHYS_THRPST_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physical Therapist - Full-Time
+qies,phys_thrpst_prtm_cnt,PHYS_THRPST_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physical Therapist - Part-Time
+qies,phys_thrpst_stf_cnt,PHYS_THRPST_STF_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: PT
+qies,pt_aide_cntrct_cnt,PT_AIDE_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: PT Aide - Contract
+qies,pt_aide_fltm_cnt,PT_AIDE_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: PT Aide - Full-Time
+qies,pt_aide_prtm_cnt,PT_AIDE_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: PT Aide - Part-Time
+qies,pt_astnt_cntrct_cnt,PT_ASTNT_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: PT Assistant - Contract
+qies,pt_astnt_fltm_cnt,PT_ASTNT_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: PT Assistant - Full-Time
+qies,pt_astnt_prtm_cnt,PT_ASTNT_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: PT Assistant - Part-Time
+qies,physn_astnt_cnt,PHYSN_ASTNT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physician Assistant
+qies,physn_ext_cntrct_cnt,PHYSN_EXT_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physician Extender - Contract
+qies,physn_ext_fltm_cnt,PHYSN_EXT_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physician Extender - Full-Time
+qies,physn_ext_prtm_cnt,PHYSN_EXT_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physician Extender - Part-Time
+qies,physn_ext_srvc_ofsite_rsdnt_sw,PHYSN_EXT_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Physician Extender Off-Site Residents
+qies,physn_ext_srvc_onst_nrsdnt_sw,PHYSN_EXT_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Physician Extender Off-Site Residents
+qies,physn_ext_srvc_onst_rsdnt_sw,PHYSN_EXT_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Physician Extender On-Site Residents
+qies,physn_cnt,PHYSN_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physician - Employee
+qies,rsdnt_physn_cnt,RSDNT_PHYSN_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physician Resident
+qies,physn_vlntr_cnt,PHYSN_VLNTR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Physician - Volunteer
+qies,pdtrst_cntrct_cnt,PDTRST_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Podiatrist - Contract
+qies,pdtrst_fltm_cnt,PDTRST_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Podiatrist - Full-Time
+qies,pdtrst_prtm_cnt,PDTRST_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Podiatrist - Part-Time
+qies,agrmt_end_prior_dt,AGRMT_END_PRIOR_DT,date,yes,2011-Q4,2012-Q4,2,Prior LTC Agreement Ending Date
+qies,agrmt_extnsn_prior_dt,AGRMT_EXTNSN_PRIOR_DT,date,yes,2011-Q4,2012-Q4,2,Prior LTC Agreement Extension Date
+qies,rscnd_suspnsn_prior_dt,RSCND_SUSPNSN_PRIOR_DT,date,yes,2011-Q4,2012-Q4,2,Prior Rescind Suspension Date
+qies,pgm_prtcptn_cd,PGM_PRTCPTN_CD,text,,2011-Q4,2026-Q3,39,Program Participation Code
+qies,prvdr_bsd_fac_sw,PRVDR_BSD_FAC_SW,text,,2011-Q4,2026-Q3,39,Provider Based Facility Indicator
+qies,psych_unit_bed_cnt,PSYCH_UNIT_BED_CNT,number,,2011-Q4,2026-Q3,39,Psychiatric Unit Bed Count
+qies,psych_unit_efctv_dt,PSYCH_UNIT_EFCTV_DT,date,,2011-Q4,2026-Q3,39,Psychiatric Unit Effective Date
+qies,psych_unit_sw,PSYCH_UNIT_SW,text,,2011-Q4,2026-Q3,39,Psychiatric Unit Indicator
+qies,psych_unit_trmntn_cd,PSYCH_UNIT_TRMNTN_CD,text,,2011-Q4,2026-Q3,39,Psychiatric Unit Termination Code
+qies,psych_unit_trmntn_dt,PSYCH_UNIT_TRMNTN_DT,date,,2011-Q4,2026-Q3,39,Psychiatric Unit Termination Date
+qies,psychlgst_cnt,PSYCHLGST_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Psychologist
+qies,rdlgy_tchncn_cnt,RDLGY_TCHNCN_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Radiology Technician
+qies,ovrrd_bed_cnt_sw,OVRRD_BED_CNT_SW,text,,2011-Q4,2026-Q3,39,Bed Count Override Indicator
+qies,ovrrd_stfg_sw,OVRRD_STFG_SW,text,,2011-Q4,2026-Q3,39,Staff Count Override Indicator
+qies,ovrrd_nrs_bed_sw,OVRRD_NRS_BED_SW,text,yes,2011-Q4,2013-Q4,3,Nurse to Bed Ratio Override Indicator
+qies,rn_cntrct_cnt,RN_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: RN - Contract
+qies,rn_fltm_cnt,RN_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: RN - Full-Time
+qies,rn_prtm_cnt,RN_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: RN - Part-Time
+qies,rn_cnt,RN_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: RN
+qies,rn_vlntr_cnt,RN_VLNTR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: RN - Volunteer
+qies,reg_phrmcst_cnt,REG_PHRMCST_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Registered Pharmacist
+qies,rehab_unit_bed_cnt,REHAB_UNIT_BED_CNT,number,,2011-Q4,2026-Q3,39,Rehabilitation Unit Bed Count
+qies,rehab_unit_efctv_dt,REHAB_UNIT_EFCTV_DT,date,,2011-Q4,2026-Q3,39,Rehabilitation Unit Effective Date
+qies,rehab_unit_sw,REHAB_UNIT_SW,text,,2011-Q4,2026-Q3,39,Rehabilitation Unit Indicator
+qies,rehab_unit_trmntn_cd,REHAB_UNIT_TRMNTN_CD,text,,2011-Q4,2026-Q3,39,Rehabilitation Unit Termination Code
+qies,rehab_unit_trmntn_dt,REHAB_UNIT_TRMNTN_DT,date,,2011-Q4,2026-Q3,39,Rehabilitation Unit Termination Date
+qies,related_provider_number,RELATED_PROVIDER_NUMBER,text,,2011-Q4,2026-Q3,39,Related Provider Number
+qies,rscnd_suspnsn_dt,RSCND_SUSPNSN_DT,date,yes,2011-Q4,2012-Q4,2,Rescind Suspension Date
+qies,rsdnt_pgm_ada_aprvd_sw,RSDNT_PGM_ADA_APRVD_SW,text,yes,2011-Q4,2012-Q4,2,Resident Program Approved by ADA
+qies,rsdnt_pgm_ama_aprvd_sw,RSDNT_PGM_AMA_APRVD_SW,text,yes,2011-Q4,2012-Q4,2,Resident Program Approved by AMA
+qies,rsdnt_pgm_aoa_aprvd_sw,RSDNT_PGM_AOA_APRVD_SW,text,yes,2011-Q4,2012-Q4,2,Resident Program Approved by AOA
+qies,rsdnt_pgm_othr_aprvd_sw,RSDNT_PGM_OTHR_APRVD_SW,text,yes,2011-Q4,2012-Q4,2,Resident Program Approved by Other
+qies,inhltn_thrpst_cnt,INHLTN_THRPST_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Respiratory Therapist
+qies,rn_drctr_cntrct_cnt,RN_DRCTR_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: RN Director of Nursing - Contract
+qies,rn_drctr_fltm_cnt,RN_DRCTR_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: RN Director of Nursing - Full-Time
+qies,rn_drctr_prtm_cnt,RN_DRCTR_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: RN Director of Nursing - Part-Time
+qies,actvty_ofsite_rsdnt_sw,ACTVTY_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Qualified Activities
+qies,actvty_onst_nrsdnt_sw,ACTVTY_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Qualified Activities
+qies,actvty_onst_rsdnt_sw,ACTVTY_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Qualified Activities
+qies,aplnc_equip_srvc_cd,APLNC_EQUIP_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Appliance and Equipment Code
+qies,blood_srvc_ofsite_rsdnt_sw,BLOOD_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Related Provider Number
+qies,blood_srvc_onst_nrsdnt_sw,BLOOD_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Related Provider Number
+qies,blood_srvc_onst_rsdnt_sw,BLOOD_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Blood Administration On-Site Residents
+qies,cl_srvc_ofsite_rsdnt_sw,CL_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Blood Administration On-Site Residents
+qies,cl_srvc_onst_nrsdnt_sw,CL_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Blood Administration On-Site Residents
+qies,cl_srvc_onst_rsdnt_sw,CL_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Blood Administration On-Site Residents
+qies,cnslng_srvc_cd,CNSLNG_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Counseling Code
+qies,dntl_srvc_onst_nrsdnt_sw,DNTL_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dental On-Site Nonresidents Indicator
+qies,dntl_srvc_ofsite_rsdnt_sw,DNTL_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dental Off-Site Residents Indicator
+qies,dntl_srvc_onst_rsdnt_sw,DNTL_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dental On-Site Residents Indicator
+qies,dtry_onst_nrsdnt_sw,DTRY_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dietary On-Site Nonresidents Indicator
+qies,dtry_ofsite_rsdnt_sw,DTRY_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dietary Off-Site Residents Indicator
+qies,dtry_onst_rsdnt_sw,DTRY_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dietary On-Site Residents Indicator
+qies,ekg_srvc_cd,EKG_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: EKG
+qies,hh_aide_srvc_cd,HH_AIDE_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Home Health Aide Code
+qies,hmmkr_srvc_cd,HMMKR_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Homemaker Code
+qies,hsekpng_srvc_onst_nrsdnt_sw,HSEKPNG_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dietary On-Site Residents Indicator
+qies,hsekpng_srvc_ofsite_rsdnt_sw,HSEKPNG_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dietary On-Site Residents Indicator
+qies,hsekpng_srvc_onst_rsdnt_sw,HSEKPNG_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dietary On-Site Residents Indicator
+qies,intrn_rsdnt_srvc_cd,INTRN_RSDNT_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Interns and Residents Code
+qies,lab_srvc_cd,LAB_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Laboratory Code
+qies,mdcl_scl_srvc_cd,MDCL_SCL_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Medical Social Code
+qies,mdcl_suply_srvc_cd,MDCL_SUPLY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Medical Supplies Code
+qies,mentl_hlth_ofsite_rsdnt_sw,MENTL_HLTH_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Dietary On-Site Residents Indicator
+qies,mentl_hlth_onst_rsdnt_sw,MENTL_HLTH_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Mental Health On-Site Nonresidents
+qies,mentl_hlth_onst_nrsdnt_sw,MENTL_HLTH_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Mental Health On-Site Nonresidents
+qies,nrsng_srvc_cd,NRSNG_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Nursing Code
+qies,nrsng_srvc_onst_nrsdnt_sw,NRSNG_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Nursing On-Site Nonresidents Indicator
+qies,nrsng_2_srvc_cd,NRSNG_2_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Nursing #2
+qies,nrsng_3_srvc_cd,NRSNG_3_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Nursing #3
+qies,nrsng_srvc_ofsite_rsdnt_sw,NRSNG_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Nursing Off-Site Residents Indicator
+qies,nrsng_srvc_onst_rsdnt_sw,NRSNG_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Nursing On-Site Residents Indicator
+qies,ntrtnl_gdnc_srvc_cd,NTRTNL_GDNC_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Nutritional Guidance Code
+qies,ot_srvc_onst_nrsdnt_sw,OT_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: OT On-Site Nonresidents Indicator
+qies,ot_2_srvc_cd,OT_2_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Occupational Therapy #2
+qies,ot_3_srvc_cd,OT_3_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Occupational Therapy #3
+qies,ot_srvc_ofsite_rsdnt_sw,OT_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: OT Off-Site Residents Indicator
+qies,ot_srvc_onst_rsdnt_sw,OT_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: OT On-Site Residents Indicator
+qies,orthtc_prsthtc_2_srvc_cd,ORTHTC_PRSTHTC_2_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Orthotic Prosthetic #2
+qies,orthtc_prsthtc_3_srvc_cd,ORTHTC_PRSTHTC_3_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Orthotic/Prosthetic #3
+qies,othr_srvc_cd,OTHR_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Other Code
+qies,actvty_othr_ofsite_rsdnt_sw,ACTVTY_OTHR_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Other Activities Staff -
+qies,actvty_othr_onst_nrsdnt_sw,ACTVTY_OTHR_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Other Activities Staff -
+qies,actvty_othr_onst_rsdnt_sw,ACTVTY_OTHR_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Other Activities Staff -
+qies,scl_srvc_othr_ofsite_rsdnt_sw,SCL_SRVC_OTHR_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Other Activities Staff -
+qies,scl_srvc_othr_onst_nrsdnt_sw,SCL_SRVC_OTHR_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Other Activities Staff -
+qies,scl_srvc_othr_onst_rsdnt_sw,SCL_SRVC_OTHR_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Other Activities Staff -
+qies,phrmcy_srvc_ofsite_rsdnt_sw,PHRMCY_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Pharmacy Off-Site Residents Indicator
+qies,phrmcy_srvc_onst_nrsdnt_sw,PHRMCY_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Pharmacy Off-Site Residents Indicator
+qies,phrmcy_srvc_onst_rsdnt_sw,PHRMCY_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Pharmacy On-Site Residents Indicator
+qies,pt_2_srvc_cd,PT_2_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Physical Therapy #2
+qies,pt_3_srvc_cd,PT_3_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Physical Therapy #3
+qies,pt_ofsite_rsdnt_sw,PT_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: PT Off-Site Residents Indicator
+qies,pt_onst_nrsdnt_sw,PT_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: PT On-Site Nonresidents Indicator
+qies,pt_onst_rsdnt_sw,PT_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: PT On-Site Residents Indicator
+qies,physn_srvc_cd,PHYSN_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Physician Code
+qies,physn_2_srvc_cd,PHYSN_2_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Physician #2
+qies,physn_3_srvc_cd,PHYSN_3_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Physician #3
+qies,physn_srvc_ofsite_rsdnt_sw,PHYSN_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Physician Off-Site Residents Indicator
+qies,physn_srvc_onst_nrsdnt_sw,PHYSN_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Physician Off-Site Residents Indicator
+qies,physn_srvc_onst_rsdnt_sw,PHYSN_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Physician On-Site Residents Indicator
+qies,pdtry_srvc_ofsite_rsdnt_sw,PDTRY_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Podiatry Off-Site Residents Indicator
+qies,pdtry_srvc_onst_nrsdnt_sw,PDTRY_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Podiatry Off-Site Residents Indicator
+qies,pdtry_srvc_onst_rsdnt_sw,PDTRY_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Podiatry On-Site Residents Indicator
+qies,psychlgcl_srvc_cd,PSYCHLGCL_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Psychological
+qies,psychlgcl_2_srvc_cd,PSYCHLGCL_2_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Psychological #2
+qies,psychlgcl_3_srvc_cd,PSYCHLGCL_3_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Psychological #3
+qies,rdlgy_srvc_cd,RDLGY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Ancillary Services: Radiology Code
+qies,rsprtry_care_2_srvc_cd,RSPRTRY_CARE_2_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Respiratory Care #2
+qies,rsprtry_care_3_srvc_cd,RSPRTRY_CARE_3_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Respiratory Care #3
+qies,shrt_term_ip_srvc_cd,SHRT_TERM_IP_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Short Term Inpatient Care Code
+qies,scl_2_srvc_cd,SCL_2_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Social #2
+qies,scl_3_srvc_cd,SCL_3_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Social #3
+qies,scl_work_srvc_ofsite_rsdnt_sw,SCL_WORK_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: PT On-Site Residents Indicator
+qies,scl_work_srvc_onst_nrsdnt_sw,SCL_WORK_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: PT On-Site Residents Indicator
+qies,scl_work_srvc_onst_rsdnt_sw,SCL_WORK_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: PT On-Site Residents Indicator
+qies,spch_pthlgy_2_srvc_cd,SPCH_PTHLGY_2_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Speech Pathology #2
+qies,spch_pthlgy_3_srvc_cd,SPCH_PTHLGY_3_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Service: Speech Pathology #3
+qies,spch_pthlgy_ofsite_rsdnt_sw,SPCH_PTHLGY_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Speech Pathology Off-Site Residents
+qies,spch_pthlgy_onst_nrsdnt_sw,SPCH_PTHLGY_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Speech Pathology On-Site Nonresidents
+qies,spch_pthlgy_onst_rsdnt_sw,SPCH_PTHLGY_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Speech Pathology On-Site Residents
+qies,spch_thrpy_srvc_cd,SPCH_THRPY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Speech Therapy Code
+qies,thrptc_rcrtnl_ofsite_rsdnt_sw,THRPTC_RCRTNL_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Qualified Activities
+qies,thrptc_rcrtnl_onst_nrsdnt_sw,THRPTC_RCRTNL_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Qualified Activities
+qies,thrptc_rcrtnl_onst_rsdnt_sw,THRPTC_RCRTNL_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Qualified Activities
+qies,vctnl_gdnc_srvc_cd,VCTNL_GDNC_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Vocational Guidance Code
+qies,vctnl_srvc_ofsite_rsdnt_sw,VCTNL_SRVC_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Qualified Activities
+qies,vctnl_srvc_onst_nrsdnt_sw,VCTNL_SRVC_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Therapeutic - Qualified Activities
+qies,vctnl_srvc_onst_rsdnt_sw,VCTNL_SRVC_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: Vocational On-Site Residents Indicator
+qies,dgnstc_xray_ofsite_rsdnt_sw,DGNSTC_XRAY_OFSITE_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: X-ray Off-Site Residents Indicator
+qies,dgnstc_xray_onst_nrsdnt_sw,DGNSTC_XRAY_ONST_NRSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: X-ray On-Site Nonresidents Indicator
+qies,dgnstc_xray_onst_rsdnt_sw,DGNSTC_XRAY_ONST_RSDNT_SW,text,,2011-Q4,2026-Q3,39,Services: X-ray On-Site Residents Indicator
+qies,open_hrt_srgry_srvc_cd,OPEN_HRT_SRGRY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Cardiac Thoracic Surgery Code
+qies,pstoprtv_rcvry_srvc_cd,PSTOPRTV_RCVRY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Postoperative Recovery Room Code
+qies,acute_rnl_dlys_srvc_cd,ACUTE_RNL_DLYS_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Acute Renal Dialysis Code
+qies,acute_rnl_dlys_srvc_desc,ACUTE_RNL_DLYS_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Acute Renal Dialysis Description
+qies,alchl_drug_srvc_desc,ALCHL_DRUG_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Alcohol and/or Drug Description
+qies,alchl_drug_srvc_cd,ALCHL_DRUG_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Alcohol and/or Drug Code
+qies,ansthsa_srvc_cd,ANSTHSA_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Anesthesia Code
+qies,ansthsa_srvc_desc,ANSTHSA_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Anesthesia Description
+qies,audlgy_srvc_cd,AUDLGY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Audiology Code
+qies,audlgy_srvc_desc,AUDLGY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Audiology Description
+qies,burn_care_unit_srvc_cd,BURN_CARE_UNIT_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Burn Care Unit Code
+qies,burn_care_unit_srvc_desc,BURN_CARE_UNIT_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Burn Care Unit Description
+qies,open_hrt_srgry_srvc_desc,OPEN_HRT_SRGRY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Cardiac Thoracic Surgery Descripti
+qies,crdc_cthtrztn_lab_srvc_cd,CRDC_CTHTRZTN_LAB_SRVC_CD,text,yes,2011-Q4,2012-Q4,2,Services Provided: Cardiac Catheterization L
+qies,crdc_cthtrztn_lab_srvc_desc,CRDC_CTHTRZTN_LAB_SRVC_DESC,text,yes,2011-Q4,2012-Q4,2,Services Provided: Cardiac Catheterization L
+qies,carf_ip_rehab_srvc_cd,CARF_IP_REHAB_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: CARF Inpatient Rehabilitation Code
+qies,carf_ip_rehab_srvc_desc,CARF_IP_REHAB_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: CARF Inpatient Rehabilitation Desc
+qies,chmthrpy_srvc_cd,CHMTHRPY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Chemotherapy Code
+qies,chmthrpy_srvc_desc,CHMTHRPY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Chemotherapy Description
+qies,chld_adlscnt_psych_srvc_desc,CHLD_ADLSCNT_PSYCH_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Psychiatric Child and/or Adolescen
+qies,chrprctic_srvc_cd,CHRPRCTIC_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Chiropractic Code
+qies,chrprctic_srvc_desc,CHRPRCTIC_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Chiropractic Description
+qies,cl_srvc_cd,CL_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Clinical Laboratory Code
+qies,cl_srvc_desc,CL_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Clinical Laboratory Description
+qies,ct_scan_srvc_cd,CT_SCAN_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: CT Scan Code
+qies,ct_scan_srvc_desc,CT_SCAN_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: CT Scan Description
+qies,dntl_srvc_cd,DNTL_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Dental Code
+qies,dntl_srvc_desc,DNTL_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Dental Description
+qies,dgnstc_rdlgy_srvc_desc,DGNSTC_RDLGY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Diagnostic Radiology Description
+qies,dtry_srvc_cd,DTRY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Dietary Code
+qies,dtry_srvc_desc,DTRY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Dietary Description
+qies,dctd_er_srvc_desc,DCTD_ER_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Emergency Department Description
+qies,dctd_er_srvc_cd,DCTD_ER_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Emergency Department Code
+qies,xtrcrprl_shck_lthtrptr_srvc_cd,XTRCRPRL_SHCK_LTHTRPTR_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: ESWL Code
+qies,xtrcrprl_shck_lthtrptr_srvcdsc,XTRCRPRL_SHCK_LTHTRPTR_SRVCDSC,text,yes,2011-Q4,2012-Q4,2,Services Provided: Extracorporeal Shock Wave
+qies,grntlgcl_spclty_srvc_cd,GRNTLGCL_SPCLTY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Gerontological Specialty Code
+qies,grntlgcl_spclty_srvc_desc,GRNTLGCL_SPCLTY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Gerontological Specialty Descripti
+qies,crnry_care_unit_srvc_cd,CRNRY_CARE_UNIT_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Coronary Care Unit Code
+qies,crnry_care_unit_srvc_desc,CRNRY_CARE_UNIT_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Coronary Care Unit Description
+qies,icu_srvc_cd,ICU_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Medical Surgical ICU Code
+qies,icu_srvc_desc,ICU_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Medical Surgical ICU Description
+qies,neontl_icu_srvc_cd,NEONTL_ICU_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Neonatal ICU Code
+qies,ped_icu_srvc_cd,PED_ICU_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Pediatric ICU Code
+qies,srgcl_icu_srvc_cd,SRGCL_ICU_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Surgical ICU Code
+qies,ip_srgcl_srvc_cd,IP_SRGCL_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Inpatient Surgical Code
+qies,ip_srgcl_srvc_desc,IP_SRGCL_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Inpatient Surgical Description
+qies,mgntc_rsnc_img_srvc_cd,MGNTC_RSNC_IMG_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: MRI Code
+qies,mgntc_rsnc_img_srvc_desc,MGNTC_RSNC_IMG_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: MRI Description
+qies,neontl_icu_srvc_desc,NEONTL_ICU_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Neonatal ICU Description
+qies,neontl_nrsry_srvc_cd,NEONTL_NRSRY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Neonatal Nursery Code
+qies,neontl_nrsry_srvc_desc,NEONTL_NRSRY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Neonatal Nursery Description
+qies,nrsrgcl_srvc_desc,NRSRGCL_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Neurosurgical Description
+qies,nrsrgcl_srvc_cd,NRSRGCL_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Neurosurgical Code
+qies,nuclr_mdcn_srvc_cd,NUCLR_MDCN_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Nuclear Medicine Code
+qies,nuclr_mdcn_srvc_desc,NUCLR_MDCN_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Nuclear Medicine Description
+qies,ob_srvc_cd,OB_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Obstetrics Code
+qies,ob_srvc_desc,OB_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Obstetrics Description
+qies,ot_srvc_cd,OT_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: OT Code
+qies,ot_srvc_desc,OT_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Ot Srvc Desc
+qies,oprtg_room_srvc_desc,OPRTG_ROOM_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: OR Description
+qies,oprtg_room_srvc_cd,OPRTG_ROOM_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: OR Code
+qies,opthlmc_srgy_srvc_cd,OPTHLMC_SRGY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Ophthalmic Surgery Code
+qies,opthlmc_srgy_srvc_desc,OPTHLMC_SRGY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Ophthalmic Surgery Description
+qies,optmtrc_srvc_cd,OPTMTRC_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Optometric Code
+qies,optmtrc_srvc_desc,OPTMTRC_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Optometric Description
+qies,orgn_trnsplnt_srvc_cd,ORGN_TRNSPLNT_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Non-Medicare Organ Transplant Code
+qies,orgn_trnsplnt_srvc_desc,ORGN_TRNSPLNT_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Non-Medicare Organ Transplant Desc
+qies,orthpdc_srgy_srvc_cd,ORTHPDC_SRGY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Orthopedic Surgery Code
+qies,orthpdc_srgy_srvc_desc,ORTHPDC_SRGY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Orthopedic Surgery Description
+qies,op_srvc_cd,OP_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Outpatient Code
+qies,op_srvc_desc,OP_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Outpatient Description
+qies,op_srgry_unit_srvc_cd,OP_SRGRY_UNIT_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Outpatient Surgery Code
+qies,op_srgry_unit_srvc_desc,OP_SRGRY_UNIT_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Outpatient Surgery Description
+qies,ped_srvc_cd,PED_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Pediatric Code
+qies,ped_srvc_desc,PED_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Pediatric Description
+qies,ped_icu_srvc_desc,PED_ICU_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Pediatric ICU Description
+qies,pet_scan_srvc_cd,PET_SCAN_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: PET Scan Code
+qies,pet_scan_srvc_desc,PET_SCAN_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: PET Scan Description
+qies,phrmcy_srvc_cd,PHRMCY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Pharmacy Code
+qies,phrmcy_srvc_desc,PHRMCY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Phrmcy Srvc Desc
+qies,pt_srvc_cd,PT_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: PT Code
+qies,pt_srvc_desc,PT_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Pt Srvc Desc
+qies,pstoprtv_rcvry_srvc_desc,PSTOPRTV_RCVRY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Postoperative Recovery Room Descri
+qies,psych_srvc_cd,PSYCH_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Adult Inpatient Psychiatric Code
+qies,psych_srvc_desc,PSYCH_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Adult Inpatient Psychiatric Descri
+qies,emer_psych_srvc_cd,EMER_PSYCH_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Emergency Psychiatric Code
+qies,frnsc_psych_srvc_cd,FRNSC_PSYCH_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Forensic Psychiatric Code
+qies,grtrc_psych_srvc_cd,GRTRC_PSYCH_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Geriatric Psychiatric Code
+qies,op_psych_srvc_cd,OP_PSYCH_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Outpatient Psychiatric Code
+qies,chld_adlscnt_psych_srvc_cd,CHLD_ADLSCNT_PSYCH_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Postoperative Recovery Room Code
+qies,emer_psych_srvc_desc,EMER_PSYCH_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Emergency Psychiatric Description
+qies,frnsc_psych_srvc_desc,FRNSC_PSYCH_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Forensic Psychiatric Description
+qies,grtrc_psych_srvc_desc,GRTRC_PSYCH_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Geriatric Psychiatric Description
+qies,op_psych_srvc_desc,OP_PSYCH_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Outpatient Psychiatric Description
+qies,dgnstc_rdlgy_srvc_cd,DGNSTC_RDLGY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Diagnostic Radiology Code
+qies,thrptc_rdlgy_srvc_cd,THRPTC_RDLGY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Therapeutic Radiology Code
+qies,thrptc_rdlgy_srvc_desc,THRPTC_RDLGY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Therapeutic Radiology Description
+qies,rcnstrctn_srgy_srvc_desc,RCNSTRCTN_SRGY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Reconstructive Surgery Description
+qies,rcnstrctn_srgy_srvc_cd,RCNSTRCTN_SRGY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Reconstructive Surgery Code
+qies,op_rehab_srvc_cd,OP_REHAB_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Outpatient Rehabilitation Code
+qies,op_rehab_srvc_desc,OP_REHAB_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Outpatient Rehabilitation Descript
+qies,rsprtry_care_srvc_cd,RSPRTRY_CARE_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Respiratory Care Code
+qies,rsprtry_care_srvc_desc,RSPRTRY_CARE_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Respiratory Care Description
+qies,scl_srvc_cd,SCL_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Social Code
+qies,scl_srvc_desc,SCL_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Social Description
+qies,spch_pthlgy_srvc_cd,SPCH_PTHLGY_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Speech Pathology Code
+qies,spch_pthlgy_srvc_desc,SPCH_PTHLGY_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Spch Pthlgy Srvc Desc
+qies,srgcl_icu_srvc_desc,SRGCL_ICU_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Surgical ICU Description
+qies,mdcr_trnsplnt_cntr_srvc_cd,MDCR_TRNSPLNT_CNTR_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Medical Surgical ICU Code
+qies,mdcr_trnsplnt_cntr_srvc_desc,MDCR_TRNSPLNT_CNTR_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Medicare Certified Transplant Cent
+qies,shck_trma_srvc_cd,SHCK_TRMA_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Designated Trauma Center Code
+qies,shck_trma_srvc_desc,SHCK_TRMA_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Designated Trauma Center Descripti
+qies,urgnt_care_srvc_cd,URGNT_CARE_SRVC_CD,text,,2011-Q4,2026-Q3,39,Services: Urgent Care Center Code
+qies,urgnt_care_srvc_desc,URGNT_CARE_SRVC_DESC,text,yes,2011-Q4,2013-Q4,3,Services: Urgent Care Center Description
+qies,scl_workr_cntrct_cnt,SCL_WORKR_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Social Worker - Contract
+qies,scl_workr_fltm_cnt,SCL_WORKR_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Social Worker - Full-Time
+qies,scl_workr_prtm_cnt,SCL_WORKR_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Social Worker - Part-Time
+qies,scl_workr_cnt,SCL_WORKR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Social Worker
+qies,rehab_bed_cnt,REHAB_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Special Care - Specialized Rehab
+qies,aids_bed_cnt,AIDS_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Special Care - AIDS
+qies,alzhmr_bed_cnt,ALZHMR_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Special Care - Alzheimers
+qies,dlys_bed_cnt,DLYS_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Special Care - Dialysis
+qies,dsbl_chldrn_bed_cnt,DSBL_CHLDRN_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Special Care - Disabled Children
+qies,head_trma_bed_cnt,HEAD_TRMA_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Special Care - Head Trauma
+qies,hospc_bed_cnt,HOSPC_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Special Care - Hospice
+qies,hntgtn_dease_bed_cnt,HNTGTN_DEASE_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Special Care - Huntingtons Disease
+qies,vntltr_bed_cnt,VNTLTR_BED_CNT,number,,2011-Q4,2026-Q3,39,Bed Count: Special Care - Ventilator
+qies,thorc_srgry_sw,THORC_SRGRY_SW,text,yes,2011-Q4,2012-Q4,2,Speciality: Thoracic Surgery
+qies,urlgy_srgry_sw,URLGY_SRGRY_SW,text,yes,2011-Q4,2012-Q4,2,Speciality: Urology
+qies,crdvsclr_srgry_sw,CRDVSCLR_SRGRY_SW,text,yes,2011-Q4,2012-Q4,2,Specialty: Cardiovascular
+qies,ft_srgry_sw,FT_SRGRY_SW,text,,2011-Q4,2026-Q3,39,Surgical Specialty: Podiatry Indicator
+qies,nrlgcl_srgry_sw,NRLGCL_SRGRY_SW,text,yes,2011-Q4,2012-Q4,2,Specialty: Neurological
+qies,ob_gyn_srgry_sw,OB_GYN_SRGRY_SW,text,,2011-Q4,2026-Q3,39,Surgical Specialty: Endoscopy Indicator
+qies,opthmlgy_srgry_sw,OPTHMLGY_SRGRY_SW,text,,2011-Q4,2026-Q3,39,Surgical Specialty: Ophthalmologic Indicator
+qies,oral_srgry_sw,ORAL_SRGRY_SW,text,yes,2011-Q4,2012-Q4,2,Specialty: Oral
+qies,orthpdc_srgry_sw,ORTHPDC_SRGRY_SW,text,,2011-Q4,2026-Q3,39,Surgical Specialty: Orthopedic Indicator
+qies,otlrynglgy_srgry_sw,OTLRYNGLGY_SRGRY_SW,text,,2011-Q4,2026-Q3,39,Surgical Specialty: Ear/Nose/Throat Indicator
+qies,plstc_srgry_sw,PLSTC_SRGRY_SW,text,,2011-Q4,2026-Q3,39,Surgical Specialty: Plastic / Reconstructive
+qies,gnrl_srgry_sw,GNRL_SRGRY_SW,text,yes,2011-Q4,2012-Q4,2,Specialty: Surgery
+qies,spch_pthlgst_cntrct_cnt,SPCH_PTHLGST_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Speech Pathologist - Contract
+qies,spch_pthlgst_fltm_cnt,SPCH_PTHLGST_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Speech Pathologist - Full-Time
+qies,spch_pthlgst_prtm_cnt,SPCH_PTHLGST_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Speech Pathologist - Part-Time
+qies,spch_pthlgst_audlgst_cnt,SPCH_PTHLGST_AUDLGST_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Speech Pathologist/Audiologist
+qies,spch_pthlgst_arngmt_cnt,SPCH_PTHLGST_ARNGMT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Speech Pathologist - Arrangement
+qies,spch_pthlgst_cnt,SPCH_PTHLGST_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Speech Pathologist - Total
+qies,hmdlys_stn_esrd_cnt,HMDLYS_STN_ESRD_CNT,number,yes,2011-Q4,2011-Q4,1,
+qies,dlys_stn_cnt,DLYS_STN_CNT,number,,2011-Q4,2026-Q3,39,Total Approved Stations
+qies,sbunit_oprtn_sw,SBUNIT_OPRTN_SW,text,,2011-Q4,2026-Q3,39,Subunit Operation Indicator
+qies,sbunit_sw,SBUNIT_SW,text,,2011-Q4,2026-Q3,39,Subunit Indicator
+qies,sbunit_cnt,SBUNIT_CNT,number,,2011-Q4,2026-Q3,39,Subunit Count
+qies,srty_bond_cd,SRTY_BOND_CD,text,yes,2011-Q4,2012-Q4,2,Surety Bond Indicator
+qies,sb_size_cd,SB_SIZE_CD,text,,2011-Q4,2026-Q3,39,Swing Bed Size Code
+qies,sb_sw,SB_SW,text,,2011-Q4,2026-Q3,39,Swing Bed Indicator
+qies,tchnlgst_2_yr_rdlgc_cnt,TCHNLGST_2_YR_RDLGC_CNT,number,,2011-Q4,2026-Q3,39,Technologist Count: 24-Month Radiologic School
+qies,tchnlgst_asct_dgr_cnt,TCHNLGST_ASCT_DGR_CNT,number,,2011-Q4,2026-Q3,39,Technologist Count: Associate Degree
+qies,tchnlgst_bs_ba_dgr_cnt,TCHNLGST_BS_BA_DGR_CNT,number,,2011-Q4,2026-Q3,39,Technologist Count: BS or BA Degree
+qies,thrptc_rcrtnl_cntrct_cnt,THRPTC_RCRTNL_CNTRCT_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Speech Pathologist - Part-Time
+qies,thrptc_rcrtnl_fltm_cnt,THRPTC_RCRTNL_FLTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Speech Pathologist - Part-Time
+qies,thrptc_rcrtnl_prtm_cnt,THRPTC_RCRTNL_PRTM_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Speech Pathologist - Part-Time
+qies,fed_pgm_name,FED_PGM_NAME,text,yes,2011-Q4,2012-Q4,2,Title of Federal Program
+qies,emplee_cnt,EMPLEE_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Total - Employee
+qies,gnrl_fac_type_cd,GNRL_FAC_TYPE_CD,text,,2011-Q4,2026-Q3,39,Category-specific Facility Type Code
+qies,npp_type_cd,NPP_TYPE_CD,text,,2011-Q4,2026-Q3,39,Non-Participating Hospital Type Code
+qies,vlntr_othr_cnt,VLNTR_OTHR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Other - Volunteer
+qies,vlntr_cnt,VLNTR_CNT,number,,2011-Q4,2026-Q3,39,Staff Count: Total - Volunteer
+qies,crtfctn_actn_type_cd,CRTFCTN_ACTN_TYPE_CD,text,yes,2013-Q4,2026-Q3,37,Type of Action Code
+qies,rsdnt_pgm_alpthc_sw,RSDNT_PGM_ALPTHC_SW,text,yes,2013-Q4,2026-Q3,37,Affiliated Resident Program: Allopathic
+qies,rsdnt_pgm_dntl_sw,RSDNT_PGM_DNTL_SW,text,yes,2013-Q4,2026-Q3,37,Affiliated Resident Program: Dental
+qies,rsdnt_pgm_ostpthc_sw,RSDNT_PGM_OSTPTHC_SW,text,yes,2013-Q4,2026-Q3,37,Affiliated Resident Program: Osteopathic
+qies,rsdnt_pgm_othr_sw,RSDNT_PGM_OTHR_SW,text,yes,2013-Q4,2026-Q3,37,Affiliated Resident Program: Other
+qies,freestndng_asc_sw,FREESTNDNG_ASC_SW,text,yes,2013-Q4,2026-Q3,37,ASC Free Standing Indicator
+qies,icfiid_bed_cnt,ICFIID_BED_CNT,number,yes,2013-Q4,2026-Q3,37,Bed Count: Certified - Total
+qies,mdcd_nf_bed_cnt,MDCD_NF_BED_CNT,number,yes,2013-Q4,2026-Q3,37,Bed Count: Medicaid NF
+qies,drctr_qualn_desc,DRCTR_QUALN_DESC,text,yes,2013-Q4,2013-Q4,1,Director Qualification Description
+qies,hh_aide_trng_pgm_cd,HH_AIDE_TRNG_PGM_CD,text,yes,2013-Q4,2026-Q3,37,Home Health Aide Training Program Code
+qies,crdc_cthrtztn_lab_srvc_cd,CRDC_CTHRTZTN_LAB_SRVC_CD,text,yes,2013-Q4,2026-Q3,37,Services: Cardiac Catheterization Lab Code
+qies,crdc_cthrtztn_lab_srvc_desc,CRDC_CTHRTZTN_LAB_SRVC_DESC,text,yes,2013-Q4,2013-Q4,1,Services: Cardiac Catheterization Lab Descri
+qies,xtrcrprl_shck_lthtrp_srvc_desc,XTRCRPRL_SHCK_LTHTRP_SRVC_DESC,text,yes,2013-Q4,2013-Q4,1,Services: ESWL Description
+qies,nrsng_srvc_emplee_sw,NRSNG_SRVC_EMPLEE_SW,text,yes,2013-Q4,2026-Q3,37,Services: Nursing - Employee Indicator
+qies,nrsng_srvc_cntrctr_sw,NRSNG_SRVC_CNTRCTR_SW,text,yes,2013-Q4,2026-Q3,37,Services: Nursing - Employee Indicator
+qies,nrsng_srvc_arngmt_sw,NRSNG_SRVC_ARNGMT_SW,text,yes,2013-Q4,2026-Q3,37,Services: Nursing - Under Arrangement Indicator
+qies,orthtc_prsthtc_emplee_sw,ORTHTC_PRSTHTC_EMPLEE_SW,text,yes,2013-Q4,2026-Q3,37,Services: Nursing - Under Arrangement Indicator
+qies,orthtc_prsthtc_cntrctr_sw,ORTHTC_PRSTHTC_CNTRCTR_SW,text,yes,2013-Q4,2026-Q3,37,Services: Orthotic / Prosthetic - Independent
+qies,orthtc_prsthtc_arngmt_sw,ORTHTC_PRSTHTC_ARNGMT_SW,text,yes,2013-Q4,2026-Q3,37,Services: Orthotic / Prosthetic - Independent
+qies,ot_emplee_sw,OT_EMPLEE_SW,text,yes,2013-Q4,2026-Q3,37,Services: OT - Employee Indicator
+qies,ot_cntrctr_sw,OT_CNTRCTR_SW,text,yes,2013-Q4,2026-Q3,37,Services: OT - Independent Contractor Indicator
+qies,ot_arngmt_sw,OT_ARNGMT_SW,text,yes,2013-Q4,2026-Q3,37,Services: OT - Under Arrangement Indicator
+qies,physn_emplee_sw,PHYSN_EMPLEE_SW,text,yes,2013-Q4,2026-Q3,37,Services: Physician - Employee Indicator
+qies,physn_cntrctr_sw,PHYSN_CNTRCTR_SW,text,yes,2013-Q4,2026-Q3,37,Services: Physician - Independent Contractor
+qies,physn_arngmt_sw,PHYSN_ARNGMT_SW,text,yes,2013-Q4,2026-Q3,37,Services: Physician - Independent Contractor
+qies,psychlgcl_emplee_sw,PSYCHLGCL_EMPLEE_SW,text,yes,2013-Q4,2026-Q3,37,Services: Psychological - Employee Indicator
+qies,psychlgcl_cntrctr_sw,PSYCHLGCL_CNTRCTR_SW,text,yes,2013-Q4,2026-Q3,37,Services: Psychological - Independent Contractor
+qies,psychlgcl_arngmt_sw,PSYCHLGCL_ARNGMT_SW,text,yes,2013-Q4,2026-Q3,37,Services: Psychological - Independent Contractor
+qies,pt_emplee_sw,PT_EMPLEE_SW,text,yes,2013-Q4,2026-Q3,37,Services: PT - Employee Indicator
+qies,pt_cntrctr_sw,PT_CNTRCTR_SW,text,yes,2013-Q4,2026-Q3,37,Services: PT - Independent Contractor Indicator
+qies,pt_arngmt_sw,PT_ARNGMT_SW,text,yes,2013-Q4,2026-Q3,37,Services: PT - Under Arrangement Indicator
+qies,rsprtry_care_emplee_sw,RSPRTRY_CARE_EMPLEE_SW,text,yes,2013-Q4,2026-Q3,37,Services: Respiratory Care - Employee Indicator
+qies,rsprtry_care_cntrctr_sw,RSPRTRY_CARE_CNTRCTR_SW,text,yes,2013-Q4,2026-Q3,37,Services: Respiratory Care - Employee Indicator
+qies,rsprtry_care_arngmt_sw,RSPRTRY_CARE_ARNGMT_SW,text,yes,2013-Q4,2026-Q3,37,Services: Respiratory Care - Under Arrangement
+qies,scl_emplee_sw,SCL_EMPLEE_SW,text,yes,2013-Q4,2026-Q3,37,Services: Social - Employee Indicator
+qies,scl_cntrctr_sw,SCL_CNTRCTR_SW,text,yes,2013-Q4,2026-Q3,37,Services: Social - Employee Indicator
+qies,scl_arngmt_sw,SCL_ARNGMT_SW,text,yes,2013-Q4,2026-Q3,37,Services: Social - Under Arrangement Indicator
+qies,spch_pthlgy_emplee_sw,SPCH_PTHLGY_EMPLEE_SW,text,yes,2013-Q4,2026-Q3,37,Services: Speech Pathology - Employee Indicator
+qies,spch_pthlgy_cntrctr_sw,SPCH_PTHLGY_CNTRCTR_SW,text,yes,2013-Q4,2026-Q3,37,Services: Speech Pathology - Employee Indicator
+qies,spch_pthlgy_arngmt_sw,SPCH_PTHLGY_ARNGMT_SW,text,yes,2013-Q4,2026-Q3,37,Services: Speech Pathology - Under Arrangement
+qies,ot_astnt_cntrct_cnt,OT_ASTNT_CNTRCT_CNT,number,yes,2013-Q4,2026-Q3,37,Staff Count: OT Assistant - Contract
+qies,ot_astnt_fltm_cnt,OT_ASTNT_FLTM_CNT,number,yes,2013-Q4,2026-Q3,37,Staff Count: OT Assistant - Full-Time
+qies,ot_astnt_prtm_cnt,OT_ASTNT_PRTM_CNT,number,yes,2013-Q4,2026-Q3,37,Staff Count: OT Assistant - Part-Time
+qies,cbsa_cd,CBSA_CD,text,yes,2014-Q4,2026-Q3,36,CBSA Code
+qies,tot_afltd_amblnc_srvc_cnt,TOT_AFLTD_AMBLNC_SRVC_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: Ambulance Services
+qies,tot_afltd_asc_cnt,TOT_AFLTD_ASC_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: ASC
+qies,tot_colctd_hosp_cnt,TOT_COLCTD_HOSP_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: Co-Located Hospital
+qies,tot_afltd_esrd_cnt,TOT_AFLTD_ESRD_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: ESRD
+qies,tot_afltd_fqhc_cnt,TOT_AFLTD_FQHC_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: FQHC
+qies,tot_afltd_hha_cnt,TOT_AFLTD_HHA_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: HHA
+qies,tot_afltd_hospc_cnt,TOT_AFLTD_HOSPC_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: Hospice
+qies,tot_afltd_opo_cnt,TOT_AFLTD_OPO_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: OPO
+qies,tot_afltd_prtf_cnt,TOT_AFLTD_PRTF_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: PRTF
+qies,tot_afltd_rhc_cnt,TOT_AFLTD_RHC_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: RHC
+qies,tot_afltd_snf_cnt,TOT_AFLTD_SNF_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: SNF
+qies,afltd_prvdr_cnt,AFLTD_PRVDR_CNT,number,yes,2014-Q4,2026-Q3,36,Affiliated Count: Total
+qies,rsdnt_pgm_pdtrc_sw,RSDNT_PGM_PDTRC_SW,text,yes,2014-Q4,2026-Q3,36,Affiliated Resident Program: Podiatric
+qies,cah_psych_dpu_sw,CAH_PSYCH_DPU_SW,text,yes,2014-Q4,2026-Q3,36,CAH Psychiatric DPU Indicator
+qies,cah_rehab_dpu_sw,CAH_REHAB_DPU_SW,text,yes,2014-Q4,2026-Q3,36,CAH Rehabilitation DPU Indicator
+qies,cah_sb_sw,CAH_SB_SW,text,yes,2014-Q4,2026-Q3,36,CAH Swing Bed Indicator
+qies,crdc_cthrtztn_prcdr_rooms_cnt,CRDC_CTHRTZTN_PRCDR_ROOMS_CNT,number,yes,2014-Q4,2026-Q3,36,Cardiac Catheterization Procedure Room Count
+qies,colctn_stus_sw,COLCTN_STUS_SW,text,yes,2014-Q4,2026-Q3,36,Co-Location Indicator
+qies,endscpy_prcdr_rooms_cnt,ENDSCPY_PRCDR_ROOMS_CNT,number,yes,2014-Q4,2026-Q3,36,Endoscopy Procedure Room Count
+qies,home_trng_sprt_only_srvc_sw,HOME_TRNG_SPRT_ONLY_SRVC_SW,text,yes,2014-Q4,2026-Q3,36,Fiscal Year End Date (MMDD)
+qies,incntr_nctrnl_srvc_sw,INCNTR_NCTRNL_SRVC_SW,text,yes,2014-Q4,2026-Q3,36,Hospital Based Indicator
+qies,tot_ofsite_cncr_hosp_cnt,TOT_OFSITE_CNCR_HOSP_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Cancer Hospital Satellites
+qies,tot_ofsite_chldrn_hosp_cnt,TOT_OFSITE_CHLDRN_HOSP_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Childrens Hospital Satellites
+qies,tot_ofsite_emer_dept_cnt,TOT_OFSITE_EMER_DEPT_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Emergency Departments
+qies,tot_ofsite_inptnt_lctn_cnt,TOT_OFSITE_INPTNT_LCTN_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Inpatient Remote Locations
+qies,tot_ofsite_ltc_hosp_cnt,TOT_OFSITE_LTC_HOSP_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: LTC Hospital Satellites
+qies,tot_ofsite_opthlmc_srgry_cnt,TOT_OFSITE_OPTHLMC_SRGRY_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Ophthalmic Surgery Units
+qies,tot_ofsite_othr_lctn_cnt,TOT_OFSITE_OTHR_LCTN_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Other Locations
+qies,tot_ofsite_psych_hosp_cnt,TOT_OFSITE_PSYCH_HOSP_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Psychiatric Hospitals
+qies,tot_ofsite_psych_unit_cnt,TOT_OFSITE_PSYCH_UNIT_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Psychiatric Units
+qies,tot_ofsite_rehab_hosp_cnt,TOT_OFSITE_REHAB_HOSP_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Rehabilitation Hospitals
+qies,tot_ofsite_rehab_unit_cnt,TOT_OFSITE_REHAB_UNIT_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Rehabilitation Units
+qies,tot_ofsite_urgnt_care_cntr_cnt,TOT_OFSITE_URGNT_CARE_CNTR_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Count: Urgent Care Centers
+qies,ofsite_lctn_cnt,OFSITE_LCTN_CNT,number,yes,2014-Q4,2026-Q3,36,Off-Site Location Count
+qies,prvnc_cd,PRVNC_CD,text,yes,2014-Q4,2026-Q3,36,Province Code
+qies,sp_home_trng_sprt_hd_sw,SP_HOME_TRNG_SPRT_HD_SW,text,yes,2014-Q4,2026-Q3,36,Services: Hemodialysis Home Training/Support
+qies,hmdlys_srvc_sw,HMDLYS_SRVC_SW,text,yes,2014-Q4,2026-Q3,36,Services: Hemodialysis Indicator
+qies,sp_home_trng_sprt_pd_sw,SP_HOME_TRNG_SPRT_PD_SW,text,yes,2014-Q4,2026-Q3,36,Services: Hemodialysis Indicator
+qies,prtnl_dlys_srvc_sw,PRTNL_DLYS_SRVC_SW,text,yes,2014-Q4,2026-Q3,36,Services: Peritoneal Dialysis Indicator
+qies,hh_aide_emplee_cnt,HH_AIDE_EMPLEE_CNT,number,yes,2014-Q4,2026-Q3,36,Staff Count: Aide - Employee
+qies,lab_tchncn_cnt,LAB_TCHNCN_CNT,number,yes,2014-Q4,2026-Q3,36,Staff Count: Lab Technician
+qies,lpn_cnt,LPN_CNT,number,yes,2014-Q4,2026-Q3,36,Staff Count: LPN
+qies,tchncl_stf_num,TCHNCL_STF_NUM,number,yes,2014-Q4,2026-Q3,36,Staff Count: Technical Staff
+qies,tchncn_cnt,TCHNCN_CNT,number,yes,2014-Q4,2026-Q3,36,Staff Count: Technician
+qies,dntl_srgry_sw,DNTL_SRGRY_SW,text,yes,2014-Q4,2026-Q3,36,Surgical Specialty: Dental Indicator
+qies,endscpy_srgry_sw,ENDSCPY_SRGRY_SW,text,yes,2014-Q4,2026-Q3,36,Surgical Specialty: Endoscopy Indicator
+qies,othr_srgry_sw,OTHR_SRGRY_SW,text,yes,2014-Q4,2026-Q3,36,Surgical Specialty: Other Indicator
+qies,pain_srgry_sw,PAIN_SRGRY_SW,text,yes,2014-Q4,2026-Q3,36,Surgical Specialty: Pain Indicator
+qies,ncry_prvdr_dsgntd_dt,NCRY_PRVDR_DSGNTD_DT,date,yes,2017-Q4,2026-Q3,33,Necessary Provider Designation Date
+qies,ncry_prvdr_dsgntd_as_sw,NCRY_PRVDR_DSGNTD_AS_SW,text,yes,2017-Q4,2026-Q3,33,Necessary Provider Indicator
+qies,ncry_prvdr_lost_dt,NCRY_PRVDR_LOST_DT,date,yes,2017-Q4,2026-Q3,33,Necessary Provider Lost Designation Date
+iqies,fac_name,fac_name,text,,2023-Q4,2026-Q3,12,Facility Name
+iqies,prvdr_sbtyp_id,prvdr_sbtyp_id,text,,2023-Q4,2026-Q3,12,Provider Subtype ID
+iqies,mdcd_vndr_num,mdcd_vndr_num,text,,2023-Q4,2026-Q3,12,Medicaid Vendor Number
+iqies,orgnl_prtcptn_dt,orgnl_prtcptn_dt,date,,2023-Q4,2026-Q3,12,Original Participation Date
+iqies,prvdr_type_id,prvdr_type_id,text,,2023-Q4,2026-Q3,12,Provider Type ID
+iqies,st_adr,st_adr,text,,2023-Q4,2026-Q3,12,Address: Street
+iqies,city_name,city_name,text,,2023-Q4,2026-Q3,12,Address: City
+iqies,ssa_cnty_cd,ssa_cnty_cd,text,,2023-Q4,2026-Q3,12,Social Security Administration County Code
+iqies,zip_cd,zip_cd,text,,2023-Q4,2026-Q3,12,ZIP Code
+iqies,phne_num,phne_num,text,,2023-Q4,2026-Q3,12,Telephone Number
+iqies,pgm_trmntn_cd,pgm_trmntn_cd,text,,2023-Q4,2026-Q3,12,Termination Code
+iqies,crtfctn_dt,crtfctn_dt,date,,2023-Q4,2026-Q3,12,Certification Date
+iqies,trmntn_exprtn_dt,trmntn_exprtn_dt,date,,2023-Q4,2026-Q3,12,Termination or Expiration Date
+iqies,state_cd,state_cd,text,,2023-Q4,2026-Q3,12,State Abbreviation
+iqies,ssa_state_cd,ssa_state_cd,text,,2023-Q4,2026-Q3,12,Social Security Administration State Code
+iqies,state_rgn_cd,state_rgn_cd,text,,2023-Q4,2026-Q3,12,State Region Code
+iqies,rgn_cd,rgn_cd,text,,2023-Q4,2026-Q3,12,Region Code
+iqies,fips_state_cd,fips_state_cd,text,,2023-Q4,2026-Q3,12,FIPS State Code
+iqies,fips_cnty_cd,fips_cnty_cd,text,,2023-Q4,2026-Q3,12,FIPS County Code
+iqies,cbsa_cd,cbsa_cd,text,,2023-Q4,2026-Q3,12,CBSA Code
+iqies,cbsa_urbn_rrl_ind,cbsa_urbn_rrl_ind,text,,2023-Q4,2026-Q3,12,CBSA (Core Based Statistical Area) Urban Rural Indicator
+iqies,acrdtn_type_cd,acrdtn_type_cd,text,,2023-Q4,2026-Q3,12,Accreditation Type Code
+iqies,intrmdry_carr_cd,intrmdry_carr_cd,text,,2023-Q4,2026-Q3,12,Intermediary or Carrier Code
+iqies,acptbl_poc_sw,acptbl_poc_sw,text,,2023-Q4,2026-Q3,12,Compliance: Acceptable Plan of Correction
+iqies,fy_end_mo_day_cd,fy_end_mo_day_cd,text,,2023-Q4,2026-Q3,12,Fiscal Year End Date (MM-DD)
+iqies,cmplnc_stus_cd,cmplnc_stus_cd,text,,2023-Q4,2026-Q3,12,Compliance Status Code
+iqies,crtfctn_actn_type_cd,crtfctn_actn_type_cd,text,,2023-Q4,2026-Q3,12,Type of Action Code
+iqies,chow_dt,chow_dt,date,,2023-Q4,2026-Q3,12,Change of Ownership Date
+iqies,gnrl_cntl_type_cd,gnrl_cntl_type_cd,text,yes,2023-Q4,2023-Q4,1,Ownership Type Code
+iqies,phrmcy_srvc_cd,phrmcy_srvc_cd,text,,2023-Q4,2026-Q3,12,Pharmacy Code
+iqies,hh_aide_srvc_cd,hh_aide_srvc_cd,text,,2023-Q4,2026-Q3,12,Home Health Aide Code
+iqies,lab_srvc_cd,lab_srvc_cd,text,,2023-Q4,2026-Q3,12,Laboratory Code
+iqies,lpn_lvn_cnt,lpn_lvn_cnt,number,,2023-Q4,2026-Q3,12,LPN/LVN - Employee Number
+iqies,mdcl_scl_srvc_cd,mdcl_scl_srvc_cd,text,,2023-Q4,2026-Q3,12,Medical Social Code
+iqies,othr_srvc_cd,othr_srvc_cd,text,,2023-Q4,2026-Q3,12,Other Code
+iqies,ot_srvc_cd,ot_srvc_cd,text,,2023-Q4,2026-Q3,12,OT Code
+iqies,nrsng_srvc_cd,nrsng_srvc_cd,text,,2023-Q4,2026-Q3,12,Nursing Code
+iqies,prsnel_othr_cnt,prsnel_othr_cnt,number,,2023-Q4,2026-Q3,12,Other Personnel Number
+iqies,pt_srvc_cd,pt_srvc_cd,text,,2023-Q4,2026-Q3,12,PT Code
+iqies,rn_cnt,rn_cnt,number,,2023-Q4,2026-Q3,12,RN Number
+iqies,asc_bgn_srvc_dt,asc_bgn_srvc_dt,date,,2023-Q4,2026-Q3,12,ASC Begin Service Date
+iqies,dntl_srgry_sw,dntl_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Dental Indicator
+iqies,endscpy_srgry_sw,endscpy_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Endoscopy Indicator
+iqies,ft_srgry_sw,ft_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Podiatry Indicator
+iqies,ob_gyn_srgry_sw,ob_gyn_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Obstetrics / Gynecology Indicator
+iqies,oprtg_room_cnt,oprtg_room_cnt,number,,2023-Q4,2026-Q3,12,Operating Room Count
+iqies,opthmlgy_srgry_sw,opthmlgy_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Ophthalmologic Indicator
+iqies,orthpdc_srgry_sw,orthpdc_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Orthopedic Indicator
+iqies,othr_srgry_sw,othr_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Other Indicator
+iqies,otlrynglgy_srgry_sw,otlrynglgy_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Ear/Nose/Throat Indicator
+iqies,pain_srgry_sw,pain_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Pain Indicator
+iqies,plstc_srgry_sw,plstc_srgry_sw,text,,2023-Q4,2026-Q3,12,Surgical Specialty: Plastic / Reconstructive
+iqies,rdlgy_srvc_cd,rdlgy_srvc_cd,text,,2023-Q4,2026-Q3,12,Radiology Code
+iqies,gnrl_fac_type_cd,gnrl_fac_type_cd,text,,2023-Q4,2026-Q3,12,Category-specific Facility Type Code
+iqies,aplnc_equip_srvc_cd,aplnc_equip_srvc_cd,text,,2023-Q4,2026-Q3,12,Appliance and Equipment Code
+iqies,brnch_cnt,brnch_cnt,number,,2023-Q4,2026-Q3,12,Branch Count
+iqies,brnch_oprtn_sw,brnch_oprtn_sw,text,,2023-Q4,2026-Q3,12,Branch Operation Indicator
+iqies,chow_sw,chow_sw,text,,2023-Q4,2026-Q3,12,Change of Ownership Indicator
+iqies,dietn_cnt,dietn_cnt,number,,2023-Q4,2026-Q3,12,Dietitian Number
+iqies,hh_aide_cnt,hh_aide_cnt,number,,2023-Q4,2026-Q3,12,Home Health Aide Number
+iqies,hh_aide_trng_pgm_cd,hh_aide_trng_pgm_cd,text,,2023-Q4,2026-Q3,12,Home Health Aide Training Program Code
+iqies,intrn_rsdnt_srvc_cd,intrn_rsdnt_srvc_cd,text,,2023-Q4,2026-Q3,12,Interns and Residents Code
+iqies,mdcr_hospc_sw,mdcr_hospc_sw,text,,2023-Q4,2026-Q3,12,Hospice Indicator
+iqies,medicare_hospice_provider_num,medicare_hospice_provider_num,text,,2023-Q4,2026-Q3,12,Medicare Hospice Provider Number
+iqies,ntrtnl_gdnc_srvc_cd,ntrtnl_gdnc_srvc_cd,text,,2023-Q4,2026-Q3,12,Nutritional Guidance Code
+iqies,ocptnl_thrpst_cnt,ocptnl_thrpst_cnt,number,,2023-Q4,2026-Q3,12,OT - Total
+iqies,pgm_prtcptn_cd,pgm_prtcptn_cd,text,,2023-Q4,2026-Q3,12,Program Participation Code
+iqies,phys_thrpst_stf_cnt,phys_thrpst_stf_cnt,number,,2023-Q4,2026-Q3,12,PT Number
+iqies,reg_phrmcst_cnt,reg_phrmcst_cnt,number,,2023-Q4,2026-Q3,12,Registered Pharmacist Number
+iqies,sbunit_cnt,sbunit_cnt,number,,2023-Q4,2026-Q3,12,Subunit Count Number
+iqies,sbunit_oprtn_sw,sbunit_oprtn_sw,text,,2023-Q4,2026-Q3,12,Subunit Operation Indicator
+iqies,sbunit_sw,sbunit_sw,text,,2023-Q4,2026-Q3,12,Subunit Indicator
+iqies,scl_workr_cnt,scl_workr_cnt,number,,2023-Q4,2026-Q3,12,Social Worker Number
+iqies,spch_pthlgst_audlgst_cnt,spch_pthlgst_audlgst_cnt,number,,2023-Q4,2026-Q3,12,Speech Pathologist/Audiologist Number
+iqies,spch_thrpy_srvc_cd,spch_thrpy_srvc_cd,text,,2023-Q4,2026-Q3,12,Speech Therapy Code
+iqies,vctnl_gdnc_srvc_cd,vctnl_gdnc_srvc_cd,text,,2023-Q4,2026-Q3,12,Vocational Guidance Code
+iqies,acute_resp_care_cd,acute_resp_care_cd,text,,2023-Q4,2026-Q3,12,Short Term Inpatient Acute/Respite Care Code
+iqies,cnslng_srvc_cd,cnslng_srvc_cd,text,,2023-Q4,2026-Q3,12,Counseling Code
+iqies,cnslr_emplee_cnt,cnslr_emplee_cnt,number,,2023-Q4,2026-Q3,12,Counselor - Employee Number
+iqies,cnslr_vlntr_cnt,cnslr_vlntr_cnt,number,,2023-Q4,2026-Q3,12,Counselor - Volunteer Number
+iqies,emplee_cnt,emplee_cnt,number,,2023-Q4,2026-Q3,12,Total - Employee Number
+iqies,hh_aide_emplee_cnt,hh_aide_emplee_cnt,number,,2023-Q4,2026-Q3,12,Aide - Employee Number
+iqies,hh_aide_vlntr_cnt,hh_aide_vlntr_cnt,number,,2023-Q4,2026-Q3,12,Aide - Volunteer Number
+iqies,hmmkr_emplee_cnt,hmmkr_emplee_cnt,number,,2023-Q4,2026-Q3,12,Homemaker - Employee Number
+iqies,hmmkr_srvc_cd,hmmkr_srvc_cd,text,,2023-Q4,2026-Q3,12,Homemaker Code
+iqies,hmmkr_vlntr_cnt,hmmkr_vlntr_cnt,number,,2023-Q4,2026-Q3,12,Homemaker - Volunteer Number
+iqies,lpn_lvn_vlntr_cnt,lpn_lvn_vlntr_cnt,number,,2023-Q4,2026-Q3,12,LPN/LVN - Volunteer Number
+iqies,mdcl_scl_workr_cnt,mdcl_scl_workr_cnt,number,,2023-Q4,2026-Q3,12,Medical Social Worker - Employee Number
+iqies,mdcl_scl_workr_vlntr_cnt,mdcl_scl_workr_vlntr_cnt,number,,2023-Q4,2026-Q3,12,Medical Social Worker - Volunteer Number
+iqies,mdcl_suply_srvc_cd,mdcl_suply_srvc_cd,text,,2023-Q4,2026-Q3,12,Medical Supplies Code
+iqies,physn_cnt,physn_cnt,number,,2023-Q4,2026-Q3,12,Physician - Employee Number
+iqies,physn_srvc_cd,physn_srvc_cd,text,,2023-Q4,2026-Q3,12,Physician Code
+iqies,physn_vlntr_cnt,physn_vlntr_cnt,number,,2023-Q4,2026-Q3,12,Physician - Volunteer Number
+iqies,rn_vlntr_cnt,rn_vlntr_cnt,number,,2023-Q4,2026-Q3,12,RN - Volunteer Number
+iqies,shrt_term_ip_srvc_cd,shrt_term_ip_srvc_cd,text,,2023-Q4,2026-Q3,12,Short Term Inpatient Care Code
+iqies,spch_pthlgy_srvc_cd,spch_pthlgy_srvc_cd,text,,2023-Q4,2026-Q3,12,Speech Pathology Code
+iqies,vlntr_cnt,vlntr_cnt,number,,2023-Q4,2026-Q3,12,Total - Volunteer Number
+iqies,vlntr_othr_cnt,vlntr_othr_cnt,number,,2023-Q4,2026-Q3,12,Other - Volunteer Number
+iqies,fed_crtfctn_stus_id,fed_crtfctn_stus_id,text,,2023-Q4,2026-Q3,12,Federal Certification Status ID
+iqies,fed_crtfctn_stus_name,fed_crtfctn_stus_name,text,,2023-Q4,2026-Q3,12,Federal Certification Status Name
+iqies,control_type,control_type,text,yes,2024-Q1,2026-Q3,11,Ownership Type
+iqies,hospice_type,hospice_type,text,yes,2024-Q2,2026-Q3,10,Hospice Type
+iqies,procedure_room_cnt,procedure_room_cnt,number,yes,2025-Q2,2026-Q3,6,Procedure Room Count
+iqies,aids_bed_cnt,aids_bed_cnt,number,yes,2025-Q3,2026-Q3,5,AIDS Bed Count
+iqies,alzhmr_bed_cnt,alzhmr_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Alzheimer Bed Count
+iqies,bed_cnt,bed_cnt,number,yes,2025-Q3,2026-Q3,5,Bed Count
+iqies,bed_per_room_wvr_sw,bed_per_room_wvr_sw,text,yes,2025-Q3,2026-Q3,5,Beds Per Room Waiver Indicator
+iqies,crtfd_bed_cnt,crtfd_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Certified Bed Count
+iqies,dlys_bed_cnt,dlys_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Dialysis Bed Count
+iqies,dsbl_chldrn_bed_cnt,dsbl_chldrn_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Disabled Children Bed Count
+iqies,elgblty_sw,elgblty_sw,text,yes,2025-Q3,2026-Q3,5,Eligibility Indicator
+iqies,exprmt_rsrch_cndctd_sw,exprmt_rsrch_cndctd_sw,text,yes,2025-Q3,2026-Q3,5,Research Conducted Indicator
+iqies,fax_phne_num,fax_phne_num,text,yes,2025-Q3,2026-Q3,5,Fax Phone Number
+iqies,head_trma_bed_cnt,head_trma_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Head Trauma Bed Count
+iqies,hntgtn_dease_bed_cnt,hntgtn_dease_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Huntington's Disease Bed Count
+iqies,hosp_bsd_sw,hosp_bsd_sw,text,yes,2025-Q3,2026-Q3,5,Hospital Based Indicator
+iqies,hospc_bed_cnt,hospc_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Hospice Bed Count
+iqies,intrmdry_carr_prior_cd,intrmdry_carr_prior_cd,text,yes,2025-Q3,2026-Q3,5,Intermediary or Carrier Code
+iqies,isccrc,isCCRC,text,yes,2025-Q3,2026-Q3,5,Continuing Care Retirement Center Indicator
+iqies,lsc_wvr_sw,lsc_wvr_sw,text,yes,2025-Q3,2026-Q3,5,LSC Waiver Indicator
+iqies,mdcr_mdcd_snf_bed_cnt,mdcr_mdcd_snf_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Medicare Medicaid SNF Bed Count
+iqies,mdcr_snf_bed_cnt,mdcr_snf_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Medicare SNF Bed Count
+iqies,mlt_fac_org_name,mlt_fac_org_name,text,yes,2025-Q3,2026-Q3,5,Multi-facility Nursing Home Organization Name
+iqies,mlt_ownd_fac_org_sw,mlt_ownd_fac_org_sw,text,yes,2025-Q3,2026-Q3,5,Multiple Facility Organization Owned Indicator
+iqies,orgnz_fmly_mbr_grp_sw,orgnz_fmly_mbr_grp_sw,text,yes,2025-Q3,2026-Q3,5,Organized Family Group Indicator
+iqies,orgnz_rsdnt_grp_sw,orgnz_rsdnt_grp_sw,text,yes,2025-Q3,2026-Q3,5,Organized Resident Group Indicator
+iqies,rehab_bed_cnt,rehab_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Specialized Rehab Bed Count
+iqies,room_size_wvr_sw,room_size_wvr_sw,text,yes,2025-Q3,2026-Q3,5,Patient Room Size Waiver Indicator
+iqies,vntltr_bed_cnt,vntltr_bed_cnt,number,yes,2025-Q3,2026-Q3,5,Ventilator Bed Count
+iqies,esrd_ntwrk_num,esrd_ntwrk_num,text,yes,2026-Q1,2026-Q3,3,End-Stage Renal Disease Network ID
+iqies,home_trng_sprt_only_srvc_sw,home_trng_sprt_only_srvc_sw,text,yes,2026-Q1,2026-Q3,3,Is Onsite Home Training Provided
+iqies,incntr_nctrnl_srvc_sw,incntr_nctrnl_srvc_sw,text,yes,2026-Q1,2026-Q3,3,Is New In-Center Nocturnal Hemodialysis
+iqies,sp_home_trng_sprt_hd_sw,sp_home_trng_sprt_hd_sw,text,yes,2026-Q1,2026-Q3,3,Is Current Home Hemodialysis
+iqies,hmdlys_srvc_sw,hmdlys_srvc_sw,text,yes,2026-Q1,2026-Q3,3,Is Current In-Center Hemodialysis
+iqies,sp_home_trng_sprt_pd_sw,sp_home_trng_sprt_pd_sw,text,yes,2026-Q1,2026-Q3,3,Is Current Home Peritoneal Dialysis
+iqies,prtnl_dlys_srvc_sw,prtnl_dlys_srvc_sw,text,yes,2026-Q1,2026-Q3,3,Is Current In-Center Peritoneal Dialysis
+iqies,lpn_cnt,lpn_cnt,number,yes,2026-Q1,2026-Q3,3,Number of Licensed Practical Nurse Staff
+iqies,tchncl_stf_num,tchncl_stf_num,number,yes,2026-Q1,2026-Q3,3,Number of Technical Staff
+iqies,tchncn_cnt,tchncn_cnt,number,yes,2026-Q1,2026-Q3,3,Number of Certified Patient Care Technician Staff
+iqies,dlys_stn_cnt,dlys_stn_cnt,number,yes,2026-Q1,2026-Q3,3,Number of Approved In-Center Dialysis Stations
+iqies,tchnlgst_2_yr_rdlgc_cnt,tchnlgst_2_yr_rdlgc_cnt,number,yes,2026-Q1,2026-Q3,3,Number of Graduates of 24-Month School of Radiologic Technology
+iqies,tchnlgst_asct_dgr_cnt,tchnlgst_asct_dgr_cnt,number,yes,2026-Q1,2026-Q3,3,Number of Associate Degrees in Radiologic Technology
+iqies,tchnlgst_bs_ba_dgr_cnt,tchnlgst_bs_ba_dgr_cnt,number,yes,2026-Q1,2026-Q3,3,Number of B.A./B.S. Degrees in Radiologic Technology
+iqies,mdcr_prtcptn_op_pt_spch_sw,mdcr_prtcptn_op_pt_spch_sw,text,yes,2026-Q1,2026-Q3,3,Currently Participating as OPT/SLP
+iqies,nrsng_srvc_emplee_sw,nrsng_srvc_emplee_sw,text,yes,2026-Q1,2026-Q3,3,Has Nurses On Staff
+iqies,nrsng_srvc_cntrctr_sw,nrsng_srvc_cntrctr_sw,text,yes,2026-Q1,2026-Q3,3,Has Nurses By Independent Contract
+iqies,nrsng_srvc_arngmt_sw,nrsng_srvc_arngmt_sw,text,yes,2026-Q1,2026-Q3,3,Has Nurses By Arrangement
+iqies,orthtc_prsthtc_emplee_sw,orthtc_prsthtc_emplee_sw,text,yes,2026-Q1,2026-Q3,3,Has Orthotic Services On Staff
+iqies,orthtc_prsthtc_cntrctr_sw,orthtc_prsthtc_cntrctr_sw,text,yes,2026-Q1,2026-Q3,3,Has Orthotic Services By Independent Contract
+iqies,orthtc_prsthtc_arngmt_sw,orthtc_prsthtc_arngmt_sw,text,yes,2026-Q1,2026-Q3,3,Has Orthotic Services By Arrangement
+iqies,ot_emplee_sw,ot_emplee_sw,text,yes,2026-Q1,2026-Q3,3,Has Occupational Therapists On Staff
+iqies,ot_cntrctr_sw,ot_cntrctr_sw,text,yes,2026-Q1,2026-Q3,3,Has Nurses By Independent Contract
+iqies,ot_arngmt_sw,ot_arngmt_sw,text,yes,2026-Q1,2026-Q3,3,Has Nurses By Arrangement
+iqies,physn_emplee_sw,physn_emplee_sw,text,yes,2026-Q1,2026-Q3,3,Has Physicians On Staff
+iqies,physn_cntrctr_sw,physn_cntrctr_sw,text,yes,2026-Q1,2026-Q3,3,Has Physicians By Independent Contract
+iqies,physn_arngmt_sw,physn_arngmt_sw,text,yes,2026-Q1,2026-Q3,3,Has Physicians By Arrangement
+iqies,psychlgcl_emplee_sw,psychlgcl_emplee_sw,text,yes,2026-Q1,2026-Q3,3,Has Psychologists On Staff
+iqies,psychlgcl_cntrctr_sw,psychlgcl_cntrctr_sw,text,yes,2026-Q1,2026-Q3,3,Has Psychologists By Independent Contract
+iqies,psychlgcl_arngmt_sw,psychlgcl_arngmt_sw,text,yes,2026-Q1,2026-Q3,3,Has Psychologists By Arrangement
+iqies,pt_emplee_sw,pt_emplee_sw,text,yes,2026-Q1,2026-Q3,3,Has Physical Therapists On Staff
+iqies,pt_cntrctr_sw,pt_cntrctr_sw,text,yes,2026-Q1,2026-Q3,3,Has Physical Therapists By Independent Contract
+iqies,pt_arngmt_sw,pt_arngmt_sw,text,yes,2026-Q1,2026-Q3,3,Has Physical Therapists By Arrangement
+iqies,rsprtry_care_emplee_sw,rsprtry_care_emplee_sw,text,yes,2026-Q1,2026-Q3,3,Has Respiratory Therapists On Staff
+iqies,rsprtry_care_cntrctr_sw,rsprtry_care_cntrctr_sw,text,yes,2026-Q1,2026-Q3,3,Has Respiratory Therapists By Independent Contract
+iqies,rsprtry_care_arngmt_sw,rsprtry_care_arngmt_sw,text,yes,2026-Q1,2026-Q3,3,Has Respiratory Therapists By Arrangement
+iqies,scl_emplee_sw,scl_emplee_sw,text,yes,2026-Q1,2026-Q3,3,Has Social Services On Staff
+iqies,scl_cntrctr_sw,scl_cntrctr_sw,text,yes,2026-Q1,2026-Q3,3,Has Social Services By Independent Contract
+iqies,scl_arngmt_sw,scl_arngmt_sw,text,yes,2026-Q1,2026-Q3,3,Has Social Services By Arrangement
+iqies,spch_pthlgy_emplee_sw,spch_pthlgy_emplee_sw,text,yes,2026-Q1,2026-Q3,3,Has Speech Language Pathologists On Staff
+iqies,spch_pthlgy_cntrctr_sw,spch_pthlgy_cntrctr_sw,text,yes,2026-Q1,2026-Q3,3,Has Speech Language Pathologists By Independent Contract
+iqies,spch_pthlgy_arngmt_sw,spch_pthlgy_arngmt_sw,text,yes,2026-Q1,2026-Q3,3,Has Speech Language Pathologists By Arrangement
+iqies,ocptnl_thrpst_cntrct_cnt,ocptnl_thrpst_cntrct_cnt,number,yes,2026-Q1,2026-Q3,3,Occupational Therapists By Arrangement
+iqies,ocptnl_thrpst_fltm_cnt,ocptnl_thrpst_fltm_cnt,number,yes,2026-Q1,2026-Q3,3,Occupational Therapists On Staff
+iqies,phys_thrpst_cnt,phys_thrpst_cnt,number,yes,2026-Q1,2026-Q3,3,Physical Therapist Count
+iqies,phys_thrpst_arngmt_cnt,phys_thrpst_arngmt_cnt,number,yes,2026-Q1,2026-Q3,3,Physical Therapists By Arrangement
+iqies,spch_pthlgst_cnt,spch_pthlgst_cnt,number,yes,2026-Q1,2026-Q3,3,Speech Pathologist Count
+iqies,spch_pthlgst_arngmt_cnt,spch_pthlgst_arngmt_cnt,number,yes,2026-Q1,2026-Q3,3,Speech Pathologists By Arrangement
+iqies,spch_pthlgst_fltm_cnt,spch_pthlgst_fltm_cnt,number,yes,2026-Q1,2026-Q3,3,Speech Pathologists On Staff
+iqies,icfiid_bed_cnt,icfiid_bed_cnt,number,yes,2026-Q1,2026-Q3,3,ICF/IID Beds
+iqies,prvdr_bsd_fac_sw,prvdr_bsd_fac_sw,text,yes,2026-Q1,2026-Q3,3,Is Distinct Part
+iqies,drct_care_prsnel_cnt,drct_care_prsnel_cnt,number,yes,2026-Q1,2026-Q3,3,Number of Direct Care Personnel
+iqies,fed_fundd_fqhc_sw,fed_fundd_fqhc_sw,text,yes,2026-Q3,2026-Q3,1,FQHC Federally Funded Indicator
+iqies,fqhc_aprvd_rhc_sw,fqhc_aprvd_rhc_sw,text,yes,2026-Q3,2026-Q3,1,Is Approved Medicare Rural Health Center
+iqies,nrs_prctnr_cnt,nrs_prctnr_cnt,number,yes,2026-Q3,2026-Q3,1,Nurse Practitioner Count
+iqies,physn_astnt_cnt,physn_astnt_cnt,number,yes,2026-Q3,2026-Q3,1,Physcian Assistant Count

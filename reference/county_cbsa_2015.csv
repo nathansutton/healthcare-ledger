@@ -1,0 +1,1900 @@
+county_fips,cbsa,cbsa_title,cbsa_type
+01001,33860,"Montgomery, AL",metro
+01003,19300,"Daphne-Fairhope-Foley, AL",metro
+01005,21640,"Eufaula, AL-GA",micro
+01007,13820,"Birmingham-Hoover, AL",metro
+01009,13820,"Birmingham-Hoover, AL",metro
+01015,11500,"Anniston-Oxford-Jacksonville, AL",metro
+01017,46740,"Valley, AL",micro
+01021,13820,"Birmingham-Hoover, AL",metro
+01031,21460,"Enterprise, AL",micro
+01033,22520,"Florence-Muscle Shoals, AL",metro
+01037,45180,"Talladega-Sylacauga, AL",micro
+01043,18980,"Cullman, AL",micro
+01045,37120,"Ozark, AL",micro
+01047,42820,"Selma, AL",micro
+01049,22840,"Fort Payne, AL",micro
+01051,33860,"Montgomery, AL",metro
+01053,12120,"Atmore, AL",micro
+01055,23460,"Gadsden, AL",metro
+01061,20020,"Dothan, AL",metro
+01065,46220,"Tuscaloosa, AL",metro
+01067,20020,"Dothan, AL",metro
+01069,20020,"Dothan, AL",metro
+01071,42460,"Scottsboro, AL",micro
+01073,13820,"Birmingham-Hoover, AL",metro
+01077,22520,"Florence-Muscle Shoals, AL",metro
+01079,19460,"Decatur, AL",metro
+01081,12220,"Auburn-Opelika, AL",metro
+01083,26620,"Huntsville, AL",metro
+01085,33860,"Montgomery, AL",metro
+01089,26620,"Huntsville, AL",metro
+01095,10700,"Albertville, AL",micro
+01097,33660,"Mobile, AL",metro
+01101,33860,"Montgomery, AL",metro
+01103,19460,"Decatur, AL",metro
+01107,46220,"Tuscaloosa, AL",metro
+01109,45980,"Troy, AL",micro
+01113,17980,"Columbus, GA-AL",metro
+01115,13820,"Birmingham-Hoover, AL",metro
+01117,13820,"Birmingham-Hoover, AL",metro
+01121,45180,"Talladega-Sylacauga, AL",micro
+01123,10760,"Alexander City, AL",micro
+01125,46220,"Tuscaloosa, AL",metro
+01127,13820,"Birmingham-Hoover, AL",metro
+02020,11260,"Anchorage, AK",metro
+02090,21820,"Fairbanks, AK",metro
+02110,27940,"Juneau, AK",micro
+02130,28540,"Ketchikan, AK",micro
+02170,11260,"Anchorage, AK",metro
+04003,43420,"Sierra Vista-Douglas, AZ",metro
+04005,22380,"Flagstaff, AZ",metro
+04007,37740,"Payson, AZ",micro
+04009,40940,"Safford, AZ",micro
+04013,38060,"Phoenix-Mesa-Scottsdale, AZ",metro
+04015,29420,"Lake Havasu City-Kingman, AZ",metro
+04017,43320,"Show Low, AZ",micro
+04019,46060,"Tucson, AZ",metro
+04021,38060,"Phoenix-Mesa-Scottsdale, AZ",metro
+04023,35700,"Nogales, AZ",micro
+04025,39140,"Prescott, AZ",metro
+04027,49740,"Yuma, AZ",metro
+05005,34260,"Mountain Home, AR",micro
+05007,22220,"Fayetteville-Springdale-Rogers, AR-MO",metro
+05009,25460,"Harrison, AR",micro
+05013,15780,"Camden, AR",micro
+05019,11660,"Arkadelphia, AR",micro
+05025,38220,"Pine Bluff, AR",metro
+05027,31620,"Magnolia, AR",micro
+05031,27860,"Jonesboro, AR",metro
+05033,22900,"Fort Smith, AR-OK",metro
+05035,32820,"Memphis, TN-MS-AR",metro
+05045,30780,"Little Rock-North Little Rock-Conway, AR",metro
+05051,26300,"Hot Springs, AR",metro
+05053,30780,"Little Rock-North Little Rock-Conway, AR",metro
+05055,37500,"Paragould, AR",micro
+05057,26260,"Hope, AR",micro
+05059,31680,"Malvern, AR",micro
+05063,12900,"Batesville, AR",micro
+05069,38220,"Pine Bluff, AR",metro
+05079,38220,"Pine Bluff, AR",metro
+05081,45500,"Texarkana, TX-AR",metro
+05085,30780,"Little Rock-North Little Rock-Conway, AR",metro
+05087,22220,"Fayetteville-Springdale-Rogers, AR-MO",metro
+05091,45500,"Texarkana, TX-AR",metro
+05093,14180,"Blytheville, AR",micro
+05099,26260,"Hope, AR",micro
+05101,25460,"Harrison, AR",micro
+05103,15780,"Camden, AR",micro
+05105,30780,"Little Rock-North Little Rock-Conway, AR",metro
+05107,25760,"Helena-West Helena, AR",micro
+05111,27860,"Jonesboro, AR",metro
+05115,40780,"Russellville, AR",micro
+05119,30780,"Little Rock-North Little Rock-Conway, AR",metro
+05123,22620,"Forrest City, AR",micro
+05125,30780,"Little Rock-North Little Rock-Conway, AR",metro
+05131,22900,"Fort Smith, AR-OK",metro
+05139,20980,"El Dorado, AR",micro
+05143,22220,"Fayetteville-Springdale-Rogers, AR-MO",metro
+05145,42620,"Searcy, AR",micro
+05149,40780,"Russellville, AR",micro
+06001,41860,"San Francisco-Oakland-Hayward, CA",metro
+06007,17020,"Chico, CA",metro
+06013,41860,"San Francisco-Oakland-Hayward, CA",metro
+06015,18860,"Crescent City, CA",micro
+06017,40900,"Sacramento--Roseville--Arden-Arcade, CA",metro
+06019,23420,"Fresno, CA",metro
+06023,21700,"Eureka-Arcata-Fortuna, CA",micro
+06025,20940,"El Centro, CA",metro
+06029,12540,"Bakersfield, CA",metro
+06031,25260,"Hanford-Corcoran, CA",metro
+06033,17340,"Clearlake, CA",micro
+06035,45000,"Susanville, CA",micro
+06037,31080,"Los Angeles-Long Beach-Anaheim, CA",metro
+06039,31460,"Madera, CA",metro
+06041,41860,"San Francisco-Oakland-Hayward, CA",metro
+06045,46380,"Ukiah, CA",micro
+06047,32900,"Merced, CA",metro
+06053,41500,"Salinas, CA",metro
+06055,34900,"Napa, CA",metro
+06057,46020,"Truckee-Grass Valley, CA",micro
+06059,31080,"Los Angeles-Long Beach-Anaheim, CA",metro
+06061,40900,"Sacramento--Roseville--Arden-Arcade, CA",metro
+06065,40140,"Riverside-San Bernardino-Ontario, CA",metro
+06067,40900,"Sacramento--Roseville--Arden-Arcade, CA",metro
+06069,41940,"San Jose-Sunnyvale-Santa Clara, CA",metro
+06071,40140,"Riverside-San Bernardino-Ontario, CA",metro
+06073,41740,"San Diego-Carlsbad, CA",metro
+06075,41860,"San Francisco-Oakland-Hayward, CA",metro
+06077,44700,"Stockton-Lodi, CA",metro
+06079,42020,"San Luis Obispo-Paso Robles-Arroyo Grande, CA",metro
+06081,41860,"San Francisco-Oakland-Hayward, CA",metro
+06083,42200,"Santa Maria-Santa Barbara, CA",metro
+06085,41940,"San Jose-Sunnyvale-Santa Clara, CA",metro
+06087,42100,"Santa Cruz-Watsonville, CA",metro
+06089,39820,"Redding, CA",metro
+06095,46700,"Vallejo-Fairfield, CA",metro
+06097,42220,"Santa Rosa, CA",metro
+06099,33700,"Modesto, CA",metro
+06101,49700,"Yuba City, CA",metro
+06103,39780,"Red Bluff, CA",micro
+06107,47300,"Visalia-Porterville, CA",metro
+06109,43760,"Sonora, CA",micro
+06111,37100,"Oxnard-Thousand Oaks-Ventura, CA",metro
+06113,40900,"Sacramento--Roseville--Arden-Arcade, CA",metro
+06115,49700,"Yuba City, CA",metro
+08001,19740,"Denver-Aurora-Lakewood, CO",metro
+08005,19740,"Denver-Aurora-Lakewood, CO",metro
+08013,14500,"Boulder, CO",metro
+08014,19740,"Denver-Aurora-Lakewood, CO",metro
+08019,19740,"Denver-Aurora-Lakewood, CO",metro
+08031,19740,"Denver-Aurora-Lakewood, CO",metro
+08035,19740,"Denver-Aurora-Lakewood, CO",metro
+08037,20780,"Edwards, CO",micro
+08039,19740,"Denver-Aurora-Lakewood, CO",metro
+08041,17820,"Colorado Springs, CO",metro
+08043,15860,"Cañon City, CO",micro
+08045,24060,"Glenwood Springs, CO",micro
+08047,19740,"Denver-Aurora-Lakewood, CO",metro
+08059,19740,"Denver-Aurora-Lakewood, CO",metro
+08067,20420,"Durango, CO",micro
+08069,22660,"Fort Collins, CO",metro
+08075,44540,"Sterling, CO",micro
+08077,24300,"Grand Junction, CO",metro
+08081,18780,"Craig, CO",micro
+08085,33940,"Montrose, CO",micro
+08087,22820,"Fort Morgan, CO",micro
+08093,19740,"Denver-Aurora-Lakewood, CO",metro
+08097,24060,"Glenwood Springs, CO",micro
+08101,39380,"Pueblo, CO",metro
+08107,44460,"Steamboat Springs, CO",micro
+08117,14720,"Breckenridge, CO",micro
+08119,17820,"Colorado Springs, CO",metro
+08123,24540,"Greeley, CO",metro
+09001,14860,"Bridgeport-Stamford-Norwalk, CT",metro
+09003,25540,"Hartford-West Hartford-East Hartford, CT",metro
+09005,45860,"Torrington, CT",micro
+09007,25540,"Hartford-West Hartford-East Hartford, CT",metro
+09009,35300,"New Haven-Milford, CT",metro
+09011,35980,"Norwich-New London, CT",metro
+09013,25540,"Hartford-West Hartford-East Hartford, CT",metro
+09015,49340,"Worcester, MA-CT",metro
+10001,20100,"Dover, DE",metro
+10003,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+10005,41540,"Salisbury, MD-DE",metro
+11001,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+12001,23540,"Gainesville, FL",metro
+12003,27260,"Jacksonville, FL",metro
+12005,37460,"Panama City, FL",metro
+12009,37340,"Palm Bay-Melbourne-Titusville, FL",metro
+12011,33100,"Miami-Fort Lauderdale-West Palm Beach, FL",metro
+12015,39460,"Punta Gorda, FL",metro
+12017,26140,"Homosassa Springs, FL",metro
+12019,27260,"Jacksonville, FL",metro
+12021,34940,"Naples-Immokalee-Marco Island, FL",metro
+12023,29380,"Lake City, FL",micro
+12027,11580,"Arcadia, FL",micro
+12031,27260,"Jacksonville, FL",metro
+12033,37860,"Pensacola-Ferry Pass-Brent, FL",metro
+12035,19660,"Deltona-Daytona Beach-Ormond Beach, FL",metro
+12039,45220,"Tallahassee, FL",metro
+12041,23540,"Gainesville, FL",metro
+12045,37460,"Panama City, FL",metro
+12049,48100,"Wauchula, FL",micro
+12051,17500,"Clewiston, FL",micro
+12053,45300,"Tampa-St. Petersburg-Clearwater, FL",metro
+12055,42700,"Sebring, FL",metro
+12057,45300,"Tampa-St. Petersburg-Clearwater, FL",metro
+12061,42680,"Sebastian-Vero Beach, FL",metro
+12065,45220,"Tallahassee, FL",metro
+12069,36740,"Orlando-Kissimmee-Sanford, FL",metro
+12071,15980,"Cape Coral-Fort Myers, FL",metro
+12073,45220,"Tallahassee, FL",metro
+12081,35840,"North Port-Sarasota-Bradenton, FL",metro
+12083,36100,"Ocala, FL",metro
+12085,38940,"Port St. Lucie, FL",metro
+12086,33100,"Miami-Fort Lauderdale-West Palm Beach, FL",metro
+12087,28580,"Key West, FL",micro
+12089,27260,"Jacksonville, FL",metro
+12091,18880,"Crestview-Fort Walton Beach-Destin, FL",metro
+12093,36380,"Okeechobee, FL",micro
+12095,36740,"Orlando-Kissimmee-Sanford, FL",metro
+12097,36740,"Orlando-Kissimmee-Sanford, FL",metro
+12099,33100,"Miami-Fort Lauderdale-West Palm Beach, FL",metro
+12101,45300,"Tampa-St. Petersburg-Clearwater, FL",metro
+12103,45300,"Tampa-St. Petersburg-Clearwater, FL",metro
+12105,29460,"Lakeland-Winter Haven, FL",metro
+12107,37260,"Palatka, FL",micro
+12109,27260,"Jacksonville, FL",metro
+12111,38940,"Port St. Lucie, FL",metro
+12113,37860,"Pensacola-Ferry Pass-Brent, FL",metro
+12115,35840,"North Port-Sarasota-Bradenton, FL",metro
+12117,36740,"Orlando-Kissimmee-Sanford, FL",metro
+12119,45540,"The Villages, FL",metro
+12127,19660,"Deltona-Daytona Beach-Ormond Beach, FL",metro
+12129,45220,"Tallahassee, FL",metro
+12131,18880,"Crestview-Fort Walton Beach-Destin, FL",metro
+13007,10500,"Albany, GA",metro
+13009,33300,"Milledgeville, GA",micro
+13013,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13015,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13017,22340,"Fitzgerald, GA",micro
+13021,31420,"Macon-Bibb County, GA",metro
+13025,15260,"Brunswick, GA",metro
+13027,46660,"Valdosta, GA",metro
+13029,42340,"Savannah, GA",metro
+13031,44340,"Statesboro, GA",micro
+13033,12260,"Augusta-Richmond County, GA-SC",metro
+13035,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13039,41220,"St. Marys, GA",micro
+13045,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13047,16860,"Chattanooga, TN-GA",metro
+13051,42340,"Savannah, GA",metro
+13053,17980,"Columbus, GA-AL",metro
+13055,44900,"Summerville, GA",micro
+13057,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13059,12020,"Athens-Clarke County, GA",metro
+13063,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13067,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13069,20060,"Douglas, GA",micro
+13071,34220,"Moultrie, GA",micro
+13073,12260,"Augusta-Richmond County, GA-SC",metro
+13077,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13079,31420,"Macon-Bibb County, GA",metro
+13081,18380,"Cordele, GA",micro
+13083,16860,"Chattanooga, TN-GA",metro
+13085,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13087,12460,"Bainbridge, GA",micro
+13089,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13095,10500,"Albany, GA",metro
+13097,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13101,46660,"Valdosta, GA",metro
+13103,42340,"Savannah, GA",metro
+13113,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13115,40660,"Rome, GA",metro
+13117,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13121,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13127,15260,"Brunswick, GA",metro
+13129,15660,"Calhoun, GA",micro
+13135,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13137,18460,"Cornelia, GA",micro
+13139,23580,"Gainesville, GA",metro
+13141,33300,"Milledgeville, GA",micro
+13143,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13145,17980,"Columbus, GA-AL",metro
+13149,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13151,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13153,47580,"Warner Robins, GA",metro
+13157,27600,"Jefferson, GA",micro
+13159,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13167,20140,"Dublin, GA",micro
+13169,31420,"Macon-Bibb County, GA",metro
+13171,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13173,46660,"Valdosta, GA",metro
+13175,20140,"Dublin, GA",micro
+13177,10500,"Albany, GA",metro
+13179,25980,"Hinesville, GA",metro
+13181,12260,"Augusta-Richmond County, GA-SC",metro
+13183,25980,"Hinesville, GA",metro
+13185,46660,"Valdosta, GA",metro
+13189,12260,"Augusta-Richmond County, GA-SC",metro
+13191,15260,"Brunswick, GA",metro
+13195,12020,"Athens-Clarke County, GA",metro
+13197,17980,"Columbus, GA-AL",metro
+13199,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13207,31420,"Macon-Bibb County, GA",metro
+13209,47080,"Vidalia, GA",micro
+13211,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13213,19140,"Dalton, GA",metro
+13215,17980,"Columbus, GA-AL",metro
+13217,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13219,12020,"Athens-Clarke County, GA",metro
+13221,12020,"Athens-Clarke County, GA",metro
+13223,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13225,47580,"Warner Robins, GA",metro
+13227,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13229,48180,"Waycross, GA",micro
+13231,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13233,16340,"Cedartown, GA",micro
+13235,47580,"Warner Robins, GA",metro
+13239,21640,"Eufaula, AL-GA",micro
+13245,12260,"Augusta-Richmond County, GA-SC",metro
+13247,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13249,11140,"Americus, GA",micro
+13255,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13257,45740,"Toccoa, GA",micro
+13261,11140,"Americus, GA",micro
+13273,10500,"Albany, GA",metro
+13275,45620,"Thomasville, GA",micro
+13277,45700,"Tifton, GA",micro
+13279,47080,"Vidalia, GA",micro
+13285,29300,"LaGrange, GA",micro
+13289,31420,"Macon-Bibb County, GA",metro
+13293,45580,"Thomaston, GA",micro
+13295,16860,"Chattanooga, TN-GA",metro
+13297,12060,"Atlanta-Sandy Springs-Roswell, GA",metro
+13299,48180,"Waycross, GA",micro
+13305,27700,"Jesup, GA",micro
+13313,19140,"Dalton, GA",metro
+13321,10500,"Albany, GA",metro
+15001,25900,"Hilo, HI",micro
+15003,46520,"Urban Honolulu, HI",metro
+15005,27980,"Kahului-Wailuku-Lahaina, HI",metro
+15007,28180,"Kapaa, HI",micro
+15009,27980,"Kahului-Wailuku-Lahaina, HI",metro
+16001,14260,"Boise City, ID",metro
+16005,38540,"Pocatello, ID",metro
+16011,13940,"Blackfoot, ID",micro
+16013,25200,"Hailey, ID",micro
+16015,14260,"Boise City, ID",metro
+16017,41760,"Sandpoint, ID",micro
+16019,26820,"Idaho Falls, ID",metro
+16023,26820,"Idaho Falls, ID",metro
+16025,25200,"Hailey, ID",micro
+16027,14260,"Boise City, ID",metro
+16031,15420,"Burley, ID",micro
+16039,34300,"Mountain Home, ID",micro
+16041,30860,"Logan, UT-ID",metro
+16043,39940,"Rexburg, ID",micro
+16045,14260,"Boise City, ID",metro
+16051,26820,"Idaho Falls, ID",metro
+16053,46300,"Twin Falls, ID",micro
+16055,17660,"Coeur d'Alene, ID",metro
+16057,34140,"Moscow, ID",micro
+16063,25200,"Hailey, ID",micro
+16065,39940,"Rexburg, ID",micro
+16067,15420,"Burley, ID",micro
+16069,30300,"Lewiston, ID-WA",metro
+16073,14260,"Boise City, ID",metro
+16075,36620,"Ontario, OR-ID",micro
+16081,27220,"Jackson, WY-ID",micro
+16083,46300,"Twin Falls, ID",micro
+17001,39500,"Quincy, IL-MO",micro
+17003,16020,"Cape Girardeau, MO-IL",metro
+17005,41180,"St. Louis, MO-IL",metro
+17007,40420,"Rockford, IL",metro
+17011,36860,"Ottawa-Peru, IL",micro
+17013,41180,"St. Louis, MO-IL",metro
+17019,16580,"Champaign-Urbana, IL",metro
+17021,45380,"Taylorville, IL",micro
+17027,41180,"St. Louis, MO-IL",metro
+17029,16660,"Charleston-Mattoon, IL",micro
+17031,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+17035,16660,"Charleston-Mattoon, IL",micro
+17037,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+17039,14010,"Bloomington, IL",metro
+17043,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+17049,20820,"Effingham, IL",micro
+17053,16580,"Champaign-Urbana, IL",metro
+17057,15900,"Canton, IL",micro
+17063,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+17067,22800,"Fort Madison-Keokuk, IA-IL-MO",micro
+17071,15460,"Burlington, IA-IL",micro
+17073,19340,"Davenport-Moline-Rock Island, IA-IL",metro
+17077,16060,"Carbondale-Marion, IL",metro
+17081,34500,"Mount Vernon, IL",micro
+17083,41180,"St. Louis, MO-IL",metro
+17089,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+17091,28100,"Kankakee, IL",metro
+17093,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+17095,23660,"Galesburg, IL",micro
+17097,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+17099,36860,"Ottawa-Peru, IL",micro
+17103,19940,"Dixon, IL",micro
+17105,38700,"Pontiac, IL",micro
+17107,30660,"Lincoln, IL",micro
+17109,31380,"Macomb, IL",micro
+17111,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+17113,14010,"Bloomington, IL",metro
+17115,19500,"Decatur, IL",metro
+17117,41180,"St. Louis, MO-IL",metro
+17119,41180,"St. Louis, MO-IL",metro
+17121,16460,"Centralia, IL",micro
+17123,37900,"Peoria, IL",metro
+17127,37140,"Paducah, KY-IL",micro
+17129,44100,"Springfield, IL",metro
+17131,19340,"Davenport-Moline-Rock Island, IA-IL",metro
+17133,41180,"St. Louis, MO-IL",metro
+17137,27300,"Jacksonville, IL",micro
+17141,40300,"Rochelle, IL",micro
+17143,37900,"Peoria, IL",metro
+17147,16580,"Champaign-Urbana, IL",metro
+17155,36860,"Ottawa-Peru, IL",micro
+17161,19340,"Davenport-Moline-Rock Island, IA-IL",metro
+17163,41180,"St. Louis, MO-IL",metro
+17167,44100,"Springfield, IL",metro
+17171,27300,"Jacksonville, IL",micro
+17175,37900,"Peoria, IL",metro
+17177,23300,"Freeport, IL",micro
+17179,37900,"Peoria, IL",metro
+17183,19180,"Danville, IL",metro
+17195,44580,"Sterling, IL",micro
+17197,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+17199,16060,"Carbondale-Marion, IL",metro
+17201,40420,"Rockford, IL",metro
+17203,37900,"Peoria, IL",metro
+18001,19540,"Decatur, IN",micro
+18003,23060,"Fort Wayne, IN",metro
+18005,18020,"Columbus, IN",metro
+18007,29200,"Lafayette-West Lafayette, IN",metro
+18011,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18013,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18015,29200,"Lafayette-West Lafayette, IN",metro
+18017,30900,"Logansport, IN",micro
+18019,31140,"Louisville/Jefferson County, KY-IN",metro
+18021,45460,"Terre Haute, IN",metro
+18023,23140,"Frankfort, IN",micro
+18027,47780,"Washington, IN",micro
+18029,17140,"Cincinnati, OH-KY-IN",metro
+18031,24700,"Greensburg, IN",micro
+18033,12140,"Auburn, IN",micro
+18035,34620,"Muncie, IN",metro
+18037,27540,"Jasper, IN",micro
+18039,21140,"Elkhart-Goshen, IN",metro
+18041,18220,"Connersville, IN",micro
+18043,31140,"Louisville/Jefferson County, KY-IN",metro
+18053,31980,"Marion, IN",micro
+18057,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18059,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18061,31140,"Louisville/Jefferson County, KY-IN",metro
+18063,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18065,35220,"New Castle, IN",micro
+18067,29020,"Kokomo, IN",metro
+18069,26540,"Huntington, IN",micro
+18071,42980,"Seymour, IN",micro
+18073,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+18077,31500,"Madison, IN",micro
+18079,35860,"North Vernon, IN",micro
+18081,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18083,47180,"Vincennes, IN",micro
+18085,47700,"Warsaw, IN",micro
+18089,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+18091,33140,"Michigan City-La Porte, IN",metro
+18093,13260,"Bedford, IN",micro
+18095,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18097,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18099,38500,"Plymouth, IN",micro
+18103,37940,"Peru, IN",micro
+18105,14020,"Bloomington, IN",metro
+18107,18820,"Crawfordsville, IN",micro
+18109,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18111,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+18113,28340,"Kendallville, IN",micro
+18115,17140,"Cincinnati, OH-KY-IN",metro
+18119,14020,"Bloomington, IN",metro
+18125,27540,"Jasper, IN",micro
+18127,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+18129,21780,"Evansville, IN-KY",metro
+18133,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18141,43780,"South Bend-Mishawaka, IN-MI",metro
+18143,31140,"Louisville/Jefferson County, KY-IN",metro
+18145,26900,"Indianapolis-Carmel-Anderson, IN",metro
+18151,11420,"Angola, IN",micro
+18153,45460,"Terre Haute, IN",metro
+18157,29200,"Lafayette-West Lafayette, IN",metro
+18161,17140,"Cincinnati, OH-KY-IN",metro
+18163,21780,"Evansville, IN-KY",metro
+18165,45460,"Terre Haute, IN",metro
+18167,45460,"Terre Haute, IN",metro
+18169,47340,"Wabash, IN",micro
+18173,21780,"Evansville, IN-KY",metro
+18175,31140,"Louisville/Jefferson County, KY-IN",metro
+18177,39980,"Richmond, IN",micro
+18179,23060,"Fort Wayne, IN",metro
+18183,23060,"Fort Wayne, IN",metro
+19011,16300,"Cedar Rapids, IA",metro
+19013,47940,"Waterloo-Cedar Falls, IA",metro
+19015,14340,"Boone, IA",micro
+19017,47940,"Waterloo-Cedar Falls, IA",metro
+19021,44740,"Storm Lake, IA",micro
+19027,16140,"Carroll, IA",micro
+19033,32380,"Mason City, IA",micro
+19041,43980,"Spencer, IA",micro
+19045,17540,"Clinton, IA",micro
+19049,19780,"Des Moines-West Des Moines, IA",metro
+19051,36900,"Ottumwa, IA",micro
+19057,15460,"Burlington, IA-IL",micro
+19059,44020,"Spirit Lake, IA",micro
+19061,20220,"Dubuque, IA",metro
+19075,47940,"Waterloo-Cedar Falls, IA",metro
+19077,19780,"Des Moines-West Des Moines, IA",metro
+19085,36540,"Omaha-Council Bluffs, NE-IA",metro
+19099,35500,"Newton, IA",micro
+19101,21840,"Fairfield, IA",micro
+19103,26980,"Iowa City, IA",metro
+19105,16300,"Cedar Rapids, IA",metro
+19111,22800,"Fort Madison-Keokuk, IA-IL-MO",micro
+19113,16300,"Cedar Rapids, IA",metro
+19121,19780,"Des Moines-West Des Moines, IA",metro
+19123,36820,"Oskaloosa, IA",micro
+19125,37800,"Pella, IA",micro
+19127,32260,"Marshalltown, IA",micro
+19129,36540,"Omaha-Council Bluffs, NE-IA",metro
+19139,34700,"Muscatine, IA",micro
+19149,43580,"Sioux City, IA-NE-SD",metro
+19153,19780,"Des Moines-West Des Moines, IA",metro
+19155,36540,"Omaha-Council Bluffs, NE-IA",metro
+19163,19340,"Davenport-Moline-Rock Island, IA-IL",metro
+19169,11180,"Ames, IA",metro
+19179,36900,"Ottumwa, IA",micro
+19181,19780,"Des Moines-West Des Moines, IA",metro
+19183,26980,"Iowa City, IA",metro
+19187,22700,"Fort Dodge, IA",micro
+19193,43580,"Sioux City, IA-NE-SD",metro
+19195,32380,"Mason City, IA",micro
+20005,11860,"Atchison, KS",micro
+20009,24460,"Great Bend, KS",micro
+20015,48620,"Wichita, KS",metro
+20035,11680,"Arkansas City-Winfield, KS",micro
+20037,38260,"Pittsburg, KS",micro
+20043,41140,"St. Joseph, MO-KS",metro
+20045,29940,"Lawrence, KS",metro
+20051,25700,"Hays, KS",micro
+20055,23780,"Garden City, KS",micro
+20057,19980,"Dodge City, KS",micro
+20059,36840,"Ottawa, KS",micro
+20061,27920,"Junction City, KS",micro
+20079,48620,"Wichita, KS",metro
+20085,45820,"Topeka, KS",metro
+20087,45820,"Topeka, KS",metro
+20091,28140,"Kansas City, MO-KS",metro
+20093,23780,"Garden City, KS",micro
+20095,48620,"Wichita, KS",metro
+20099,37660,"Parsons, KS",micro
+20103,28140,"Kansas City, MO-KS",metro
+20107,28140,"Kansas City, MO-KS",metro
+20111,21380,"Emporia, KS",micro
+20113,32700,"McPherson, KS",micro
+20121,28140,"Kansas City, MO-KS",metro
+20125,17700,"Coffeyville, KS",micro
+20139,45820,"Topeka, KS",metro
+20143,41460,"Salina, KS",micro
+20149,31740,"Manhattan, KS",metro
+20155,26740,"Hutchinson, KS",micro
+20161,31740,"Manhattan, KS",metro
+20169,41460,"Salina, KS",micro
+20173,48620,"Wichita, KS",metro
+20175,30580,"Liberal, KS",micro
+20177,45820,"Topeka, KS",metro
+20191,48620,"Wichita, KS",metro
+20197,45820,"Topeka, KS",metro
+20209,28140,"Kansas City, MO-KS",metro
+21003,14540,"Bowling Green, KY",metro
+21005,23180,"Frankfort, KY",micro
+21007,37140,"Paducah, KY-IL",micro
+21009,23980,"Glasgow, KY",micro
+21011,34460,"Mount Sterling, KY",micro
+21013,33180,"Middlesborough, KY",micro
+21015,17140,"Cincinnati, OH-KY-IN",metro
+21017,30460,"Lexington-Fayette, KY",metro
+21019,26580,"Huntington-Ashland, WV-KY-OH",metro
+21021,19220,"Danville, KY",micro
+21023,17140,"Cincinnati, OH-KY-IN",metro
+21029,31140,"Louisville/Jefferson County, KY-IN",metro
+21031,14540,"Bowling Green, KY",metro
+21035,34660,"Murray, KY",micro
+21037,17140,"Cincinnati, OH-KY-IN",metro
+21047,17300,"Clarksville, TN-KY",metro
+21049,30460,"Lexington-Fayette, KY",metro
+21059,36980,"Owensboro, KY",metro
+21061,14540,"Bowling Green, KY",metro
+21067,30460,"Lexington-Fayette, KY",metro
+21073,23180,"Frankfort, KY",micro
+21075,46460,"Union City, TN-KY",micro
+21077,17140,"Cincinnati, OH-KY-IN",metro
+21081,17140,"Cincinnati, OH-KY-IN",metro
+21083,32460,"Mayfield, KY",micro
+21089,26580,"Huntington-Ashland, WV-KY-OH",metro
+21091,36980,"Owensboro, KY",metro
+21093,21060,"Elizabethtown-Fort Knox, KY",metro
+21101,21780,"Evansville, IN-KY",metro
+21103,31140,"Louisville/Jefferson County, KY-IN",metro
+21107,31580,"Madisonville, KY",micro
+21111,31140,"Louisville/Jefferson County, KY-IN",metro
+21113,30460,"Lexington-Fayette, KY",metro
+21117,17140,"Cincinnati, OH-KY-IN",metro
+21121,30940,"London, KY",micro
+21123,21060,"Elizabethtown-Fort Knox, KY",metro
+21125,30940,"London, KY",micro
+21137,19220,"Danville, KY",micro
+21139,37140,"Paducah, KY-IL",micro
+21145,37140,"Paducah, KY-IL",micro
+21149,36980,"Owensboro, KY",metro
+21151,40080,"Richmond-Berea, KY",micro
+21161,32500,"Maysville, KY",micro
+21163,21060,"Elizabethtown-Fort Knox, KY",metro
+21165,34460,"Mount Sterling, KY",micro
+21169,23980,"Glasgow, KY",micro
+21173,34460,"Mount Sterling, KY",micro
+21177,16420,"Central City, KY",micro
+21179,12680,"Bardstown, KY",micro
+21185,31140,"Louisville/Jefferson County, KY-IN",metro
+21191,17140,"Cincinnati, OH-KY-IN",metro
+21199,43700,"Somerset, KY",micro
+21203,40080,"Richmond-Berea, KY",micro
+21209,30460,"Lexington-Fayette, KY",metro
+21211,31140,"Louisville/Jefferson County, KY-IN",metro
+21215,31140,"Louisville/Jefferson County, KY-IN",metro
+21217,15820,"Campbellsville, KY",micro
+21221,17300,"Clarksville, TN-KY",metro
+21223,31140,"Louisville/Jefferson County, KY-IN",metro
+21227,14540,"Bowling Green, KY",metro
+21235,30940,"London, KY",micro
+21239,30460,"Lexington-Fayette, KY",metro
+22001,29180,"Lafayette, LA",metro
+22005,12940,"Baton Rouge, LA",metro
+22011,19760,"DeRidder, LA",micro
+22015,43340,"Shreveport-Bossier City, LA",metro
+22017,43340,"Shreveport-Bossier City, LA",metro
+22019,29340,"Lake Charles, LA",metro
+22023,29340,"Lake Charles, LA",metro
+22029,35020,"Natchez, MS-LA",micro
+22031,43340,"Shreveport-Bossier City, LA",metro
+22033,12940,"Baton Rouge, LA",metro
+22037,12940,"Baton Rouge, LA",metro
+22043,10780,"Alexandria, LA",metro
+22045,29180,"Lafayette, LA",metro
+22047,12940,"Baton Rouge, LA",metro
+22051,35380,"New Orleans-Metairie, LA",metro
+22053,27660,"Jennings, LA",micro
+22055,29180,"Lafayette, LA",metro
+22057,26380,"Houma-Thibodaux, LA",metro
+22061,40820,"Ruston, LA",micro
+22063,12940,"Baton Rouge, LA",metro
+22067,12820,"Bastrop, LA",micro
+22069,35060,"Natchitoches, LA",micro
+22071,35380,"New Orleans-Metairie, LA",metro
+22073,33740,"Monroe, LA",metro
+22075,35380,"New Orleans-Metairie, LA",metro
+22077,12940,"Baton Rouge, LA",metro
+22079,10780,"Alexandria, LA",metro
+22087,35380,"New Orleans-Metairie, LA",metro
+22089,35380,"New Orleans-Metairie, LA",metro
+22091,12940,"Baton Rouge, LA",metro
+22093,35380,"New Orleans-Metairie, LA",metro
+22095,35380,"New Orleans-Metairie, LA",metro
+22097,36660,"Opelousas, LA",micro
+22099,29180,"Lafayette, LA",metro
+22101,34020,"Morgan City, LA",micro
+22103,35380,"New Orleans-Metairie, LA",metro
+22105,25220,"Hammond, LA",metro
+22109,26380,"Houma-Thibodaux, LA",metro
+22111,33740,"Monroe, LA",metro
+22113,29180,"Lafayette, LA",metro
+22115,22860,"Fort Polk South, LA",micro
+22117,14220,"Bogalusa, LA",micro
+22119,43340,"Shreveport-Bossier City, LA",metro
+22121,12940,"Baton Rouge, LA",metro
+22125,12940,"Baton Rouge, LA",metro
+23001,30340,"Lewiston-Auburn, ME",metro
+23005,38860,"Portland-South Portland, ME",metro
+23011,12300,"Augusta-Waterville, ME",micro
+23019,12620,"Bangor, ME",metro
+23023,38860,"Portland-South Portland, ME",metro
+23031,38860,"Portland-South Portland, ME",metro
+24001,19060,"Cumberland, MD-WV",metro
+24003,12580,"Baltimore-Columbia-Towson, MD",metro
+24005,12580,"Baltimore-Columbia-Towson, MD",metro
+24009,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+24013,12580,"Baltimore-Columbia-Towson, MD",metro
+24015,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+24017,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+24019,15700,"Cambridge, MD",micro
+24021,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+24025,12580,"Baltimore-Columbia-Towson, MD",metro
+24027,12580,"Baltimore-Columbia-Towson, MD",metro
+24031,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+24033,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+24035,12580,"Baltimore-Columbia-Towson, MD",metro
+24037,15680,"California-Lexington Park, MD",metro
+24039,41540,"Salisbury, MD-DE",metro
+24041,20660,"Easton, MD",micro
+24043,25180,"Hagerstown-Martinsburg, MD-WV",metro
+24045,41540,"Salisbury, MD-DE",metro
+24047,41540,"Salisbury, MD-DE",metro
+24510,12580,"Baltimore-Columbia-Towson, MD",metro
+25001,12700,"Barnstable Town, MA",metro
+25003,38340,"Pittsfield, MA",metro
+25005,39300,"Providence-Warwick, RI-MA",metro
+25007,47240,"Vineyard Haven, MA",micro
+25009,14460,"Boston-Cambridge-Newton, MA-NH",metro
+25011,24640,"Greenfield Town, MA",micro
+25013,44140,"Springfield, MA",metro
+25015,44140,"Springfield, MA",metro
+25017,14460,"Boston-Cambridge-Newton, MA-NH",metro
+25021,14460,"Boston-Cambridge-Newton, MA-NH",metro
+25023,14460,"Boston-Cambridge-Newton, MA-NH",metro
+25025,14460,"Boston-Cambridge-Newton, MA-NH",metro
+25027,49340,"Worcester, MA-CT",metro
+26005,26090,"Holland, MI",micro
+26007,10980,"Alpena, MI",micro
+26015,24340,"Grand Rapids-Wyoming, MI",metro
+26017,13020,"Bay City, MI",metro
+26019,45900,"Traverse City, MI",micro
+26021,35660,"Niles-Benton Harbor, MI",metro
+26023,17740,"Coldwater, MI",micro
+26025,12980,"Battle Creek, MI",metro
+26027,43780,"South Bend-Mishawaka, IN-MI",metro
+26033,42300,"Sault Ste. Marie, MI",micro
+26037,29620,"Lansing-East Lansing, MI",metro
+26041,21540,"Escanaba, MI",micro
+26043,27020,"Iron Mountain, MI-WI",micro
+26045,29620,"Lansing-East Lansing, MI",metro
+26049,22420,"Flint, MI",metro
+26055,45900,"Traverse City, MI",micro
+26057,10940,"Alma, MI",micro
+26059,25880,"Hillsdale, MI",micro
+26061,26340,"Houghton, MI",micro
+26065,29620,"Lansing-East Lansing, MI",metro
+26067,26960,"Ionia, MI",micro
+26073,34380,"Mount Pleasant, MI",micro
+26075,27100,"Jackson, MI",metro
+26077,28020,"Kalamazoo-Portage, MI",metro
+26079,45900,"Traverse City, MI",micro
+26081,24340,"Grand Rapids-Wyoming, MI",metro
+26083,26340,"Houghton, MI",micro
+26087,19820,"Detroit-Warren-Dearborn, MI",metro
+26089,45900,"Traverse City, MI",micro
+26091,10300,"Adrian, MI",micro
+26093,19820,"Detroit-Warren-Dearborn, MI",metro
+26099,19820,"Detroit-Warren-Dearborn, MI",metro
+26103,32100,"Marquette, MI",micro
+26105,31220,"Ludington, MI",micro
+26107,13660,"Big Rapids, MI",micro
+26109,31940,"Marinette, WI-MI",micro
+26111,33220,"Midland, MI",metro
+26113,15620,"Cadillac, MI",micro
+26115,33780,"Monroe, MI",metro
+26117,24340,"Grand Rapids-Wyoming, MI",metro
+26121,34740,"Muskegon, MI",metro
+26125,19820,"Detroit-Warren-Dearborn, MI",metro
+26139,24340,"Grand Rapids-Wyoming, MI",metro
+26145,40980,"Saginaw, MI",metro
+26147,19820,"Detroit-Warren-Dearborn, MI",metro
+26149,44780,"Sturgis, MI",micro
+26155,37020,"Owosso, MI",micro
+26159,28020,"Kalamazoo-Portage, MI",metro
+26161,11460,"Ann Arbor, MI",metro
+26163,19820,"Detroit-Warren-Dearborn, MI",metro
+26165,15620,"Cadillac, MI",micro
+27003,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27007,13420,"Bemidji, MN",micro
+27009,41060,"St. Cloud, MN",metro
+27013,31860,"Mankato-North Mankato, MN",metro
+27015,35580,"New Ulm, MN",micro
+27017,20260,"Duluth, MN-WI",metro
+27019,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27021,14660,"Brainerd, MN",micro
+27025,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27027,22020,"Fargo, ND-MN",metro
+27035,14660,"Brainerd, MN",micro
+27037,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27039,40340,"Rochester, MN",metro
+27041,10820,"Alexandria, MN",micro
+27045,40340,"Rochester, MN",metro
+27047,10660,"Albert Lea, MN",micro
+27049,39860,"Red Wing, MN",micro
+27053,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27055,29100,"La Crosse-Onalaska, WI-MN",metro
+27059,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27061,24330,"Grand Rapids, MN",micro
+27067,48820,"Willmar, MN",micro
+27079,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27083,32140,"Marshall, MN",micro
+27085,26780,"Hutchinson, MN",micro
+27091,21860,"Fairmont, MN",micro
+27095,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27099,12380,"Austin, MN",micro
+27103,31860,"Mankato-North Mankato, MN",metro
+27105,49380,"Worthington, MN",micro
+27109,40340,"Rochester, MN",metro
+27111,22260,"Fergus Falls, MN",micro
+27119,24220,"Grand Forks, ND-MN",metro
+27123,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27131,22060,"Faribault-Northfield, MN",micro
+27137,20260,"Duluth, MN-WI",metro
+27139,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27141,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27143,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27145,41060,"St. Cloud, MN",metro
+27147,36940,"Owatonna, MN",micro
+27157,40340,"Rochester, MN",metro
+27163,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+27167,47420,"Wahpeton, ND-MN",micro
+27169,49100,"Winona, MN",micro
+27171,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+28001,35020,"Natchez, MS-LA",micro
+28003,18420,"Corinth, MS",micro
+28005,32620,"McComb, MS",micro
+28009,32820,"Memphis, TN-MS-AR",metro
+28011,17380,"Cleveland, MS",micro
+28015,24900,"Greenwood, MS",micro
+28021,46980,"Vicksburg, MS",micro
+28023,32940,"Meridian, MS",micro
+28025,48500,"West Point, MS",micro
+28027,17260,"Clarksdale, MS",micro
+28029,27140,"Jackson, MS",metro
+28033,32820,"Memphis, TN-MS-AR",metro
+28035,25620,"Hattiesburg, MS",metro
+28043,24980,"Grenada, MS",micro
+28045,25060,"Gulfport-Biloxi-Pascagoula, MS",metro
+28047,25060,"Gulfport-Biloxi-Pascagoula, MS",metro
+28049,27140,"Jackson, MS",metro
+28057,46180,"Tupelo, MS",micro
+28059,25060,"Gulfport-Biloxi-Pascagoula, MS",metro
+28061,29860,"Laurel, MS",micro
+28067,29860,"Laurel, MS",micro
+28069,32940,"Meridian, MS",micro
+28071,37060,"Oxford, MS",micro
+28073,25620,"Hattiesburg, MS",metro
+28075,32940,"Meridian, MS",micro
+28081,46180,"Tupelo, MS",micro
+28083,24900,"Greenwood, MS",micro
+28085,15020,"Brookhaven, MS",micro
+28087,18060,"Columbus, MS",micro
+28089,27140,"Jackson, MS",metro
+28093,32820,"Memphis, TN-MS-AR",metro
+28105,44260,"Starkville, MS",micro
+28109,38100,"Picayune, MS",micro
+28111,25620,"Hattiesburg, MS",metro
+28113,32620,"McComb, MS",micro
+28115,46180,"Tupelo, MS",micro
+28121,27140,"Jackson, MS",metro
+28127,27140,"Jackson, MS",metro
+28133,26940,"Indianola, MS",micro
+28137,32820,"Memphis, TN-MS-AR",metro
+28143,32820,"Memphis, TN-MS-AR",metro
+28149,46980,"Vicksburg, MS",micro
+28151,24740,"Greenville, MS",micro
+28163,27140,"Jackson, MS",metro
+29001,28860,"Kirksville, MO",micro
+29003,41140,"St. Joseph, MO-KS",metro
+29007,33020,"Mexico, MO",micro
+29013,28140,"Kansas City, MO-KS",metro
+29017,16020,"Cape Girardeau, MO-IL",metro
+29019,17860,"Columbia, MO",metro
+29021,41140,"St. Joseph, MO-KS",metro
+29023,38740,"Poplar Bluff, MO",micro
+29025,28140,"Kansas City, MO-KS",metro
+29027,27620,"Jefferson City, MO",metro
+29031,16020,"Cape Girardeau, MO-IL",metro
+29037,28140,"Kansas City, MO-KS",metro
+29043,44180,"Springfield, MO",metro
+29045,22800,"Fort Madison-Keokuk, IA-IL-MO",micro
+29047,28140,"Kansas City, MO-KS",metro
+29049,28140,"Kansas City, MO-KS",metro
+29051,27620,"Jefferson City, MO",metro
+29059,44180,"Springfield, MO",metro
+29063,41140,"St. Joseph, MO-KS",metro
+29069,28380,"Kennett, MO",micro
+29071,41180,"St. Louis, MO-IL",metro
+29077,44180,"Springfield, MO",metro
+29091,48460,"West Plains, MO",micro
+29095,28140,"Kansas City, MO-KS",metro
+29097,27900,"Joplin, MO",metro
+29099,41180,"St. Louis, MO-IL",metro
+29101,47660,"Warrensburg, MO",micro
+29105,30060,"Lebanon, MO",micro
+29107,28140,"Kansas City, MO-KS",metro
+29111,39500,"Quincy, IL-MO",micro
+29113,41180,"St. Louis, MO-IL",metro
+29119,22220,"Fayetteville-Springdale-Rogers, AR-MO",metro
+29127,25300,"Hannibal, MO",micro
+29135,27620,"Jefferson City, MO",metro
+29145,27900,"Joplin, MO",metro
+29147,32340,"Maryville, MO",micro
+29151,27620,"Jefferson City, MO",metro
+29159,42740,"Sedalia, MO",micro
+29161,40620,"Rolla, MO",micro
+29165,28140,"Kansas City, MO-KS",metro
+29167,44180,"Springfield, MO",metro
+29169,22780,"Fort Leonard Wood, MO",micro
+29173,25300,"Hannibal, MO",micro
+29175,33620,"Moberly, MO",micro
+29177,28140,"Kansas City, MO-KS",metro
+29183,41180,"St. Louis, MO-IL",metro
+29187,22100,"Farmington, MO",micro
+29189,41180,"St. Louis, MO-IL",metro
+29195,32180,"Marshall, MO",micro
+29197,28860,"Kirksville, MO",micro
+29201,43460,"Sikeston, MO",micro
+29209,14700,"Branson, MO",micro
+29213,14700,"Branson, MO",micro
+29219,41180,"St. Louis, MO-IL",metro
+29225,44180,"Springfield, MO",metro
+29510,41180,"St. Louis, MO-IL",metro
+30009,13740,"Billings, MT",metro
+30013,24500,"Great Falls, MT",metro
+30029,28060,"Kalispell, MT",micro
+30031,14580,"Bozeman, MT",micro
+30037,13740,"Billings, MT",metro
+30043,25740,"Helena, MT",micro
+30049,25740,"Helena, MT",micro
+30063,33540,"Missoula, MT",metro
+30093,15580,"Butte-Silver Bow, MT",micro
+30111,13740,"Billings, MT",metro
+31001,25580,"Hastings, NE",micro
+31007,42420,"Scottsbluff, NE",micro
+31019,28260,"Kearney, NE",micro
+31025,36540,"Omaha-Council Bluffs, NE-IA",metro
+31043,43580,"Sioux City, IA-NE-SD",metro
+31047,30420,"Lexington, NE",micro
+31051,43580,"Sioux City, IA-NE-SD",metro
+31053,23340,"Fremont, NE",micro
+31055,36540,"Omaha-Council Bluffs, NE-IA",metro
+31067,13100,"Beatrice, NE",micro
+31073,30420,"Lexington, NE",micro
+31079,24260,"Grand Island, NE",metro
+31081,24260,"Grand Island, NE",metro
+31093,24260,"Grand Island, NE",metro
+31099,28260,"Kearney, NE",micro
+31109,30700,"Lincoln, NE",metro
+31111,35820,"North Platte, NE",micro
+31113,35820,"North Platte, NE",micro
+31117,35820,"North Platte, NE",micro
+31119,35740,"Norfolk, NE",micro
+31121,24260,"Grand Island, NE",metro
+31139,35740,"Norfolk, NE",micro
+31141,18100,"Columbus, NE",micro
+31153,36540,"Omaha-Council Bluffs, NE-IA",metro
+31155,36540,"Omaha-Council Bluffs, NE-IA",metro
+31157,42420,"Scottsbluff, NE",micro
+31159,30700,"Lincoln, NE",metro
+31165,42420,"Scottsbluff, NE",micro
+31167,35740,"Norfolk, NE",micro
+31177,36540,"Omaha-Council Bluffs, NE-IA",metro
+32001,21980,"Fallon, NV",micro
+32003,29820,"Las Vegas-Henderson-Paradise, NV",metro
+32005,23820,"Gardnerville Ranchos, NV",micro
+32007,21220,"Elko, NV",micro
+32011,21220,"Elko, NV",micro
+32013,49080,"Winnemucca, NV",micro
+32019,22280,"Fernley, NV",micro
+32023,37220,"Pahrump, NV",micro
+32029,39900,"Reno, NV",metro
+32031,39900,"Reno, NV",metro
+32510,16180,"Carson City, NV",metro
+33001,29060,"Laconia, NH",micro
+33005,28300,"Keene, NH",micro
+33007,13620,"Berlin, NH-VT",micro
+33009,17200,"Claremont-Lebanon, NH-VT",micro
+33011,31700,"Manchester-Nashua, NH",metro
+33013,18180,"Concord, NH",micro
+33015,14460,"Boston-Cambridge-Newton, MA-NH",metro
+33017,14460,"Boston-Cambridge-Newton, MA-NH",metro
+33019,17200,"Claremont-Lebanon, NH-VT",micro
+34001,12100,"Atlantic City-Hammonton, NJ",metro
+34003,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34005,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+34007,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+34009,36140,"Ocean City, NJ",metro
+34011,47220,"Vineland-Bridgeton, NJ",metro
+34013,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34015,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+34017,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34019,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34021,45940,"Trenton, NJ",metro
+34023,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34025,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34027,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34029,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34031,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34033,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+34035,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34037,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34039,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+34041,10900,"Allentown-Bethlehem-Easton, PA-NJ",metro
+35001,10740,"Albuquerque, NM",metro
+35005,40740,"Roswell, NM",micro
+35006,24380,"Grants, NM",micro
+35009,17580,"Clovis, NM",micro
+35013,29740,"Las Cruces, NM",metro
+35015,16100,"Carlsbad-Artesia, NM",micro
+35017,43500,"Silver City, NM",micro
+35025,26020,"Hobbs, NM",micro
+35027,40760,"Ruidoso, NM",micro
+35028,31060,"Los Alamos, NM",micro
+35029,19700,"Deming, NM",micro
+35031,23700,"Gallup, NM",micro
+35035,10460,"Alamogordo, NM",micro
+35039,21580,"Española, NM",micro
+35041,38780,"Portales, NM",micro
+35043,10740,"Albuquerque, NM",metro
+35045,22140,"Farmington, NM",metro
+35047,29780,"Las Vegas, NM",micro
+35049,42140,"Santa Fe, NM",metro
+35055,45340,"Taos, NM",micro
+35057,10740,"Albuquerque, NM",metro
+35061,10740,"Albuquerque, NM",metro
+36001,10580,"Albany-Schenectady-Troy, NY",metro
+36005,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36007,13780,"Binghamton, NY",metro
+36009,36460,"Olean, NY",micro
+36011,12180,"Auburn, NY",micro
+36013,27460,"Jamestown-Dunkirk-Fredonia, NY",micro
+36015,21300,"Elmira, NY",metro
+36019,38460,"Plattsburgh, NY",micro
+36021,26460,"Hudson, NY",micro
+36023,18660,"Cortland, NY",micro
+36027,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36029,15380,"Buffalo-Cheektowaga-Niagara Falls, NY",metro
+36033,31660,"Malone, NY",micro
+36035,24100,"Gloversville, NY",micro
+36037,12860,"Batavia, NY",micro
+36043,46540,"Utica-Rome, NY",metro
+36045,48060,"Watertown-Fort Drum, NY",metro
+36047,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36051,40380,"Rochester, NY",metro
+36053,45060,"Syracuse, NY",metro
+36055,40380,"Rochester, NY",metro
+36057,11220,"Amsterdam, NY",micro
+36059,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36061,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36063,15380,"Buffalo-Cheektowaga-Niagara Falls, NY",metro
+36065,46540,"Utica-Rome, NY",metro
+36067,45060,"Syracuse, NY",metro
+36069,40380,"Rochester, NY",metro
+36071,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36073,40380,"Rochester, NY",metro
+36075,45060,"Syracuse, NY",metro
+36077,36580,"Oneonta, NY",micro
+36079,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36081,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36083,10580,"Albany-Schenectady-Troy, NY",metro
+36085,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36087,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36089,36300,"Ogdensburg-Massena, NY",micro
+36091,10580,"Albany-Schenectady-Troy, NY",metro
+36093,10580,"Albany-Schenectady-Troy, NY",metro
+36095,10580,"Albany-Schenectady-Troy, NY",metro
+36099,42900,"Seneca Falls, NY",micro
+36101,18500,"Corning, NY",micro
+36103,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36107,13780,"Binghamton, NY",metro
+36109,27060,"Ithaca, NY",metro
+36111,28740,"Kingston, NY",metro
+36113,24020,"Glens Falls, NY",metro
+36115,24020,"Glens Falls, NY",metro
+36117,40380,"Rochester, NY",metro
+36119,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+36123,40380,"Rochester, NY",metro
+37001,15500,"Burlington, NC",metro
+37003,25860,"Hickory-Lenoir-Morganton, NC",metro
+37013,47820,"Washington, NC",micro
+37019,34820,"Myrtle Beach-Conway-North Myrtle Beach, SC-NC",metro
+37021,11700,"Asheville, NC",metro
+37023,25860,"Hickory-Lenoir-Morganton, NC",metro
+37025,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+37027,25860,"Hickory-Lenoir-Morganton, NC",metro
+37029,21020,"Elizabeth City, NC",micro
+37031,33980,"Morehead City, NC",micro
+37035,25860,"Hickory-Lenoir-Morganton, NC",metro
+37037,20500,"Durham-Chapel Hill, NC",metro
+37045,43140,"Shelby, NC",micro
+37049,35100,"New Bern, NC",metro
+37051,22180,"Fayetteville, NC",metro
+37053,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+37055,28620,"Kill Devil Hills, NC",micro
+37057,49180,"Winston-Salem, NC",metro
+37059,49180,"Winston-Salem, NC",metro
+37063,20500,"Durham-Chapel Hill, NC",metro
+37065,40580,"Rocky Mount, NC",metro
+37067,49180,"Winston-Salem, NC",metro
+37069,39580,"Raleigh, NC",metro
+37071,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+37073,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+37077,37080,"Oxford, NC",micro
+37081,24660,"Greensboro-High Point, NC",metro
+37083,40260,"Roanoke Rapids, NC",micro
+37085,20380,"Dunn, NC",micro
+37087,11700,"Asheville, NC",metro
+37089,11700,"Asheville, NC",metro
+37093,22180,"Fayetteville, NC",metro
+37097,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+37099,19000,"Cullowhee, NC",micro
+37101,39580,"Raleigh, NC",metro
+37103,35100,"New Bern, NC",metro
+37105,41820,"Sanford, NC",micro
+37107,28820,"Kinston, NC",micro
+37109,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+37111,32000,"Marion, NC",micro
+37115,11700,"Asheville, NC",metro
+37119,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+37125,38240,"Pinehurst-Southern Pines, NC",micro
+37127,40580,"Rocky Mount, NC",metro
+37129,48900,"Wilmington, NC",metro
+37131,40260,"Roanoke Rapids, NC",micro
+37133,27340,"Jacksonville, NC",metro
+37135,20500,"Durham-Chapel Hill, NC",metro
+37137,35100,"New Bern, NC",metro
+37139,21020,"Elizabeth City, NC",micro
+37141,48900,"Wilmington, NC",metro
+37143,21020,"Elizabeth City, NC",micro
+37145,20500,"Durham-Chapel Hill, NC",metro
+37147,24780,"Greenville, NC",metro
+37151,24660,"Greensboro-High Point, NC",metro
+37153,40460,"Rockingham, NC",micro
+37155,31300,"Lumberton, NC",micro
+37157,24660,"Greensboro-High Point, NC",metro
+37159,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+37161,22580,"Forest City, NC",micro
+37165,29900,"Laurinburg, NC",micro
+37167,10620,"Albemarle, NC",micro
+37169,49180,"Winston-Salem, NC",metro
+37171,34340,"Mount Airy, NC",micro
+37175,14820,"Brevard, NC",micro
+37177,28620,"Kill Devil Hills, NC",micro
+37179,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+37181,25780,"Henderson, NC",micro
+37183,39580,"Raleigh, NC",metro
+37189,14380,"Boone, NC",micro
+37191,24140,"Goldsboro, NC",metro
+37193,35900,"North Wilkesboro, NC",micro
+37195,48980,"Wilson, NC",micro
+37197,49180,"Winston-Salem, NC",metro
+38015,13900,"Bismarck, ND",metro
+38017,22020,"Fargo, ND-MN",metro
+38035,24220,"Grand Forks, ND-MN",metro
+38049,33500,"Minot, ND",micro
+38059,13900,"Bismarck, ND",metro
+38065,13900,"Bismarck, ND",metro
+38075,33500,"Minot, ND",micro
+38077,47420,"Wahpeton, ND-MN",micro
+38085,13900,"Bismarck, ND",metro
+38089,19860,"Dickinson, ND",micro
+38093,27420,"Jamestown, ND",micro
+38101,33500,"Minot, ND",micro
+38105,48780,"Williston, ND",micro
+39003,30620,"Lima, OH",metro
+39005,11740,"Ashland, OH",micro
+39007,11780,"Ashtabula, OH",micro
+39009,11900,"Athens, OH",micro
+39011,47540,"Wapakoneta, OH",micro
+39013,48540,"Wheeling, WV-OH",metro
+39015,17140,"Cincinnati, OH-KY-IN",metro
+39017,17140,"Cincinnati, OH-KY-IN",metro
+39019,15940,"Canton-Massillon, OH",metro
+39021,46500,"Urbana, OH",micro
+39023,44220,"Springfield, OH",metro
+39025,17140,"Cincinnati, OH-KY-IN",metro
+39027,48940,"Wilmington, OH",micro
+39029,41400,"Salem, OH",micro
+39031,18740,"Coshocton, OH",micro
+39033,15340,"Bucyrus, OH",micro
+39035,17460,"Cleveland-Elyria, OH",metro
+39037,24820,"Greenville, OH",micro
+39039,19580,"Defiance, OH",micro
+39041,18140,"Columbus, OH",metro
+39043,41780,"Sandusky, OH",micro
+39045,18140,"Columbus, OH",metro
+39047,47920,"Washington Court House, OH",micro
+39049,18140,"Columbus, OH",metro
+39051,45780,"Toledo, OH",metro
+39053,38580,"Point Pleasant, WV-OH",micro
+39055,17460,"Cleveland-Elyria, OH",metro
+39057,19380,"Dayton, OH",metro
+39059,15740,"Cambridge, OH",micro
+39061,17140,"Cincinnati, OH-KY-IN",metro
+39063,22300,"Findlay, OH",micro
+39073,18140,"Columbus, OH",metro
+39077,35940,"Norwalk, OH",micro
+39079,27160,"Jackson, OH",micro
+39081,48260,"Weirton-Steubenville, WV-OH",metro
+39083,34540,"Mount Vernon, OH",micro
+39085,17460,"Cleveland-Elyria, OH",metro
+39087,26580,"Huntington-Ashland, WV-KY-OH",metro
+39089,18140,"Columbus, OH",metro
+39091,13340,"Bellefontaine, OH",micro
+39093,17460,"Cleveland-Elyria, OH",metro
+39095,45780,"Toledo, OH",metro
+39097,18140,"Columbus, OH",metro
+39099,49660,"Youngstown-Warren-Boardman, OH-PA",metro
+39101,32020,"Marion, OH",micro
+39103,17460,"Cleveland-Elyria, OH",metro
+39107,16380,"Celina, OH",micro
+39109,19380,"Dayton, OH",metro
+39113,19380,"Dayton, OH",metro
+39117,18140,"Columbus, OH",metro
+39119,49780,"Zanesville, OH",micro
+39123,38840,"Port Clinton, OH",micro
+39127,18140,"Columbus, OH",metro
+39129,18140,"Columbus, OH",metro
+39133,10420,"Akron, OH",metro
+39139,31900,"Mansfield, OH",metro
+39141,17060,"Chillicothe, OH",micro
+39143,23380,"Fremont, OH",micro
+39145,39020,"Portsmouth, OH",micro
+39147,45660,"Tiffin, OH",micro
+39149,43380,"Sidney, OH",micro
+39151,15940,"Canton-Massillon, OH",metro
+39153,10420,"Akron, OH",metro
+39155,49660,"Youngstown-Warren-Boardman, OH-PA",metro
+39157,35420,"New Philadelphia-Dover, OH",micro
+39159,18140,"Columbus, OH",metro
+39161,46780,"Van Wert, OH",micro
+39165,17140,"Cincinnati, OH-KY-IN",metro
+39167,31930,"Marietta, OH",micro
+39169,49300,"Wooster, OH",micro
+39173,45780,"Toledo, OH",metro
+40009,21120,"Elk City, OK",micro
+40013,20460,"Durant, OK",micro
+40017,36420,"Oklahoma City, OK",metro
+40019,11620,"Ardmore, OK",micro
+40021,45140,"Tahlequah, OK",micro
+40027,36420,"Oklahoma City, OK",metro
+40031,30020,"Lawton, OK",metro
+40033,30020,"Lawton, OK",metro
+40037,46140,"Tulsa, OK",metro
+40039,48220,"Weatherford, OK",micro
+40047,21420,"Enid, OK",metro
+40051,36420,"Oklahoma City, OK",metro
+40065,11060,"Altus, OK",micro
+40071,38620,"Ponca City, OK",micro
+40079,22900,"Fort Smith, AR-OK",metro
+40081,36420,"Oklahoma City, OK",metro
+40083,36420,"Oklahoma City, OK",metro
+40087,36420,"Oklahoma City, OK",metro
+40101,34780,"Muskogee, OK",micro
+40109,36420,"Oklahoma City, OK",metro
+40111,46140,"Tulsa, OK",metro
+40113,46140,"Tulsa, OK",metro
+40115,33060,"Miami, OK",micro
+40117,46140,"Tulsa, OK",metro
+40119,44660,"Stillwater, OK",micro
+40121,32540,"McAlester, OK",micro
+40123,10220,"Ada, OK",micro
+40125,43060,"Shawnee, OK",micro
+40131,46140,"Tulsa, OK",metro
+40135,22900,"Fort Smith, AR-OK",metro
+40137,20340,"Duncan, OK",micro
+40139,25100,"Guymon, OK",micro
+40143,46140,"Tulsa, OK",metro
+40145,46140,"Tulsa, OK",metro
+40147,12780,"Bartlesville, OK",micro
+40153,49260,"Woodward, OK",micro
+41003,18700,"Corvallis, OR",metro
+41005,38900,"Portland-Vancouver-Hillsboro, OR-WA",metro
+41007,11820,"Astoria, OR",micro
+41009,38900,"Portland-Vancouver-Hillsboro, OR-WA",metro
+41011,18300,"Coos Bay, OR",micro
+41013,39260,"Prineville, OR",micro
+41015,15060,"Brookings, OR",micro
+41017,13460,"Bend-Redmond, OR",metro
+41019,40700,"Roseburg, OR",micro
+41027,26220,"Hood River, OR",micro
+41029,32780,"Medford, OR",metro
+41033,24420,"Grants Pass, OR",metro
+41035,28900,"Klamath Falls, OR",micro
+41039,21660,"Eugene, OR",metro
+41041,35440,"Newport, OR",micro
+41043,10540,"Albany, OR",metro
+41045,36620,"Ontario, OR-ID",micro
+41047,41420,"Salem, OR",metro
+41049,25840,"Hermiston-Pendleton, OR",micro
+41051,38900,"Portland-Vancouver-Hillsboro, OR-WA",metro
+41053,41420,"Salem, OR",metro
+41059,25840,"Hermiston-Pendleton, OR",micro
+41061,29260,"La Grande, OR",micro
+41065,45520,"The Dalles, OR",micro
+41067,38900,"Portland-Vancouver-Hillsboro, OR-WA",metro
+41071,38900,"Portland-Vancouver-Hillsboro, OR-WA",metro
+42001,23900,"Gettysburg, PA",metro
+42003,38300,"Pittsburgh, PA",metro
+42005,38300,"Pittsburgh, PA",metro
+42007,38300,"Pittsburgh, PA",metro
+42011,39740,"Reading, PA",metro
+42013,11020,"Altoona, PA",metro
+42015,42380,"Sayre, PA",micro
+42017,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+42019,38300,"Pittsburgh, PA",metro
+42021,27780,"Johnstown, PA",metro
+42025,10900,"Allentown-Bethlehem-Easton, PA-NJ",metro
+42027,44300,"State College, PA",metro
+42029,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+42033,20180,"DuBois, PA",micro
+42035,30820,"Lock Haven, PA",micro
+42037,14100,"Bloomsburg-Berwick, PA",metro
+42039,32740,"Meadville, PA",micro
+42041,25420,"Harrisburg-Carlisle, PA",metro
+42043,25420,"Harrisburg-Carlisle, PA",metro
+42045,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+42047,41260,"St. Marys, PA",micro
+42049,21500,"Erie, PA",metro
+42051,38300,"Pittsburgh, PA",metro
+42055,16540,"Chambersburg-Waynesboro, PA",metro
+42061,26500,"Huntingdon, PA",micro
+42063,26860,"Indiana, PA",micro
+42069,42540,"Scranton--Wilkes-Barre--Hazleton, PA",metro
+42071,29540,"Lancaster, PA",metro
+42073,35260,"New Castle, PA",micro
+42075,30140,"Lebanon, PA",metro
+42077,10900,"Allentown-Bethlehem-Easton, PA-NJ",metro
+42079,42540,"Scranton--Wilkes-Barre--Hazleton, PA",metro
+42081,48700,"Williamsport, PA",metro
+42083,14620,"Bradford, PA",micro
+42085,49660,"Youngstown-Warren-Boardman, OH-PA",metro
+42087,30380,"Lewistown, PA",micro
+42089,20700,"East Stroudsburg, PA",metro
+42091,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+42093,14100,"Bloomsburg-Berwick, PA",metro
+42095,10900,"Allentown-Bethlehem-Easton, PA-NJ",metro
+42097,44980,"Sunbury, PA",micro
+42099,25420,"Harrisburg-Carlisle, PA",metro
+42101,37980,"Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",metro
+42103,35620,"New York-Newark-Jersey City, NY-NJ-PA",metro
+42107,39060,"Pottsville, PA",micro
+42109,42780,"Selinsgrove, PA",micro
+42111,43740,"Somerset, PA",micro
+42119,30260,"Lewisburg, PA",micro
+42121,36340,"Oil City, PA",micro
+42123,47620,"Warren, PA",micro
+42125,38300,"Pittsburgh, PA",metro
+42129,38300,"Pittsburgh, PA",metro
+42131,42540,"Scranton--Wilkes-Barre--Hazleton, PA",metro
+42133,49620,"York-Hanover, PA",metro
+44001,39300,"Providence-Warwick, RI-MA",metro
+44003,39300,"Providence-Warwick, RI-MA",metro
+44005,39300,"Providence-Warwick, RI-MA",metro
+44007,39300,"Providence-Warwick, RI-MA",metro
+44009,39300,"Providence-Warwick, RI-MA",metro
+45001,24940,"Greenwood, SC",micro
+45003,12260,"Augusta-Richmond County, GA-SC",metro
+45007,24860,"Greenville-Anderson-Mauldin, SC",metro
+45013,25940,"Hilton Head Island-Bluffton-Beaufort, SC",metro
+45015,16700,"Charleston-North Charleston, SC",metro
+45017,17900,"Columbia, SC",metro
+45019,16700,"Charleston-North Charleston, SC",metro
+45021,23500,"Gaffney, SC",micro
+45023,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+45031,22500,"Florence, SC",metro
+45035,16700,"Charleston-North Charleston, SC",metro
+45037,12260,"Augusta-Richmond County, GA-SC",metro
+45039,17900,"Columbia, SC",metro
+45041,22500,"Florence, SC",metro
+45043,23860,"Georgetown, SC",micro
+45045,24860,"Greenville-Anderson-Mauldin, SC",metro
+45047,24940,"Greenwood, SC",micro
+45051,34820,"Myrtle Beach-Conway-North Myrtle Beach, SC-NC",metro
+45053,25940,"Hilton Head Island-Bluffton-Beaufort, SC",metro
+45055,17900,"Columbia, SC",metro
+45057,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+45059,24860,"Greenville-Anderson-Mauldin, SC",metro
+45063,17900,"Columbia, SC",metro
+45069,13500,"Bennettsville, SC",micro
+45071,35140,"Newberry, SC",micro
+45073,42860,"Seneca, SC",micro
+45075,36700,"Orangeburg, SC",micro
+45077,24860,"Greenville-Anderson-Mauldin, SC",metro
+45079,17900,"Columbia, SC",metro
+45081,17900,"Columbia, SC",metro
+45083,43900,"Spartanburg, SC",metro
+45085,44940,"Sumter, SC",metro
+45087,43900,"Spartanburg, SC",metro
+45091,16740,"Charlotte-Concord-Gastonia, NC-SC",metro
+46005,26700,"Huron, SD",micro
+46011,15100,"Brookings, SD",micro
+46013,10100,"Aberdeen, SD",micro
+46027,46820,"Vermillion, SD",micro
+46029,47980,"Watertown, SD",micro
+46033,39660,"Rapid City, SD",metro
+46035,33580,"Mitchell, SD",micro
+46045,10100,"Aberdeen, SD",micro
+46061,33580,"Mitchell, SD",micro
+46065,38180,"Pierre, SD",micro
+46081,43940,"Spearfish, SD",micro
+46083,43620,"Sioux Falls, SD",metro
+46087,43620,"Sioux Falls, SD",metro
+46093,39660,"Rapid City, SD",metro
+46099,43620,"Sioux Falls, SD",metro
+46103,39660,"Rapid City, SD",metro
+46117,38180,"Pierre, SD",micro
+46119,38180,"Pierre, SD",micro
+46125,43620,"Sioux Falls, SD",metro
+46127,43580,"Sioux City, IA-NE-SD",metro
+46135,49460,"Yankton, SD",micro
+47001,28940,"Knoxville, TN",metro
+47003,43180,"Shelbyville, TN",micro
+47009,28940,"Knoxville, TN",metro
+47011,17420,"Cleveland, TN",metro
+47013,28940,"Knoxville, TN",metro
+47015,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47019,27740,"Johnson City, TN",metro
+47021,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47023,27180,"Jackson, TN",metro
+47029,35460,"Newport, TN",micro
+47031,46100,"Tullahoma-Manchester, TN",micro
+47033,27180,"Jackson, TN",metro
+47035,18900,"Crossville, TN",micro
+47037,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47043,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47045,20540,"Dyersburg, TN",micro
+47047,32820,"Memphis, TN-MS-AR",metro
+47051,46100,"Tullahoma-Manchester, TN",micro
+47057,28940,"Knoxville, TN",metro
+47059,24620,"Greeneville, TN",micro
+47063,34100,"Morristown, TN",metro
+47065,16860,"Chattanooga, TN-GA",metro
+47073,28700,"Kingsport-Bristol-Bristol, TN-VA",metro
+47075,15140,"Brownsville, TN",micro
+47079,37540,"Paris, TN",micro
+47081,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47087,18260,"Cookeville, TN",micro
+47089,34100,"Morristown, TN",metro
+47093,28940,"Knoxville, TN",metro
+47099,29980,"Lawrenceburg, TN",micro
+47105,28940,"Knoxville, TN",metro
+47107,11940,"Athens, TN",micro
+47111,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47113,27180,"Jackson, TN",metro
+47115,16860,"Chattanooga, TN-GA",metro
+47117,30280,"Lewisburg, TN",micro
+47119,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47125,17300,"Clarksville, TN-KY",metro
+47127,46100,"Tullahoma-Manchester, TN",micro
+47129,28940,"Knoxville, TN",metro
+47131,46460,"Union City, TN-KY",micro
+47133,18260,"Cookeville, TN",micro
+47139,17420,"Cleveland, TN",metro
+47141,18260,"Cookeville, TN",micro
+47143,19420,"Dayton, TN",micro
+47145,28940,"Knoxville, TN",metro
+47147,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47149,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47153,16860,"Chattanooga, TN-GA",metro
+47155,42940,"Sevierville, TN",micro
+47157,32820,"Memphis, TN-MS-AR",metro
+47159,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47163,28700,"Kingsport-Bristol-Bristol, TN-VA",metro
+47165,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47167,32820,"Memphis, TN-MS-AR",metro
+47169,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47171,27740,"Johnson City, TN",metro
+47173,28940,"Knoxville, TN",metro
+47177,32660,"McMinnville, TN",micro
+47179,27740,"Johnson City, TN",metro
+47183,32280,"Martin, TN",micro
+47187,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+47189,34980,"Nashville-Davidson--Murfreesboro--Franklin, TN",metro
+48001,37300,"Palestine, TX",micro
+48003,11380,"Andrews, TX",micro
+48005,31260,"Lufkin, TX",micro
+48007,18580,"Corpus Christi, TX",metro
+48009,48660,"Wichita Falls, TX",metro
+48011,11100,"Amarillo, TX",metro
+48013,41700,"San Antonio-New Braunfels, TX",metro
+48015,26420,"Houston-The Woodlands-Sugar Land, TX",metro
+48019,41700,"San Antonio-New Braunfels, TX",metro
+48021,12420,"Austin-Round Rock, TX",metro
+48025,13300,"Beeville, TX",micro
+48027,28660,"Killeen-Temple, TX",metro
+48029,41700,"San Antonio-New Braunfels, TX",metro
+48037,45500,"Texarkana, TX-AR",metro
+48039,26420,"Houston-The Woodlands-Sugar Land, TX",metro
+48041,17780,"College Station-Bryan, TX",metro
+48049,15220,"Brownwood, TX",micro
+48051,17780,"College Station-Bryan, TX",metro
+48055,12420,"Austin-Round Rock, TX",metro
+48057,38920,"Port Lavaca, TX",micro
+48059,10180,"Abilene, TX",metro
+48061,15180,"Brownsville-Harlingen, TX",metro
+48065,11100,"Amarillo, TX",metro
+48071,26420,"Houston-The Woodlands-Sugar Land, TX",metro
+48073,27380,"Jacksonville, TX",micro
+48077,48660,"Wichita Falls, TX",metro
+48085,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48091,41700,"San Antonio-New Braunfels, TX",metro
+48097,23620,"Gainesville, TX",micro
+48099,28660,"Killeen-Temple, TX",metro
+48107,31180,"Lubbock, TX",metro
+48113,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48115,29500,"Lamesa, TX",micro
+48117,25820,"Hereford, TX",micro
+48121,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48135,36220,"Odessa, TX",metro
+48139,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48141,21340,"El Paso, TX",metro
+48143,44500,"Stephenville, TX",micro
+48145,47380,"Waco, TX",metro
+48147,14300,"Bonham, TX",micro
+48157,26420,"Houston-The Woodlands-Sugar Land, TX",metro
+48167,26420,"Houston-The Woodlands-Sugar Land, TX",metro
+48171,23240,"Fredericksburg, TX",micro
+48173,13700,"Big Spring, TX",micro
+48175,47020,"Victoria, TX",metro
+48179,37420,"Pampa, TX",micro
+48181,43300,"Sherman-Denison, TX",metro
+48183,30980,"Longview, TX",metro
+48187,41700,"San Antonio-New Braunfels, TX",metro
+48189,38380,"Plainview, TX",micro
+48199,13140,"Beaumont-Port Arthur, TX",metro
+48201,26420,"Houston-The Woodlands-Sugar Land, TX",metro
+48203,32220,"Marshall, TX",micro
+48209,12420,"Austin-Round Rock, TX",metro
+48213,11980,"Athens, TX",micro
+48215,32580,"McAllen-Edinburg-Mission, TX",metro
+48219,30220,"Levelland, TX",micro
+48221,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48223,44860,"Sulphur Springs, TX",micro
+48227,13700,"Big Spring, TX",micro
+48229,21340,"El Paso, TX",metro
+48231,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48233,14420,"Borger, TX",micro
+48235,41660,"San Angelo, TX",metro
+48245,13140,"Beaumont-Port Arthur, TX",metro
+48249,10860,"Alice, TX",micro
+48251,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48253,10180,"Abilene, TX",metro
+48257,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48259,41700,"San Antonio-New Braunfels, TX",metro
+48261,28780,"Kingsville, TX",micro
+48265,28500,"Kerrville, TX",micro
+48273,28780,"Kingsville, TX",micro
+48277,37580,"Paris, TX",micro
+48281,28660,"Killeen-Temple, TX",metro
+48291,26420,"Houston-The Woodlands-Sugar Land, TX",metro
+48303,31180,"Lubbock, TX",metro
+48305,31180,"Lubbock, TX",metro
+48309,47380,"Waco, TX",metro
+48317,33260,"Midland, TX",metro
+48321,13060,"Bay City, TX",micro
+48323,20580,"Eagle Pass, TX",micro
+48325,41700,"San Antonio-New Braunfels, TX",metro
+48329,33260,"Midland, TX",metro
+48339,26420,"Houston-The Woodlands-Sugar Land, TX",metro
+48341,20300,"Dumas, TX",micro
+48347,34860,"Nacogdoches, TX",micro
+48349,18620,"Corsicana, TX",micro
+48351,13140,"Beaumont-Port Arthur, TX",metro
+48353,45020,"Sweetwater, TX",micro
+48355,18580,"Corpus Christi, TX",metro
+48359,11100,"Amarillo, TX",metro
+48361,13140,"Beaumont-Port Arthur, TX",metro
+48363,33420,"Mineral Wells, TX",micro
+48367,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48375,11100,"Amarillo, TX",metro
+48381,11100,"Amarillo, TX",metro
+48389,37780,"Pecos, TX",micro
+48395,17780,"College Station-Bryan, TX",metro
+48397,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48401,30980,"Longview, TX",metro
+48409,18580,"Corpus Christi, TX",metro
+48415,43660,"Snyder, TX",micro
+48423,46340,"Tyler, TX",metro
+48425,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48427,40100,"Rio Grande City, TX",micro
+48439,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48441,10180,"Abilene, TX",metro
+48449,34420,"Mount Pleasant, TX",micro
+48451,41660,"San Angelo, TX",metro
+48453,12420,"Austin-Round Rock, TX",metro
+48455,26660,"Huntsville, TX",micro
+48459,30980,"Longview, TX",metro
+48463,46620,"Uvalde, TX",micro
+48465,19620,"Del Rio, TX",micro
+48469,47020,"Victoria, TX",metro
+48471,26660,"Huntsville, TX",micro
+48473,26420,"Houston-The Woodlands-Sugar Land, TX",metro
+48477,14780,"Brenham, TX",micro
+48479,29700,"Laredo, TX",metro
+48481,20900,"El Campo, TX",micro
+48485,48660,"Wichita Falls, TX",metro
+48487,46900,"Vernon, TX",micro
+48489,39700,"Raymondville, TX",micro
+48491,12420,"Austin-Round Rock, TX",metro
+48493,41700,"San Antonio-New Braunfels, TX",metro
+48497,19100,"Dallas-Fort Worth-Arlington, TX",metro
+48505,49820,"Zapata, TX",micro
+49003,36260,"Ogden-Clearfield, UT",metro
+49005,30860,"Logan, UT-ID",metro
+49007,39220,"Price, UT",micro
+49011,36260,"Ogden-Clearfield, UT",metro
+49021,16260,"Cedar City, UT",micro
+49023,39340,"Provo-Orem, UT",metro
+49029,36260,"Ogden-Clearfield, UT",metro
+49035,41620,"Salt Lake City, UT",metro
+49043,44920,"Summit Park, UT",micro
+49045,41620,"Salt Lake City, UT",metro
+49047,46860,"Vernal, UT",micro
+49049,39340,"Provo-Orem, UT",metro
+49051,25720,"Heber, UT",micro
+49053,41100,"St. George, UT",metro
+49057,36260,"Ogden-Clearfield, UT",metro
+50003,13540,"Bennington, VT",micro
+50007,15540,"Burlington-South Burlington, VT",metro
+50009,13620,"Berlin, NH-VT",micro
+50011,15540,"Burlington-South Burlington, VT",metro
+50013,15540,"Burlington-South Burlington, VT",metro
+50017,17200,"Claremont-Lebanon, NH-VT",micro
+50021,40860,"Rutland, VT",micro
+50023,12740,"Barre, VT",micro
+50027,17200,"Claremont-Lebanon, NH-VT",micro
+51003,16820,"Charlottesville, VA",metro
+51007,40060,"Richmond, VA",metro
+51009,31340,"Lynchburg, VA",metro
+51011,31340,"Lynchburg, VA",metro
+51013,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51015,44420,"Staunton-Waynesboro, VA",metro
+51019,31340,"Lynchburg, VA",metro
+51023,40220,"Roanoke, VA",metro
+51029,16820,"Charlottesville, VA",metro
+51031,31340,"Lynchburg, VA",metro
+51033,40060,"Richmond, VA",metro
+51036,40060,"Richmond, VA",metro
+51041,40060,"Richmond, VA",metro
+51043,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51045,40220,"Roanoke, VA",metro
+51047,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51051,13720,"Big Stone Gap, VA",micro
+51053,40060,"Richmond, VA",metro
+51059,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51061,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51063,13980,"Blacksburg-Christiansburg-Radford, VA",metro
+51065,16820,"Charlottesville, VA",metro
+51067,40220,"Roanoke, VA",metro
+51069,49020,"Winchester, VA-WV",metro
+51071,13980,"Blacksburg-Christiansburg-Radford, VA",metro
+51073,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51075,40060,"Richmond, VA",metro
+51079,16820,"Charlottesville, VA",metro
+51085,40060,"Richmond, VA",metro
+51087,40060,"Richmond, VA",metro
+51089,32300,"Martinsville, VA",micro
+51093,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51095,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51101,40060,"Richmond, VA",metro
+51107,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51115,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51121,13980,"Blacksburg-Christiansburg-Radford, VA",metro
+51125,16820,"Charlottesville, VA",metro
+51127,40060,"Richmond, VA",metro
+51143,19260,"Danville, VA",micro
+51145,40060,"Richmond, VA",metro
+51149,40060,"Richmond, VA",metro
+51153,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51155,13980,"Blacksburg-Christiansburg-Radford, VA",metro
+51157,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51161,40220,"Roanoke, VA",metro
+51165,25500,"Harrisonburg, VA",metro
+51169,28700,"Kingsport-Bristol-Bristol, TN-VA",metro
+51177,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51179,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51183,40060,"Richmond, VA",metro
+51185,14140,"Bluefield, WV-VA",micro
+51187,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51191,28700,"Kingsport-Bristol-Bristol, TN-VA",metro
+51195,13720,"Big Stone Gap, VA",micro
+51199,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51510,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51520,28700,"Kingsport-Bristol-Bristol, TN-VA",metro
+51540,16820,"Charlottesville, VA",metro
+51550,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51570,40060,"Richmond, VA",metro
+51590,19260,"Danville, VA",micro
+51600,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51610,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51630,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51650,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51660,25500,"Harrisonburg, VA",metro
+51670,40060,"Richmond, VA",metro
+51680,31340,"Lynchburg, VA",metro
+51683,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51685,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+51690,32300,"Martinsville, VA",micro
+51700,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51710,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51720,13720,"Big Stone Gap, VA",micro
+51730,40060,"Richmond, VA",metro
+51735,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51740,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51750,13980,"Blacksburg-Christiansburg-Radford, VA",metro
+51760,40060,"Richmond, VA",metro
+51770,40220,"Roanoke, VA",metro
+51775,40220,"Roanoke, VA",metro
+51790,44420,"Staunton-Waynesboro, VA",metro
+51800,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51810,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51820,44420,"Staunton-Waynesboro, VA",metro
+51830,47260,"Virginia Beach-Norfolk-Newport News, VA-NC",metro
+51840,49020,"Winchester, VA-WV",metro
+53001,36830,"Othello, WA",micro
+53003,30300,"Lewiston, ID-WA",metro
+53005,28420,"Kennewick-Richland, WA",metro
+53007,48300,"Wenatchee, WA",metro
+53009,38820,"Port Angeles, WA",micro
+53011,38900,"Portland-Vancouver-Hillsboro, OR-WA",metro
+53013,47460,"Walla Walla, WA",metro
+53015,31020,"Longview, WA",metro
+53017,48300,"Wenatchee, WA",metro
+53021,28420,"Kennewick-Richland, WA",metro
+53025,34180,"Moses Lake, WA",micro
+53027,10140,"Aberdeen, WA",micro
+53029,36020,"Oak Harbor, WA",micro
+53033,42660,"Seattle-Tacoma-Bellevue, WA",metro
+53035,14740,"Bremerton-Silverdale, WA",metro
+53037,21260,"Ellensburg, WA",micro
+53041,16500,"Centralia, WA",micro
+53045,43220,"Shelton, WA",micro
+53051,44060,"Spokane-Spokane Valley, WA",metro
+53053,42660,"Seattle-Tacoma-Bellevue, WA",metro
+53057,34580,"Mount Vernon-Anacortes, WA",metro
+53059,38900,"Portland-Vancouver-Hillsboro, OR-WA",metro
+53061,42660,"Seattle-Tacoma-Bellevue, WA",metro
+53063,44060,"Spokane-Spokane Valley, WA",metro
+53065,44060,"Spokane-Spokane Valley, WA",metro
+53067,36500,"Olympia-Tumwater, WA",metro
+53071,47460,"Walla Walla, WA",metro
+53073,13380,"Bellingham, WA",metro
+53075,39420,"Pullman, WA",micro
+53077,49420,"Yakima, WA",metro
+54003,25180,"Hagerstown-Martinsburg, MD-WV",metro
+54005,16620,"Charleston, WV",metro
+54009,48260,"Weirton-Steubenville, WV-OH",metro
+54011,26580,"Huntington-Ashland, WV-KY-OH",metro
+54015,16620,"Charleston, WV",metro
+54017,17220,"Clarksburg, WV",micro
+54019,13220,"Beckley, WV",metro
+54027,49020,"Winchester, VA-WV",metro
+54029,48260,"Weirton-Steubenville, WV-OH",metro
+54033,17220,"Clarksburg, WV",micro
+54037,47900,"Washington-Arlington-Alexandria, DC-VA-MD-WV",metro
+54039,16620,"Charleston, WV",metro
+54043,26580,"Huntington-Ashland, WV-KY-OH",metro
+54045,30880,"Logan, WV",micro
+54049,21900,"Fairmont, WV",micro
+54051,48540,"Wheeling, WV-OH",metro
+54053,38580,"Point Pleasant, WV-OH",micro
+54055,14140,"Bluefield, WV-VA",micro
+54057,19060,"Cumberland, MD-WV",metro
+54061,34060,"Morgantown, WV",metro
+54069,48540,"Wheeling, WV-OH",metro
+54077,34060,"Morgantown, WV",metro
+54079,26580,"Huntington-Ashland, WV-KY-OH",metro
+54081,13220,"Beckley, WV",metro
+54083,21180,"Elkins, WV",micro
+54091,17220,"Clarksburg, WV",micro
+54099,26580,"Huntington-Ashland, WV-KY-OH",metro
+54105,37620,"Parkersburg-Vienna, WV",metro
+54107,37620,"Parkersburg-Vienna, WV",metro
+55009,24580,"Green Bay, WI",metro
+55015,11540,"Appleton, WI",metro
+55017,20740,"Eau Claire, WI",metro
+55021,31540,"Madison, WI",metro
+55025,31540,"Madison, WI",metro
+55027,13180,"Beaver Dam, WI",micro
+55031,20260,"Duluth, MN-WI",metro
+55033,32860,"Menomonie, WI",micro
+55035,20740,"Eau Claire, WI",metro
+55037,27020,"Iron Mountain, MI-WI",micro
+55039,22540,"Fond du Lac, WI",metro
+55043,38420,"Platteville, WI",micro
+55045,31540,"Madison, WI",metro
+55049,31540,"Madison, WI",metro
+55055,48020,"Watertown-Fort Atkinson, WI",micro
+55059,16980,"Chicago-Naperville-Elgin, IL-IN-WI",metro
+55061,24580,"Green Bay, WI",metro
+55063,29100,"La Crosse-Onalaska, WI-MN",metro
+55069,32980,"Merrill, WI",micro
+55071,31820,"Manitowoc, WI",micro
+55073,48140,"Wausau, WI",metro
+55075,31940,"Marinette, WI-MI",micro
+55078,43020,"Shawano, WI",micro
+55079,33340,"Milwaukee-Waukesha-West Allis, WI",metro
+55083,24580,"Green Bay, WI",metro
+55087,11540,"Appleton, WI",metro
+55089,33340,"Milwaukee-Waukesha-West Allis, WI",metro
+55093,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+55097,44620,"Stevens Point, WI",micro
+55101,39540,"Racine, WI",metro
+55105,27500,"Janesville-Beloit, WI",metro
+55109,33460,"Minneapolis-St. Paul-Bloomington, MN-WI",metro
+55111,12660,"Baraboo, WI",micro
+55115,43020,"Shawano, WI",micro
+55117,43100,"Sheboygan, WI",metro
+55127,48580,"Whitewater-Elkhorn, WI",micro
+55131,33340,"Milwaukee-Waukesha-West Allis, WI",metro
+55133,33340,"Milwaukee-Waukesha-West Allis, WI",metro
+55139,36780,"Oshkosh-Neenah, WI",metro
+55141,49220,"Wisconsin Rapids-Marshfield, WI",micro
+56001,29660,"Laramie, WY",micro
+56005,23940,"Gillette, WY",micro
+56013,40180,"Riverton, WY",micro
+56021,16940,"Cheyenne, WY",metro
+56025,16220,"Casper, WY",metro
+56033,43260,"Sheridan, WY",micro
+56037,40540,"Rock Springs, WY",micro
+56039,27220,"Jackson, WY-ID",micro
+56041,21740,"Evanston, WY",micro
+72001,10260,"Adjuntas, PR",micro
+72003,10380,"Aguadilla-Isabela, PR",metro
+72005,10380,"Aguadilla-Isabela, PR",metro
+72007,41980,"San Juan-Carolina-Caguas, PR",metro
+72009,41980,"San Juan-Carolina-Caguas, PR",metro
+72011,10380,"Aguadilla-Isabela, PR",metro
+72013,11640,"Arecibo, PR",metro
+72015,25020,"Guayama, PR",metro
+72017,41980,"San Juan-Carolina-Caguas, PR",metro
+72019,41980,"San Juan-Carolina-Caguas, PR",metro
+72021,41980,"San Juan-Carolina-Caguas, PR",metro
+72023,41900,"San Germán, PR",metro
+72025,41980,"San Juan-Carolina-Caguas, PR",metro
+72027,11640,"Arecibo, PR",metro
+72029,41980,"San Juan-Carolina-Caguas, PR",metro
+72031,41980,"San Juan-Carolina-Caguas, PR",metro
+72033,41980,"San Juan-Carolina-Caguas, PR",metro
+72035,41980,"San Juan-Carolina-Caguas, PR",metro
+72037,41980,"San Juan-Carolina-Caguas, PR",metro
+72039,41980,"San Juan-Carolina-Caguas, PR",metro
+72041,41980,"San Juan-Carolina-Caguas, PR",metro
+72043,17620,"Coamo, PR",micro
+72045,41980,"San Juan-Carolina-Caguas, PR",metro
+72047,41980,"San Juan-Carolina-Caguas, PR",metro
+72051,41980,"San Juan-Carolina-Caguas, PR",metro
+72053,41980,"San Juan-Carolina-Caguas, PR",metro
+72054,41980,"San Juan-Carolina-Caguas, PR",metro
+72055,38660,"Ponce, PR",metro
+72057,25020,"Guayama, PR",metro
+72059,38660,"Ponce, PR",metro
+72061,41980,"San Juan-Carolina-Caguas, PR",metro
+72063,41980,"San Juan-Carolina-Caguas, PR",metro
+72065,11640,"Arecibo, PR",metro
+72067,32420,"Mayagüez, PR",metro
+72069,41980,"San Juan-Carolina-Caguas, PR",metro
+72071,10380,"Aguadilla-Isabela, PR",metro
+72073,27580,"Jayuya, PR",micro
+72075,38660,"Ponce, PR",metro
+72077,41980,"San Juan-Carolina-Caguas, PR",metro
+72079,41900,"San Germán, PR",metro
+72081,10380,"Aguadilla-Isabela, PR",metro
+72085,41980,"San Juan-Carolina-Caguas, PR",metro
+72087,41980,"San Juan-Carolina-Caguas, PR",metro
+72089,41980,"San Juan-Carolina-Caguas, PR",metro
+72091,41980,"San Juan-Carolina-Caguas, PR",metro
+72095,41980,"San Juan-Carolina-Caguas, PR",metro
+72097,32420,"Mayagüez, PR",metro
+72099,10380,"Aguadilla-Isabela, PR",metro
+72101,41980,"San Juan-Carolina-Caguas, PR",metro
+72103,41980,"San Juan-Carolina-Caguas, PR",metro
+72105,41980,"San Juan-Carolina-Caguas, PR",metro
+72107,41980,"San Juan-Carolina-Caguas, PR",metro
+72109,25020,"Guayama, PR",metro
+72111,38660,"Ponce, PR",metro
+72113,38660,"Ponce, PR",metro
+72115,11640,"Arecibo, PR",metro
+72117,10380,"Aguadilla-Isabela, PR",metro
+72119,41980,"San Juan-Carolina-Caguas, PR",metro
+72121,41900,"San Germán, PR",metro
+72123,17640,"Coco, PR",micro
+72125,41900,"San Germán, PR",metro
+72127,41980,"San Juan-Carolina-Caguas, PR",metro
+72129,41980,"San Juan-Carolina-Caguas, PR",metro
+72131,10380,"Aguadilla-Isabela, PR",metro
+72133,42180,"Santa Isabel, PR",micro
+72135,41980,"San Juan-Carolina-Caguas, PR",metro
+72137,41980,"San Juan-Carolina-Caguas, PR",metro
+72139,41980,"San Juan-Carolina-Caguas, PR",metro
+72141,10380,"Aguadilla-Isabela, PR",metro
+72143,41980,"San Juan-Carolina-Caguas, PR",metro
+72145,41980,"San Juan-Carolina-Caguas, PR",metro
+72149,38660,"Ponce, PR",metro
+72151,41980,"San Juan-Carolina-Caguas, PR",metro
+72153,38660,"Ponce, PR",metro
