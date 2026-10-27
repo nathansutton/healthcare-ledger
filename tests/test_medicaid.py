@@ -86,10 +86,10 @@ def test_missing_zip_and_a_changed_layout_are_user_errors(tmp_path):
     assert not (tmp_path / "wh" / "medicaid.duckdb").exists()
 
 
-def test_medicaid_is_a_reference_source_without_export_tables():
+def test_medicaid_is_a_reference_source_without_published_tables():
     src = sources.by_name("medicaid")
     assert src is medicaid.SOURCE and src.kind == "reference" and not src.versioned and not src.required
-    assert src.export_tables is None and src.snapshots_file is None and src.database == "medicaid"
+    assert src.tables is None and src.snapshots_file is None and src.database == "medicaid"
     assert list(COLUMNS) == ["billing_npi", "servicing_npi", "hcpcs", "month", "patients", "claim_lines", "paid"]
 
 

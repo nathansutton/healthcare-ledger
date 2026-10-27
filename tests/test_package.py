@@ -50,7 +50,7 @@ def test_package_builds_a_verifiable_deposit(source, tmp_path):
     names = {f["name"] for f in files}
     assert {"README.md", "CITATION.cff", "manifest.json", "SHA256SUMS", "data_dictionary.csv", "snapshots.csv",
             "privacy_audit.csv", "LICENSE-DATA.txt", "zenodo.json", "parquet_provider.zip", "parquet_provider_taxonomy.zip",
-            "parquet_endpoint.zip", "csv_provider.zip", "csv_endpoint.zip"} <= names
+            "parquet_provider_endpoint.zip", "csv_provider.zip", "csv_provider_endpoint.zip"} <= names
     assert len(names) + 1 <= 100
     # PACKAGE_SHA256SUMS covers every other file
     sums = dict(reversed(line.split("  ")) for line in (dest / "PACKAGE_SHA256SUMS").read_text().splitlines())

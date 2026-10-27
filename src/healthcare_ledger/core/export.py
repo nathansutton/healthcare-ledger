@@ -10,20 +10,16 @@ Layout of ``--out``::
     snapshots.csv                      one row per loaded snapshot with per-stream counts and fingerprints
     privacy_audit.csv                  independent scan of the written Parquet files for tax ids and SSNs (core.privacy)
     parquet/
-      provider/effective_year=YYYY/    core provider versions (scalar columns)
-      provider_taxonomy/...            long: one row per (version, taxonomy slot)
-      practice_location.parquet        secondary practice location versions
-      other_name.parquet               organization other-name versions
-      endpoint.parquet                 endpoint versions
+      <table>/effective_year=YYYY/     one directory per published table (provider, provider_taxonomy, ...,
+                                       medicare_enrollment, ..., facility)
       provider_monthly/                optional (--monthly-files): provider_YYYY-MM.parquet, one per snapshot
     csv/                               same tables, gzipped CSV (.csv.gz), same partitioning (no monthly files)
 
-Big tables are hive-partitioned by the year of ``effective_date`` so a
-researcher can fetch a slice without the whole thing. DuckDB, Arrow, pandas,
-polars and Spark all read a partitioned directory as one table.
-
-What each source publishes (tables, dictionary rows, ``*_snapshots.csv``) is declared with the source;
-the NPPES tables and the optional monthly files are in ``sources/nppes/export.py``.
+The tables are the views each source publishes (``Source.tables``, ``core.published``), every one
+hive-partitioned by the year of ``effective_date`` so a researcher can fetch a slice without the whole
+thing and reads every table with the same pattern. DuckDB, Arrow, pandas, polars and Spark all read a
+partitioned directory as one table. ``*_snapshots.csv`` is declared with each source and the optional
+monthly files in ``sources/nppes/export.py``.
 
 Write order matters for the release id: data files, then ``SHA256SUMS`` (which fixes the
 id), then README and CITATION (which quote the id), then ``manifest.json`` last. A directory
@@ -44,25 +40,25 @@ import duckdb
 
 from .. import sources
 from ..sources.nppes import export as nppes_export
-from . import privacy, release
+from . import privacy, published, release
 from .connect import configure, open_catalog
 from .errors import PrivacyRefusal, UserError
 
 log = logging.getLogger(__name__)
 
 
-def _copy(con: duckdb.DuckDBPyConnection, sql: str, dest: Path, fmt: str, partition: bool) -> None:
+def _copy(con: duckdb.DuckDBPyConnection, table: str, dest: Path, fmt: str) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     opts = "FORMAT PARQUET, COMPRESSION ZSTD" if fmt == "parquet" else "FORMAT CSV, HEADER, COMPRESSION GZIP"
-    if partition:
-        # Remove the previous export first: partitions that no longer exist would otherwise
-        # survive and be double-counted by glob readers.
-        shutil.rmtree(dest, ignore_errors=True)
-        sql = f"SELECT *, year(effective_date) AS effective_year FROM ({sql})"
-        con.execute(f"COPY ({sql}) TO '{dest}' ({opts}, PARTITION_BY (effective_year), OVERWRITE)")
-    else:
-        suffix = ".parquet" if fmt == "parquet" else ".csv.gz"
-        con.execute(f"COPY ({sql}) TO '{dest.with_suffix(suffix)}' ({opts})")
+    # Remove the previous export first: partitions that no longer exist would otherwise
+    # survive and be double-counted by glob readers.
+    shutil.rmtree(dest, ignore_errors=True)
+    if con.execute(f"SELECT count(*) FROM (SELECT 1 FROM {table} LIMIT 1)").fetchone()[0]:
+        con.execute(f"COPY (SELECT *, year(effective_date) AS effective_year FROM {table}) TO '{dest}' "
+                    f"({opts}, PARTITION_BY (effective_year), OVERWRITE)")
+    else:   # no rows, so no partition: one empty file keeps the table and its columns in the release
+        dest.mkdir()
+        con.execute(f"COPY {table} TO '{dest / ('empty' + ('.parquet' if fmt == 'parquet' else '.csv.gz'))}' ({opts})")
 
 
 _HASH_CHUNK = 16 * 1024 * 1024
@@ -107,11 +103,11 @@ def _file_entries(out: Path, include_csv: bool, include_monthly: bool = False) -
     return entries
 
 
-def write_data_dictionary(path: Path, rows: list[tuple[str, str, str, str, str]] | None = None) -> None:
+def write_data_dictionary(path: Path, rows: list[tuple[str, str, str, str, str]]) -> None:
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["table", "column", "type", "cms_header", "description"])
-        w.writerows(rows if rows is not None else nppes_export.data_dictionary_rows())
+        w.writerows(rows)
 
 
 def export_all(warehouse: Path, out: Path, *, csv: bool = False, threads: int | None = None,
@@ -153,7 +149,8 @@ def export_all(warehouse: Path, out: Path, *, csv: bool = False, threads: int | 
                             + "; ".join(problems[:5]) + (f" (+{len(problems) - 5} more)" if len(problems) > 5 else ""))
 
         # Gate 3: continuity with the latest release of the current edition.
-        dictionary_rows = [r for src in present for r in src.data_dictionary_rows()]
+        tables = [t for src in present for t in src.tables()]
+        dictionary_rows = [r for t in tables for r in published.dictionary_rows(con, t)]
         # The monthly table is always part of the comparison: it is a format choice like --csv, and
         # leaving it out of one export must not block the next.
         dictionary = {(t, c, ty) for t, c, ty, _, _ in dictionary_rows + nppes_export.monthly_dictionary_rows()}
@@ -191,21 +188,17 @@ def export_all(warehouse: Path, out: Path, *, csv: bool = False, threads: int | 
         write_data_dictionary(out / "data_dictionary.csv",
                               dictionary_rows + (nppes_export.monthly_dictionary_rows() if monthly_files else []))
 
-        all_tables: dict[str, tuple[str, bool]] = {}
-        for src in (s for s in sources.SOURCES if s.versioned):
-            if src.name in names:
-                all_tables.update(src.export_tables())
-            else:
-                for name in src.export_tables():    # a stale table from an earlier export must not linger
-                    shutil.rmtree(out / "parquet" / name, ignore_errors=True)
-                    shutil.rmtree(out / "csv" / name, ignore_errors=True)
+        for src in (s for s in sources.SOURCES if s.versioned and s.name not in names):
+            for t in src.tables():    # a stale table from an earlier export must not linger
+                shutil.rmtree(out / "parquet" / t.name, ignore_errors=True)
+                shutil.rmtree(out / "csv" / t.name, ignore_errors=True)
         counts: dict[str, int] = {}
-        for name, (sql, partition) in all_tables.items():
-            log.info("exporting %s", name)
-            counts[name] = con.execute(f"SELECT count(*) FROM ({sql})").fetchone()[0]
-            _copy(con, sql, out / "parquet" / name, "parquet", partition)
+        for t in tables:
+            log.info("exporting %s", t.name)
+            counts[t.name] = con.execute(f"SELECT count(*) FROM {t.name}").fetchone()[0]
+            _copy(con, t.name, out / "parquet" / t.name, "parquet")
             if csv_too:
-                _copy(con, sql, out / "csv" / name, "csv", partition)
+                _copy(con, t.name, out / "csv" / t.name, "csv")
         if monthly_files:
             counts[nppes_export.MONTHLY] = nppes_export._write_monthly(con, out / "parquet" / nppes_export.MONTHLY)
 
@@ -230,7 +223,7 @@ def export_all(warehouse: Path, out: Path, *, csv: bool = False, threads: int | 
         ex_rows = release.example_history(con, ex) if ex else []
         ex_name = None
         if ex:
-            row = con.execute("SELECT coalesce(org_name, last_name || ', ' || first_name, last_name) FROM provider_version "
+            row = con.execute("SELECT coalesce(org_name, last_name || ', ' || first_name, last_name) FROM provider "
                               "WHERE npi = ? AND entity_type IS NOT NULL ORDER BY effective_date DESC LIMIT 1", [ex]).fetchone()
             ex_name = row[0] if row else None
         latest_count = con.execute("SELECT n_npis FROM snapshot_stream WHERE stream = 'provider' ORDER BY snapshot_id DESC LIMIT 1").fetchone()[0]
@@ -240,6 +233,7 @@ def export_all(warehouse: Path, out: Path, *, csv: bool = False, threads: int | 
                                       if "pos" in names else (0, "", ""))
         generated_at = release.now_iso()
         ctx = release.ReadmeContext(
+            tables=[(t.name, t.description) for t in tables],
             release_id=rid, edition=edition, generated_at=generated_at, snapshots=n,
             first_as_of=str(first), last_as_of=str(last),
             distinct_npis=con.execute("SELECT count(DISTINCT npi) FROM provider_version").fetchone()[0],

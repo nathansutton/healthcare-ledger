@@ -61,9 +61,9 @@ from ..core import engine, filesources
 from ..core.columns import Column, header_key
 from ..core.engine import VersionedWarehouse
 from ..core.privacy import free_text_columns, has_token, redact_expr
-from ..core.sql import q, sql_type
+from ..core.published import INTERVAL, Table, interval_columns
+from ..core.sql import q
 from ..core.errors import UserError
-from ..core.versioning import meta_columns
 from .base import Source, quarter_status, recorded_download, recorded_files_gate
 
 log = logging.getLogger(__name__)
@@ -143,8 +143,6 @@ PPEF_STREAM_BY_NAME = {s.name: s for s in PPEF_STREAMS}
 # contains a digit is NULL (SSNs, NPIs and birth dates typed into the middle-name field; CMS's own
 # re-publication of the January 2026 extract removed exactly those values)
 PERSON_NAME_COLUMNS = {"first_name", "middle_name", "last_name"}
-
-META_COLUMNS = meta_columns(KEY)
 
 
 # ------------------------------------------------------------------ discovery
@@ -320,13 +318,6 @@ def check_problems(con: duckdb.DuckDBPyConnection) -> list[str]:
 
 # --------------------------------------------------------------------- export
 SNAPSHOTS_FILE = "medicare_snapshots.csv"
-META_EXPORT = [n for n, _ in META_COLUMNS]
-
-
-def export_tables() -> dict[str, tuple[str, bool]]:
-    """name -> (select sql, partition by year), in the shape export.tables() uses."""
-    return {s.name: (f"SELECT {', '.join(META_EXPORT)}, {', '.join(s.data_columns)} FROM {s.name}_version", True)
-            for s in PPEF_STREAMS}
 
 
 def snapshots_sql() -> str:
@@ -342,34 +333,30 @@ def snapshots_sql() -> str:
             + ", ".join(cols) + " FROM ppef_snapshot s " + " ".join(joins) + " ORDER BY s.snapshot_id")
 
 
-META_DESC = {
-    KEY: "PECOS enrollment id (the key of every PPEF file; one provider can hold several)",
-    "effective_date": "Extract date of the first quarterly file in which this version was observed (inclusive)",
-    "end_date": "Extract date of the first quarterly file in which this version was no longer observed (exclusive); NULL while current",
-    "is_current": "True if this is the latest version and the enrollment id was present in the latest quarterly file",
-    "first_snapshot_id": "Snapshot id (YYYYMMDD of the extract date) that first showed this version",
-    "last_snapshot_id": "Snapshot id that last showed this version",
-    "close_reason": "'changed' if superseded by a new version, 'absent' if the enrollment id disappeared from the file, NULL while current",
-    "version_hash": "MD5 fingerprint of all data columns of this version (set-level for multi-row streams)",
-    "row_seq": "Row number within a multi-row version, ordered by row hash (no meaning beyond uniqueness)",
-}
+def _table(s: PpefStream) -> Table:
+    lead = interval_columns(KEY, s.key_header, "PECOS enrollment id (one provider can hold several enrollments)",
+                            "Extract date", "the enrollment id left the file")
+    select = [KEY, *INTERVAL]
+    if s is ENROLLMENT:
+        select.append("CASE left(enrollment_id, 1) WHEN 'I' THEN 'individual' WHEN 'O' THEN 'organization' END "
+                      "AS enrollee_type")
+        lead += (("enrollee_type", "", "'individual' (a clinician; the enrollment id starts with I) or 'organization' "
+                                       "(a group, facility or supplier; O)"),)
+    cols = []
+    for c in s.columns:
+        desc = ("NULL when it contains a digit (METHODOLOGY 6)" if c.name in PERSON_NAME_COLUMNS
+                else "Formatted SSNs and EINs and nine-digit numbers are replaced by [REDACTED] (METHODOLOGY 2a)"
+                if c.name in free_text_columns(s) else "")
+        if c.hash_optional:
+            desc = (desc + "; " if desc else "") + "Not in every quarter's file; NULL in the others"
+        cols.append((c.name, c.cms_header, desc))
+    return Table(s.name, (KEY,), s.description,
+                 f"SELECT {', '.join(select + s.data_columns)} FROM {s.name}_version", lead + tuple(cols))
 
 
-def data_dictionary_rows() -> list[tuple[str, str, str, str, str]]:
-    rows = []
-    types = {"effective_date": "DATE", "end_date": "DATE", "is_current": "BOOLEAN", "first_snapshot_id": "INTEGER",
-             "last_snapshot_id": "INTEGER", "row_seq": "INTEGER"}
-    for s in PPEF_STREAMS:
-        for m in META_EXPORT:
-            rows.append((s.name, m, types.get(m, "VARCHAR"), s.key_header if m == KEY else "", META_DESC[m]))
-        for c in s.columns:
-            desc = ("NULL when it contains a digit (METHODOLOGY 6)" if c.name in PERSON_NAME_COLUMNS
-                    else "Formatted SSNs and EINs and nine-digit numbers are replaced by [REDACTED] (METHODOLOGY 2a)"
-                    if c.name in free_text_columns(s) else "")
-            if c.hash_optional:
-                desc = (desc + "; " if desc else "") + "Added by CMS later; NULL in earlier quarters and outside the version hash while NULL"
-            rows.append((s.name, c.name, sql_type(c.kind), c.cms_header, desc))
-    return rows
+def tables() -> tuple[Table, ...]:
+    """What PPEF publishes: each file's versions as loaded, the enrollment file with its enrollee type decoded."""
+    return tuple(_table(s) for s in PPEF_STREAMS)
 
 
 # -------------------------------------------------------------------- sources
@@ -446,8 +433,7 @@ SOURCE = Source(
     check_problems=check_problems,
     stored_fingerprints=stored_fingerprints,
     recompute_fingerprints=recompute_fingerprints,
-    export_tables=export_tables,
-    data_dictionary_rows=data_dictionary_rows,
+    tables=tables,
     snapshots_sql=snapshots_sql,
     validate_streams=lambda: [(s.name, KEY, "ppef_snapshot_stream", False) for s in PPEF_STREAMS],
     status=quarter_status("ppef_snapshot"),

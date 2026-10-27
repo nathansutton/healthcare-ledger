@@ -1,7 +1,7 @@
 """A provider graph built from the warehouse: practitioners, the organizations they bill through, and hospitals.
 
 The graph is derived, not loaded: every edge and node comes from tables the warehouse already holds (the
-Medicare PPEF enrollment and reassignment streams, the NPPES provider stream and the POS hospital file), and
+published tables ``medicare_enrollment``, ``medicare_reassignment``, ``provider`` and ``facility``), and
 ``graph-build`` can rebuild it from scratch at any time. docs/METHODOLOGY.md section 8 has the rules and
 docs/designs/provider-graph.md the literature they follow.
 
@@ -19,10 +19,9 @@ Nodes
     hospital department enrollment.
 ``hospital``
     a POS hospital (category 01, active), keyed by CCN, with its location, subtype, beds and control type.
-``facility``
-    an active POS nursing home (skilled nursing and nursing facilities) or home health agency, keyed by CCN,
-    from the QIES file and, once CMS moved the type there, the iQIES file (home health from December 2023,
-    nursing homes from September 2025).
+``post_acute_facility``
+    an active POS nursing home (skilled nursing and nursing facilities) or home health agency, keyed by CCN
+    (``facility_type`` 'nursing_home' or 'home_health' in ``facility``).
 
 Edges
 
@@ -34,9 +33,9 @@ Edges
     the same state by NPPES phone and street number (rule 1), street number within the ZIP (rule 2) or
     phone alone (rule 3). Only active POS hospitals are candidates; an enrollment whose best rule ties
     between two CCNs is not linked.
-``facility_link``
-    organization enrollment -> facility CCN: a skilled nursing facility or home health agency enrollment
-    matched by the same three rules to an active POS facility of the same type.
+``post_acute_link``
+    organization enrollment -> post-acute facility CCN: a skilled nursing facility or home health agency
+    enrollment matched by the same three rules to an active POS facility of the same type.
 
 With ``--compendium``, two annual tables derived from the AHRQ Compendium of U.S. Health Systems source
 (``load --source-name ahrq``; derived/compendium.py) join them:
@@ -89,12 +88,6 @@ FACILITY_TYPES = ("00-09", "00-85", "00-24")
 # PPEF provider types linked to POS nursing homes and home health agencies
 NURSING_HOME_TYPES = ("00-18",)
 HOME_HEALTH_TYPES = ("00-06",)
-# POS codes of those facilities: QIES category (02 SNF/NF, 03 distinct part, 04 SNF, 10 NF; 05 HHA) and the iQIES
-# type and subtype that replaced them (20 with subtypes 16-19; 3)
-POS_NURSING_HOME = ("02", "03", "04", "10")
-IQIES_NURSING_HOME = ("20",)
-POS_HOME_HEALTH = ("05",)
-IQIES_HOME_HEALTH = ("3",)
 
 
 @dataclass(frozen=True)
@@ -120,10 +113,10 @@ TABLES = (
           "practitioner reassigns Medicare benefits to organization"),
     Table("hospital_link", ("enrollment_id",), ("organization_pac_id", "npi", "ccn", "match_rule"),
           "hospital-type enrollment matched to its POS CCN"),
-    Table("facility", ("ccn",),
+    Table("post_acute_facility", ("ccn",),
           ("facility_type", "fac_name", "subtype", "state", "zip5", "county_fips", "beds", "control_type"),
           "active POS nursing homes and home health agencies (QIES, then iQIES)"),
-    Table("facility_link", ("enrollment_id",), ("organization_pac_id", "npi", "ccn", "facility_type", "match_rule"),
+    Table("post_acute_link", ("enrollment_id",), ("organization_pac_id", "npi", "ccn", "facility_type", "match_rule"),
           "skilled nursing facility or home health enrollment matched to its POS CCN"),
 )
 # built from the quarter's tables above, advanced like them, and written with the annual system edges appended
@@ -159,7 +152,7 @@ def _link_sql(enrollment_types: str, candidates: str, same_type: str = "") -> st
                 FROM cand QUALIFY match_rule = min(match_rule) OVER (PARTITION BY enrollment_id))"""
 
 
-def _quarter_sql(d: str, iqies: bool = True) -> dict[str, str]:
+def _quarter_sql(d: str) -> dict[str, str]:
     """The SELECT that gives each table's rows on date d (an ISO date literal)."""
     def asof(alias: str = "") -> str:
         a = f"{alias}." if alias else ""
@@ -168,17 +161,17 @@ def _quarter_sql(d: str, iqies: bool = True) -> dict[str, str]:
     facility_types = ", ".join(f"'{t}'" for t in FACILITY_TYPES)
     return {
         "enr": f"""
-            SELECT enrollment_id, npi, pac_id, provider_type_code, state
-            FROM medicare_enrollment_version WHERE {asof()}""",
+            SELECT enrollment_id, enrollee_type, npi, pac_id, provider_type_code, state
+            FROM medicare_enrollment WHERE {asof()}""",
         "nppes": f"""
-            SELECT npi, org_name, taxonomy_code_1 AS taxonomy_code,
+            SELECT npi, org_name, primary_taxonomy_code AS taxonomy_code,
                    left(practice_postal_code, 5) AS zip5, practice_state,
                    nullif(regexp_replace(practice_phone, '[^0-9]', '', 'g'), '') AS phone,
                    nullif(regexp_extract(practice_address_1, '^\\s*(\\d+)', 1), '') AS street_number
-            FROM provider_version
+            FROM provider
             WHERE {asof()} AND npi IN (SELECT npi FROM enr)""",
         "practitioner": """
-            WITH i AS (SELECT * FROM enr WHERE enrollment_id LIKE 'I%' AND pac_id IS NOT NULL),
+            WITH i AS (SELECT * FROM enr WHERE enrollee_type = 'individual' AND pac_id IS NOT NULL),
             first_npi AS (SELECT pac_id, min(npi) AS npi FROM i GROUP BY pac_id)
             SELECT i.pac_id, any_value(f.npi) AS npi,
                    list_sort(list(DISTINCT i.provider_type_code)) AS provider_type_codes,
@@ -188,7 +181,7 @@ def _quarter_sql(d: str, iqies: bool = True) -> dict[str, str]:
             FROM i JOIN first_npi f USING (pac_id) LEFT JOIN nppes n ON n.npi = f.npi
             GROUP BY i.pac_id""",
         "organization": f"""
-            WITH o AS (SELECT * FROM enr WHERE enrollment_id LIKE 'O%' AND pac_id IS NOT NULL),
+            WITH o AS (SELECT * FROM enr WHERE enrollee_type = 'organization' AND pac_id IS NOT NULL),
             first_npi AS (SELECT pac_id, min(npi) AS npi FROM o GROUP BY pac_id)
             SELECT o.pac_id, list_sort(list(DISTINCT o.npi)) AS npis,
                    list_sort(list(DISTINCT o.provider_type_code)) AS provider_type_codes,
@@ -205,43 +198,30 @@ def _quarter_sql(d: str, iqies: bool = True) -> dict[str, str]:
                    gnrl_cntl_type_cd AS control_type,
                    nullif(regexp_replace(phne_num, '[^0-9]', '', 'g'), '') AS phone,
                    nullif(regexp_extract(st_adr, '^\\s*(\\d+)', 1), '') AS street_number
-            FROM pos_facility_version
-            WHERE {asof()} AND prvdr_ctgry_cd = '01' AND pgm_trmntn_cd = '00'""",
+            FROM facility
+            WHERE {asof()} AND facility_type = 'hospital' AND active""",
         "reassignment": f"""
             SELECT DISTINCT i.pac_id AS practitioner_pac_id, o.pac_id AS organization_pac_id
-            FROM medicare_reassignment_version r
+            FROM medicare_reassignment r
             JOIN enr i ON i.enrollment_id = r.enrollment_id
             JOIN enr o ON o.enrollment_id = r.receiving_enrollment_id
             WHERE {asof('r')}
-              AND o.enrollment_id LIKE 'O%' AND i.pac_id IS NOT NULL AND o.pac_id IS NOT NULL""",
+              AND o.enrollee_type = 'organization' AND i.pac_id IS NOT NULL AND o.pac_id IS NOT NULL""",
         "hospital_link": _link_sql(facility_types, "hospital") + """
             SELECT enrollment_id, pac_id AS organization_pac_id, npi, ccn, match_rule
             FROM best WHERE n_best = 1""",
-        "facility": f"""
-            SELECT ccn, CASE WHEN prvdr_ctgry_cd = '05' THEN 'home_health' ELSE 'nursing_home' END AS facility_type,
-                   fac_name, prvdr_ctgry_cd || '-' || coalesce(prvdr_ctgry_sbtyp_cd, '') AS subtype,
+        "post_acute_facility": f"""
+            SELECT ccn, facility_type, fac_name,
+                   CASE pos_file WHEN 'qies' THEN prvdr_ctgry_cd || '-' || coalesce(prvdr_ctgry_sbtyp_cd, '')
+                        ELSE 'iqies ' || prvdr_type_id || '-' || coalesce(prvdr_sbtyp_id, '') END AS subtype,
                    state_cd AS state, left(zip_cd, 5) AS zip5, fips_state_cd || fips_cnty_cd AS county_fips,
                    crtfd_bed_cnt AS beds, gnrl_cntl_type_cd AS control_type,
                    nullif(regexp_replace(phne_num, '[^0-9]', '', 'g'), '') AS phone,
                    nullif(regexp_extract(st_adr, '^\\s*(\\d+)', 1), '') AS street_number
-            FROM pos_facility_version
-            WHERE {asof()} AND prvdr_ctgry_cd IN ({_in_list(POS_NURSING_HOME + POS_HOME_HEALTH)}) AND pgm_trmntn_cd = '00'
-            """ + (f"""
-            UNION ALL BY NAME
-            SELECT ccn, CASE WHEN prvdr_type_id IN ({_in_list(IQIES_HOME_HEALTH)}) THEN 'home_health' ELSE 'nursing_home' END
-                       AS facility_type,
-                   fac_name, 'iqies ' || prvdr_type_id || '-' || coalesce(prvdr_sbtyp_id, '') AS subtype,
-                   state_cd AS state, left(zip_cd, 5) AS zip5, fips_state_cd || fips_cnty_cd AS county_fips,
-                   crtfd_bed_cnt AS beds, gnrl_cntl_type_cd AS control_type,
-                   nullif(regexp_replace(phne_num, '[^0-9]', '', 'g'), '') AS phone,
-                   nullif(regexp_extract(st_adr, '^\\s*(\\d+)', 1), '') AS street_number
-            FROM pos_facility_iqies_version
-            -- the first iQIES file (2023-Q4) leaves the termination code blank for active agencies
-            WHERE {asof()} AND prvdr_type_id IN ({_in_list(IQIES_NURSING_HOME + IQIES_HOME_HEALTH)})
-              AND coalesce(pgm_trmntn_cd, '00') = '00'
-            """ if iqies else ""),
-        "facility_link": _link_sql(
-            _in_list(NURSING_HOME_TYPES + HOME_HEALTH_TYPES), "facility",
+            FROM facility
+            WHERE {asof()} AND facility_type IN ('nursing_home', 'home_health') AND active""",
+        "post_acute_link": _link_sql(
+            _in_list(NURSING_HOME_TYPES + HOME_HEALTH_TYPES), "post_acute_facility",
             f"AND f.facility_type = CASE WHEN h.provider_type_code IN ({_in_list(HOME_HEALTH_TYPES)}) "
             f"THEN 'home_health' ELSE 'nursing_home' END") + """
             SELECT enrollment_id, pac_id AS organization_pac_id, npi, ccn, facility_type, match_rule
@@ -279,14 +259,10 @@ class GraphBuilder:
                 self.con.execute("SELECT snapshot_id, as_of_date FROM ppef_snapshot ORDER BY as_of_date").fetchall()]
 
     def _require(self) -> None:
-        have = {r[0] for r in self.con.execute(
-            "SELECT table_name FROM information_schema.tables WHERE table_catalog NOT IN ('memory', 'temp')").fetchall()}
-        need = {"ppef_snapshot", "medicare_enrollment_version", "medicare_reassignment_version",
-                "medicare_additional_npi_version", "provider_version", "pos_facility_version"}
+        have = {r[0] for r in self.con.execute("SELECT table_name FROM information_schema.tables").fetchall()}
+        need = {"ppef_snapshot", "medicare_enrollment", "medicare_reassignment", "medicare_additional_npi", "provider",
+                "facility"}
         missing = sorted(need - have)
-        # CMS moved nursing homes and home health agencies to the iQIES POS file; a warehouse without it has them
-        # only until they moved
-        self.iqies = "pos_facility_iqies_version" in have
         if missing:
             from ..core.errors import UserError
             raise UserError(f"the warehouse lacks {', '.join(missing)}; the graph needs the NPPES, PPEF and POS tables "
@@ -329,7 +305,7 @@ class GraphBuilder:
         return self.stats
 
     def _quarter(self, snapshot_id: int, d: str) -> None:
-        sql = _quarter_sql(d, iqies=self.iqies)
+        sql = _quarter_sql(d)
         con = self.con
         con.execute(f"CREATE OR REPLACE TEMP TABLE enr AS {sql['enr']}")
         con.execute(f"CREATE OR REPLACE TEMP TABLE nppes AS {sql['nppes']}")
@@ -343,11 +319,11 @@ class GraphBuilder:
         stat.update(zip(
             ("n_reassignment_rows", "n_reassignment_dropped", "n_hospital_enrollments"),
             con.execute(f"""
-                WITH r AS (SELECT enrollment_id, receiving_enrollment_id FROM medicare_reassignment_version
+                WITH r AS (SELECT enrollment_id, receiving_enrollment_id FROM medicare_reassignment
                            WHERE effective_date <= DATE '{d}' AND (end_date IS NULL OR end_date > DATE '{d}'))
                 SELECT (SELECT count(*) FROM r),
                        (SELECT count(*) FROM r WHERE r.enrollment_id NOT IN (SELECT enrollment_id FROM enr)
-                           OR r.receiving_enrollment_id NOT IN (SELECT enrollment_id FROM enr WHERE enrollment_id LIKE 'O%')),
+                           OR r.receiving_enrollment_id NOT IN (SELECT enrollment_id FROM enr WHERE enrollee_type = 'organization')),
                        (SELECT count(*) FROM enr WHERE provider_type_code IN ({", ".join(f"'{x}'" for x in FACILITY_TYPES)}))
             """).fetchone()))
         self.stats.append(stat)

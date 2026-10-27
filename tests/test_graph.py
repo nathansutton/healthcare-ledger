@@ -1,8 +1,9 @@
 """graph-build on a hand-made warehouse: associate-id roll-up, interval semantics, the hospital matching rules,
 and the annual system tables from the AHRQ source loaded from hand-made Compendium files.
 
-The graph reads only a few columns of five warehouse tables, so the fixture creates those columns directly
-instead of loading CMS files.
+The graph reads only a few columns of five warehouse tables, so the fixture fills those columns directly
+instead of loading CMS files; the tables themselves have the loaders' schemas, which the published views
+(``core.published``) the graph reads are declared over.
 """
 from datetime import date
 from pathlib import Path
@@ -10,6 +11,7 @@ from pathlib import Path
 import duckdb
 import pytest
 
+from healthcare_ledger import sources
 from healthcare_ledger.cli import main
 from healthcare_ledger.core.errors import UserError
 from healthcare_ledger.derived.graph import build_graph
@@ -21,13 +23,15 @@ Q = ["2020-01-01", "2020-04-01", "2020-07-01"]
 @pytest.fixture
 def warehouse(tmp_path: Path) -> Path:
     db = tmp_path / "warehouse"
-    db.mkdir()
+    for name in ("nppes", "ppef", "pos"):     # each source's file, with its loader's empty tables
+        sources.by_name(name).warehouse_cls(db).close()
     con = duckdb.connect()
-    for name in ("nppes", "ppef", "pos"):     # each table in its source's file
+    for name in ("nppes", "ppef", "pos"):
         con.execute(f"ATTACH '{db / name}.duckdb' AS {name}")
-    con.execute("USE ppef")
-    con.execute("CREATE TABLE ppef_snapshot (snapshot_id INTEGER, as_of_date DATE)")
-    con.executemany("INSERT INTO ppef_snapshot VALUES (?, ?)", [(int(d.replace("-", "")), d) for d in Q])
+    con.executemany("INSERT INTO ppef.ppef_snapshot (snapshot_id, as_of_date, directory, loaded_at) VALUES (?, ?, ?, now())",
+                    [(int(d.replace("-", "")), d, d) for d in Q])
+    # the columns the graph reads, filled here and copied by name into the source files at the end
+    con.execute("USE memory")
     con.execute("""CREATE TABLE medicare_enrollment_version (enrollment_id VARCHAR, effective_date DATE, end_date DATE,
                    npi VARCHAR, pac_id VARCHAR, provider_type_code VARCHAR, state VARCHAR)""")
     enr = [
@@ -65,7 +69,6 @@ def warehouse(tmp_path: Path) -> Path:
     # the hospital enrollment's further NPI lapses in Q1 and returns in Q2
     con.executemany("INSERT INTO medicare_additional_npi_version VALUES (?, ?, ?, ?)", [
         ("OH1", Q[0], Q[1], "3000000009"), ("OH1", Q[2], None, "3000000009")])
-    con.execute("USE nppes")
     con.execute("""CREATE TABLE provider_version (npi VARCHAR, effective_date DATE, end_date DATE, org_name VARCHAR,
                    taxonomy_code_1 VARCHAR, practice_address_1 VARCHAR, practice_postal_code VARCHAR,
                    practice_state VARCHAR, practice_phone VARCHAR)""")
@@ -80,7 +83,6 @@ def warehouse(tmp_path: Path) -> Path:
         ("6000000001", "2019-01-01", None, "A NURSING HOME", None, "100 HOSPITAL RD", "02114", "MA", "6175550100"),
         ("7000000001", "2019-01-01", None, "HOME CARE A", None, "3 OAK ST", "01003", "MA", "4135550000"),
     ])
-    con.execute("USE pos")
     con.execute("""CREATE TABLE pos_facility_version (ccn VARCHAR, effective_date DATE, end_date DATE, prvdr_ctgry_cd VARCHAR,
                    pgm_trmntn_cd VARCHAR, fac_name VARCHAR, prvdr_ctgry_sbtyp_cd VARCHAR, state_cd VARCHAR, zip_cd VARCHAR,
                    fips_state_cd VARCHAR, fips_cnty_cd VARCHAR, crtfd_bed_cnt DOUBLE, gnrl_cntl_type_cd VARCHAR,
@@ -102,6 +104,11 @@ def warehouse(tmp_path: Path) -> Path:
     # the first iQIES file leaves the termination code of active agencies blank
     con.execute("INSERT INTO pos_facility_iqies_version VALUES ('227001', ?, NULL, '3', NULL, NULL, 'HOME CARE A', 'MA', "
                 "'01003', '25', '015', NULL, NULL, '4135550000', '3 OAK ST')", [Q[2]])
+    for name, tables in {"ppef": ("medicare_enrollment_version", "medicare_reassignment_version",
+                                  "medicare_additional_npi_version"),
+                         "nppes": ("provider_version",), "pos": ("pos_facility_version", "pos_facility_iqies_version")}.items():
+        for t in tables:
+            con.execute(f"INSERT INTO {name}.{t} BY NAME SELECT * FROM memory.{t}")
     con.close()
     return db
 
@@ -152,7 +159,7 @@ def test_quarter_counts_and_dropped_rows(warehouse, tmp_path):
     assert [r[1:] for r in q] == [(3, 6, 2), (2, 5, 2), (3, 6, 2)]
     assert m["quarters"] == 3 and m["last_as_of_date"] == Q[2]
     # every table reproduces each quarter's count from its intervals
-    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link", "facility", "facility_link"):
+    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link", "post_acute_facility", "post_acute_link"):
         got = duckdb.sql(f"""SELECT count(t.effective_date) FROM read_csv('{out}/quarters.csv') s
                              LEFT JOIN '{out}/{t}.parquet' t ON t.effective_date <= s.as_of_date
                               AND (t.end_date IS NULL OR t.end_date > s.as_of_date)
@@ -190,19 +197,19 @@ def test_hospital_link_uses_active_hospitals_and_drops_ties(warehouse, tmp_path)
     assert hosp == [("220001",), ("221001",), ("221002",)]
 
 
-def test_facility_nodes_follow_the_move_to_iqies(warehouse, tmp_path):
+def test_post_acute_nodes_follow_the_move_to_iqies(warehouse, tmp_path):
     out = tmp_path / "g"
     build_graph(warehouse, out)
     q = [date.fromisoformat(d) for d in Q]
     per_quarter = duckdb.sql(f"""SELECT s.as_of_date, f.ccn, f.facility_type FROM read_csv('{out}/quarters.csv') s
-                                 JOIN '{out}/facility.parquet' f ON f.effective_date <= s.as_of_date
+                                 JOIN '{out}/post_acute_facility.parquet' f ON f.effective_date <= s.as_of_date
                                   AND (f.end_date IS NULL OR f.end_date > s.as_of_date) ORDER BY ALL""").fetchall()
     # the agency is a node in every quarter: QIES until Q2, iQIES (blank termination code) from Q2
     assert per_quarter == [(d, c, t) for d in q for c, t in (("225000", "nursing_home"), ("227001", "home_health"))]
-    subtypes = duckdb.sql(f"SELECT subtype FROM '{out}/facility.parquet' WHERE ccn = '227001' ORDER BY effective_date").fetchall()
+    subtypes = duckdb.sql(f"SELECT subtype FROM '{out}/post_acute_facility.parquet' WHERE ccn = '227001' ORDER BY effective_date").fetchall()
     assert subtypes == [("05-01",), ("iqies 3-",)]
     links = duckdb.sql(f"""SELECT enrollment_id, organization_pac_id, ccn, facility_type, match_rule, end_date
-                           FROM '{out}/facility_link.parquet' ORDER BY 1""").fetchall()
+                           FROM '{out}/post_acute_link.parquet' ORDER BY 1""").fetchall()
     # the nursing home shares the hospital's address and phone; only facilities of the enrollment's type are candidates
     assert links == [("OA1", "A", "227001", "home_health", 1, None), ("OS1", "S", "225000", "nursing_home", 1, None)]
 
@@ -368,7 +375,7 @@ def test_notebook_sql_runs_on_a_fixture_graph(warehouse, compendium, medicaid, t
     out = tmp_path / "g"
     build_graph(warehouse, out, compendium=True, medicaid=True)
     con = study_con(STUDY)
-    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link", "facility", "facility_link",
+    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link", "post_acute_facility", "post_acute_link",
               "system", "system_link"):
         con.execute(f"CREATE VIEW {t} AS SELECT * FROM read_parquet('{out}/{t}.parquet')")
     for p in primitives.PRIMITIVES:

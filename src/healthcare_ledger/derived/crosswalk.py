@@ -10,7 +10,7 @@ comes from. ``graph-build`` writes it; nothing in it is inferred beyond the grap
 ``enrollment -> pac``
     the enrollment's PECOS associate id in the PPEF enrollment file.
 ``enrollment -> ccn``
-    the graph's ``hospital_link`` and ``facility_link`` rows; ``method`` is 'match_rule_<n>', the rule that matched.
+    the graph's ``hospital_link`` and ``post_acute_link`` rows; ``method`` is 'match_rule_<n>', the rule that matched.
 ``pac -> system``, ``ccn -> system``
     with ``--compendium``, the ``system_link`` rows that name a system: an organization's associate id from the
     group practice file, or a hospital, nursing home or home health CCN from its file (``source`` the ``ahrq_*``
@@ -37,14 +37,14 @@ DESCRIPTION = ("interval-dated edges npi -> enrollment -> pac and enrollment -> 
 
 def quarter_sql(d: str) -> str:
     """The SELECT giving the quarterly edges on date d, from the graph's temp tables enr, hospital_link and
-    facility_link of that quarter and the PPEF additional NPI versions in force that day."""
+    post_acute_link of that quarter and the PPEF additional NPIs in force that day."""
     return f"""
         SELECT DISTINCT 'npi' AS from_type, npi AS from_id, 'enrollment' AS to_type, enrollment_id AS to_id,
                'ppef_enrollment' AS source, 'registry' AS method
         FROM enr WHERE npi IS NOT NULL
         UNION ALL
         SELECT DISTINCT 'npi', npi, 'enrollment', enrollment_id, 'ppef_additional_npi', 'registry'
-        FROM medicare_additional_npi_version
+        FROM medicare_additional_npi
         WHERE effective_date <= DATE '{d}' AND (end_date IS NULL OR end_date > DATE '{d}') AND npi IS NOT NULL
         UNION ALL
         SELECT DISTINCT 'enrollment', enrollment_id, 'pac', pac_id, 'ppef_enrollment', 'registry'
@@ -52,7 +52,7 @@ def quarter_sql(d: str) -> str:
         UNION ALL
         SELECT 'enrollment', enrollment_id, 'ccn', ccn, 'hospital_link', 'match_rule_' || match_rule FROM hospital_link
         UNION ALL
-        SELECT 'enrollment', enrollment_id, 'ccn', ccn, 'facility_link', 'match_rule_' || match_rule FROM facility_link"""
+        SELECT 'enrollment', enrollment_id, 'ccn', ccn, 'post_acute_link', 'match_rule_' || match_rule FROM post_acute_link"""
 
 
 def system_edges_sql() -> str:

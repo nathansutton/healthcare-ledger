@@ -97,7 +97,7 @@ def test_export_readme_stata_recipe_sql_runs(export_dir, tmp_path, monkeypatch):
     con.execute(f"SET file_search_path = '{export_dir}'")
     con.execute(sql)
     out = next(tmp_path.glob("registry_*.csv"))
-    rows = con.execute(f"SELECT npi, taxonomy_code FROM read_csv('{out}', all_varchar=true) ORDER BY npi").fetchall()
+    rows = con.execute(f"SELECT npi, primary_taxonomy_code FROM read_csv('{out}', all_varchar=true) ORDER BY npi").fetchall()
     assert rows == [("1000000002", None), ("1144225327", "207Q00000X")]
 
 

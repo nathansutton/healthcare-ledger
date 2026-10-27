@@ -18,6 +18,7 @@ from healthcare_ledger.cli import main
 from healthcare_ledger.core import engine
 from healthcare_ledger.core.errors import UserError
 from healthcare_ledger.core.export import export_all
+from healthcare_ledger.core.published import Table
 from healthcare_ledger.core.validate import validate
 from healthcare_ledger.sources import NPPES
 
@@ -39,8 +40,10 @@ def fake_source() -> sources.Source:
         reset=lambda con: engine.reset(con, SPEC), check_problems=lambda con: [],
         stored_fingerprints=lambda con: engine.stored_fingerprints(con, SPEC),
         recompute_fingerprints=lambda con: engine.recompute_fingerprints(con, SPEC),
-        export_tables=lambda: {"fake_thing": ("SELECT fid, effective_date, end_date, version_hash FROM fake_thing_version", False)},
-        data_dictionary_rows=lambda: [("fake_thing", "fid", "VARCHAR", "FID", "Fake key")],
+        tables=lambda: (Table("fake_thing", ("fid",), "fake things",
+                              "SELECT fid, effective_date, end_date, close_reason FROM fake_thing_version",
+                              (("fid", "FID", "Fake key"), ("effective_date", "", ""), ("end_date", "", ""),
+                               ("close_reason", "", ""))),),
         snapshots_sql=snapshots_sql,
         validate_streams=lambda: [("fake_thing", "fid", "fake_snapshot_stream", False)],
         status=lambda con: {"quarters": 1}, check_sources=lambda con, releases: None,
@@ -92,7 +95,7 @@ def test_export_publishes_and_gates_a_registered_source(source, tmp_path, regist
     rid = export_all(db, out, releases=releases)
     with open(out / "data_dictionary.csv", newline="") as f:
         assert ("fake_thing", "fid", "VARCHAR") in {(r["table"], r["column"], r["type"]) for r in csv.DictReader(f)}
-    assert (out / "parquet" / "fake_thing.parquet").exists()
+    assert (out / "parquet" / "fake_thing" / "effective_year=2020").is_dir()     # every table partitioned alike
     assert (releases / rid / "fake_snapshots.csv").exists()          # in the release record, so continuity sees it
 
     # the load-time fingerprint gate covers it

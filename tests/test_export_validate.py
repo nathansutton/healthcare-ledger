@@ -28,8 +28,8 @@ def test_cli_round_trip(source, tmp_path):
     assert main(["export", "--warehouse", str(db), "--out", str(out), "--csv"]) == 0
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["snapshots"] == 2 and manifest["distinct_npis"] == 2
-    assert manifest["row_counts"] == {"provider": 3, "provider_taxonomy": 3,
-                                      "practice_location": 0, "other_name": 0, "endpoint": 0}
+    assert manifest["row_counts"] == {"provider": 3, "provider_taxonomy": 3, "provider_practice_location": 0,
+                                      "provider_other_name": 0, "provider_endpoint": 0}
     con = duckdb.connect()
     tax = con.execute(f"SELECT npi, effective_date, slot, taxonomy_code FROM read_parquet('{out}/parquet/provider_taxonomy/*/*.parquet') ORDER BY 1,2,3").fetchall()
     assert [t[2:] for t in tax] == [(1, "207Q00000X"), (1, "207Q00000X"), (2, "208D00000X")]
@@ -38,8 +38,18 @@ def test_cli_round_trip(source, tmp_path):
     assert (out / "csv" / "provider" / "effective_year=2020").exists()
     dd = (out / "data_dictionary.csv").read_text().splitlines()
     assert dd[0] == "table,column,type,cms_header,description" and any(",sex,VARCHAR,Provider Sex Code," in l for l in dd)
-    assert "other_name,created_date,DATE,Created Date," in (out / "data_dictionary.csv").read_text()
+    assert "provider_other_name,created_date,DATE,Created Date," in (out / "data_dictionary.csv").read_text()
     assert "provider_rows" in (out / "snapshots.csv").read_text().splitlines()[0]
+    # the published provider: codes decoded, the primary taxonomy alongside, interval columns only, no tax ids
+    import healthcare_ledger
+    lib = healthcare_ledger.connect(out)
+    cols = [r[0] for r in lib.execute("DESCRIBE provider").fetchall()]
+    assert cols[:6] == ["npi", "effective_date", "end_date", "close_reason", "entity_type", "primary_taxonomy_code"]
+    assert not {"is_current", "version_hash", "first_snapshot_id", "row_seq", "ein", "parent_org_tin", "effective_year"} & set(cols)
+    assert lib.execute("SELECT npi, entity_type, primary_taxonomy_code, close_reason FROM provider ORDER BY npi, effective_date").fetchall() == [
+        ("1000000001", "individual", "207Q00000X", "changed"), ("1000000001", "individual", "207Q00000X", None),
+        ("1000000002", "organization", None, None)]
+    assert lib.execute("SELECT count(*) FROM snapshots").fetchone() == (2,)
 
 
 def test_reexport_removes_stale_partitions_and_keeps_sparse_slots(source, tmp_path):
@@ -222,12 +232,12 @@ def test_monthly_files_one_per_snapshot(source, tmp_path):
     # wide, in CMS column order, one value of snapshot_id per file
     cols = [r[0] for r in con.execute(f"DESCRIBE SELECT * FROM '{d}/provider_2020-01.parquet'").fetchall()]
     assert cols[:5] == ["snapshot_id", "as_of_date", "npi", "effective_date", "entity_type"]
-    assert "taxonomy_code_15" in cols and "other_id_1" not in cols and len(cols) == 133
+    assert "taxonomy_code_15" in cols and "other_id_1" not in cols and "ein" not in cols and len(cols) == 131
     # each month equals the as-of query over the version table
     for m, as_of in (("2020-01", "2020-01-12"), ("2020-02", "2020-02-09"), ("2020-03", "2020-03-08")):
-        asof = con.execute(f"SELECT npi, version_hash FROM read_parquet('{out}/parquet/provider/*/*.parquet') "
+        asof = con.execute(f"SELECT npi, last_name FROM read_parquet('{out}/parquet/provider/*/*.parquet') "
                            f"WHERE effective_date <= DATE '{as_of}' AND (end_date IS NULL OR end_date > DATE '{as_of}') ORDER BY 1").fetchall()
-        joined = con.execute(f"SELECT m.npi, p.version_hash FROM '{d}/provider_{m}.parquet' m JOIN "
+        joined = con.execute(f"SELECT m.npi, p.last_name FROM '{d}/provider_{m}.parquet' m JOIN "
                              f"read_parquet('{out}/parquet/provider/*/*.parquet') p USING (npi, effective_date) ORDER BY 1").fetchall()
         assert joined == asof
     manifest = json.loads((out / "manifest.json").read_text())
@@ -249,8 +259,11 @@ def test_monthly_files_canonical_slots_and_suppression(source, tmp_path):
     export_all(db, out, monthly_files=True)
     con = duckdb.connect()
     f = out / "parquet" / "provider_monthly" / "provider_2020-01.parquet"
-    assert con.execute(f"SELECT taxonomy_code_1, primary_taxonomy_1, taxonomy_code_2, ein, parent_org_tin FROM '{f}'").fetchone() == \
-        ("207Q00000X", "Y", "363L00000X", None, None)
+    assert con.execute(f"SELECT taxonomy_code_1, primary_taxonomy_1, taxonomy_code_2 FROM '{f}'").fetchone() == \
+        ("207Q00000X", "Y", "363L00000X")
+    # the tax-id columns, always NULL (core.privacy rule 1), are not published at all
+    assert not {"ein", "parent_org_tin"} & {r[0] for r in con.execute(f"DESCRIBE SELECT * FROM '{f}'").fetchall()}
+    assert con.execute(f"SELECT primary_taxonomy_code FROM read_parquet('{out}/parquet/provider/*/*.parquet')").fetchone() == ("207Q00000X",)
     tax = con.execute(f"SELECT slot, taxonomy_code FROM read_parquet('{out}/parquet/provider_taxonomy/*/*.parquet') ORDER BY 1").fetchall()
     assert tax == [(1, "207Q00000X"), (2, "363L00000X")]
 

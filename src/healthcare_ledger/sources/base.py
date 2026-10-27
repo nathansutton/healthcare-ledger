@@ -6,7 +6,8 @@ what it needs. Adding a source means writing ``sources/<name>/`` and listing its
 ``sources/__init__.py``; nothing else changes.
 
 A source is one of two kinds. A **versioned** source (NPPES, PPEF, POS) loads snapshots in as-of order
-into SCD2 version tables; its fingerprints, continuity and export tables make up a release. A
+into SCD2 version tables, one per file, and publishes ``tables``, views over them shaped for a reader
+(``core.published``); its fingerprints, continuity and published tables make up a release. A
 **reference** source (the AHRQ Compendium, HHS's Medicaid spending extract) is published as dated editions and loaded wholesale: ``load``
 rebuilds its file from scratch, and the export, its gates and the release record leave it out. Both kinds
 pin their input files in ``releases/<sources_file>``, and ``validate`` and ``status`` cover both.
@@ -29,10 +30,10 @@ from typing import Any, Literal
 import duckdb
 
 from ..core.errors import UserError
+from ..core.published import Table
 
 Con = duckdb.DuckDBPyConnection
 Fingerprints = dict[tuple[int, str], str | None]
-DictionaryRow = tuple[str, str, str, str, str]          # table, column, type, cms_header, description
 Kind = Literal["versioned", "reference"]
 
 
@@ -63,8 +64,7 @@ class Source:
     finalize: Callable[[Con], None] | None = None
     stored_fingerprints: Callable[[Con], Fingerprints] | None = None     # (snapshot_id, stream) -> fingerprint stored at load
     recompute_fingerprints: Callable[[Con], Fingerprints] | None = None  # the same, recomputed from the version tables
-    export_tables: Callable[[], dict[str, tuple[str, bool]]] | None = None   # name -> (select sql, partition by year)
-    data_dictionary_rows: Callable[[], list[DictionaryRow]] | None = None
+    tables: Callable[[], tuple[Table, ...]] | None = None    # what a reader sees (core.published), views over the versions
     snapshots_sql: Callable[[], str] | None = None        # the rows of ``snapshots_file``
     validate_streams: Callable[[], list[tuple[str, str, str, bool]]] | None = None  # (stream, key, stream table, one row per key)
     check_sources: Callable[[Con, Path | None], None] | None = None  # export gate: raises UserError when a loaded file is not pinned
@@ -95,7 +95,7 @@ class Source:
 
 
 VERSIONED_FIELDS = ("key", "snapshots_file", "warehouse_cls", "discover", "finalize", "stored_fingerprints",
-                    "recompute_fingerprints", "export_tables", "data_dictionary_rows", "snapshots_sql", "validate_streams",
+                    "recompute_fingerprints", "tables", "snapshots_sql", "validate_streams",
                     "check_sources", "write_sources")
 REFERENCE_FIELDS = ("load",)
 

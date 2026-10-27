@@ -7,6 +7,7 @@ from pathlib import Path
 
 import duckdb
 
+from . import published
 from .errors import UserError
 
 
@@ -21,6 +22,9 @@ def open_catalog(warehouse: Path, *, read_only: bool, require: Iterable[str] | N
     Each ``<source>.duckdb`` present is attached under the source's name (``Source.database``) and
     ``search_path`` lists them in registry order after ``memory``, so reader SQL names tables without
     a catalog (table names are unique across sources) and any table a reader creates stays in memory.
+    The tables each attached versioned source publishes (``Source.tables``, ``core.published``) are created as
+    temporary views, so a reader queries ``provider`` or ``facility`` as the export has them, or the version tables
+    underneath; a source file without its version tables publishes nothing.
     ``require`` names the sources that must be present (default: the ``required`` ones, i.e. NPPES); a
     missing one is a ``UserError`` with exit code 2. Writes go through to the attached files unless
     ``read_only``; DuckDB allows one transaction to write to one file only.
@@ -41,6 +45,11 @@ def open_catalog(warehouse: Path, *, read_only: bool, require: Iterable[str] | N
         for s in present:
             con.execute(f"ATTACH '{source_file(warehouse, s.database)}' AS {s.database}{' (READ_ONLY)' if read_only else ''}")
         con.execute(f"SET search_path = '{','.join(['memory'] + [s.database for s in present])}'")
+        tables = {(c, t) for c, t in con.execute("SELECT table_catalog, table_name FROM information_schema.tables").fetchall()}
+        # a source file without the version tables (an empty or foreign file) publishes nothing
+        published.create_views(con, [t for s in present if s.versioned
+                                     and all((s.database, f"{st.name}_version") in tables for st in s.streams)
+                                     for t in s.tables()])
     except BaseException:
         con.close()
         raise

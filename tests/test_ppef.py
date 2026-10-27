@@ -161,6 +161,8 @@ def test_export_carries_the_medicare_tables_and_records_their_sources(tmp_path, 
     con = duckdb.connect()
     pq = con.execute(f"SELECT enrollment_id, state, effective_year FROM read_parquet('{out}/parquet/medicare_enrollment/*/*.parquet', hive_partitioning=true) ORDER BY 1, 2").fetchall()
     assert ("I001", "PA", 2020) in pq and len(pq) == 8
+    assert con.execute(f"SELECT DISTINCT left(enrollment_id, 1), enrollee_type FROM read_parquet('{out}/parquet/medicare_enrollment/*/*.parquet') "
+                       f"ORDER BY 1").fetchall() == [("I", "individual"), ("O", "organization")]
     with open(out / "medicare_snapshots.csv", newline="") as f:
         snaps = list(csv.DictReader(f))
     assert [s["directory"] for s in snaps] == ["2020-Q1", "2020-Q2"]

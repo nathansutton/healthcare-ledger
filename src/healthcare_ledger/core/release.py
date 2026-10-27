@@ -261,6 +261,7 @@ class ReadmeContext:
     last_as_of: str
     distinct_npis: int
     row_counts: dict[str, int]
+    tables: list[tuple[str, str]]    # (name, description) of every published table, in order
     formats: list[str]
     example_npi: str | None
     example_rows: list[tuple]
@@ -339,51 +340,37 @@ SELECT as_of_date, count(*) FROM read_parquet('parquet/provider_monthly/*.parque
 These files are large (hundreds of MB per month) and say nothing the version tables do not;
 download only the months you need.
 """
-    medicare_rows = ""
-    medicare_section = ""
+    rc = ctx.row_counts
+    table_rows = "".join(f"| `parquet/{name}/` | {desc} ({rc.get(name, 0):,} rows) |\n" for name, desc in ctx.tables)
+    snapshot_rows = "| `snapshots.csv` | one row per monthly NPPES snapshot: dates, source file, per-stream counts and content fingerprints |\n"
+    medicare_section = pos_section = ""
     if ctx.ppef_snapshots:
-        rc = ctx.row_counts
-        medicare_rows = f"""| `parquet/medicare_enrollment/effective_year=YYYY/` | Medicare FFS enrollment versions, one row per enrollment id per version ({rc.get('medicare_enrollment', 0):,} rows) |
-| `parquet/medicare_practice_location/effective_year=YYYY/` | practice locations of an enrollment ({rc.get('medicare_practice_location', 0):,} rows) |
-| `parquet/medicare_reassignment/effective_year=YYYY/` | reassignment of benefits: individual enrollment id to group enrollment id ({rc.get('medicare_reassignment', 0):,} rows) |
-| `parquet/medicare_secondary_specialty/effective_year=YYYY/` | secondary specialties of an enrollment, from August 2016 ({rc.get('medicare_secondary_specialty', 0):,} rows) |
-| `parquet/medicare_additional_npi/effective_year=YYYY/` | further NPIs of an enrollment, from October 2025 ({rc.get('medicare_additional_npi', 0):,} rows) |
-| `medicare_snapshots.csv` | one row per PPEF quarter: extract date, files, per-stream counts and content fingerprints |
-"""
+        snapshot_rows += "| `medicare_snapshots.csv` | one row per PPEF quarter: extract date, files, per-file counts and content fingerprints |\n"
         medicare_section = f"""
 ## Medicare enrollment (PPEF)
 
 The `medicare_*` tables are the same kind of history for CMS's quarterly *Medicare Fee-For-Service
 Public Provider Enrollment* files (PECOS), {ctx.ppef_snapshots} quarterly extracts dated {ctx.ppef_first_as_of} to
 {ctx.ppef_last_as_of}. Their key is the PECOS `enrollment_id`, not the NPI: one provider can hold
-several enrollments, and `medicare_enrollment.npi` joins them to the NPPES tables. `effective_date`
-and `end_date` are extract dates, so between two quarters the valid version is the earlier extract.
-The sub-files join to `medicare_enrollment` on `(enrollment_id, effective_date)` only within one
-quarter; across quarters use the as-of filter on each table separately, because each stream is
-versioned on its own.
+several enrollments, and `medicare_enrollment.npi` joins them to `provider`. `enrollee_type` says whether
+an enrollment is a clinician's or an organization's. `effective_date` and `end_date` are extract dates.
+The other `medicare_*` tables join to `medicare_enrollment` on `enrollment_id` and a date: take the rows
+of each that hold on the date, because each table is versioned on its own.
 """
-
-    pos_rows = ""
-    pos_section = ""
     if ctx.pos_snapshots:
-        rc = ctx.row_counts
-        pos_rows = f"""| `parquet/pos_facility/effective_year=YYYY/` | Medicare-certified facilities in the POS Hospital & Non-Hospital (QIES) file, one row per CCN per version ({rc.get('pos_facility', 0):,} rows) |
-| `parquet/pos_facility_iqies/effective_year=YYYY/` | facilities in the POS iQIES file, from the fourth quarter of 2023 ({rc.get('pos_facility_iqies', 0):,} rows) |
-| `pos_snapshots.csv` | one row per POS quarter: as-of date, files, per-stream counts and content fingerprints |
-"""
+        snapshot_rows += "| `pos_snapshots.csv` | one row per POS quarter: as-of date, files, per-file counts and content fingerprints |\n"
         pos_section = f"""
 ## Medicare-certified facilities (POS)
 
-The `pos_*` tables are the same kind of history for CMS's quarterly *Provider of Services* files,
-{ctx.pos_snapshots} quarters dated {ctx.pos_first_as_of} to {ctx.pos_last_as_of} (annual at year end before 2019). Their
-key is the CMS Certification Number `ccn`, the id a hospital, nursing home, home health agency,
-hospice, dialysis facility or clinic bills Medicare under. `effective_date` and `end_date` are the last
-days of quarters. CMS has published two files since the end of 2023 and is moving provider types from
-the first to the second: `pos_facility` is the Hospital & Non-Hospital Facilities (QIES) file,
-`pos_facility_iqies` the iQIES file. A CCN that leaves one file for the other in the same quarter is
-closed with `close_reason = 'moved'` and its history continues in the other table, so a facility's
-full history is the union of the two tables filtered on `ccn`. The two files code the provider type
-differently (`prvdr_ctgry_cd` against `prvdr_type_id`; `data_dictionary.csv` describes every column).
+`facility` is the same kind of history for CMS's quarterly *Provider of Services* files,
+{ctx.pos_snapshots} quarters dated {ctx.pos_first_as_of} to {ctx.pos_last_as_of} (annual at year end before 2019). Its key is
+the CMS Certification Number `ccn`, the id a hospital, nursing home, home health agency, hospice, dialysis
+facility or clinic bills Medicare under; `effective_date` and `end_date` are the last days of quarters.
+`facility_type` names the kind of facility (`hospital`, `nursing_home`, `home_health`, ...) and `active`
+whether it is still certified. Since the end of 2023 CMS has been moving provider types from its old
+certification system (QIES) to a new one (iQIES), each with its own file; `facility` follows a CCN across
+the move, and `pos_file` says which file a version comes from. The two files code some columns
+differently (`prvdr_ctgry_cd` against `prvdr_type_id`); `data_dictionary.csv` describes every column.
 """
 
     csv_section = ""
@@ -427,40 +414,33 @@ earlier snapshot. `snapshots.csv` lists every snapshot date.
 
 | Path | What it is |
 |---|---|
-| `parquet/provider/effective_year=YYYY/` | one row per NPI per version; 54 scalar CMS columns plus version metadata ({ctx.row_counts.get('provider', 0):,} rows) |
-| `parquet/provider_taxonomy/effective_year=YYYY/` | one row per version per taxonomy slot: code, license, state, primary flag, group ({ctx.row_counts.get('provider_taxonomy', 0):,} rows) |
-| `parquet/practice_location.parquet` | secondary practice location versions, since July 2018 ({ctx.row_counts.get('practice_location', 0):,} rows) |
-| `parquet/other_name.parquet` | organization other-name versions, since July 2018 ({ctx.row_counts.get('other_name', 0):,} rows) |
-| `parquet/endpoint.parquet` | endpoint versions, since March 2019 ({ctx.row_counts.get('endpoint', 0):,} rows) |
-{monthly_row}{medicare_rows}{pos_rows}| `snapshots.csv` | one row per monthly snapshot: dates, source file, per-stream counts and content fingerprints |
-| `data_dictionary.csv` | every exported column with its type, CMS header and any suppression note |
+{table_rows}{monthly_row}{snapshot_rows}| `data_dictionary.csv` | every exported column with its type, CMS header and any suppression note |
 | `privacy_audit.csv` | per text column: rows scanned for formatted SSNs and EINs and nine-digit numbers, and the verdict |
 | `manifest.json` | release id, counts, and the size and SHA-256 of every file |
 | `SHA256SUMS` | checksums of the data files; `sha256sum -c SHA256SUMS` verifies a download |
 | `CITATION.cff` | citation metadata for this release |
 {csv_section}
-The Parquet directories are hive-partitioned by `effective_year` (the year of `effective_date`).
+Every table is a directory hive-partitioned by `effective_year` (the year of `effective_date`), so every
+table reads the same way: `read_parquet('parquet/<table>/*/*.parquet', hive_partitioning = true)`.
 DuckDB, Arrow, pandas, polars, R `arrow` and Spark read such a directory as one table.
 {medicare_section}{pos_section}
-## Version metadata
+## Versions
 
-Every table starts with the same columns:
+Every table starts with its key and the same three columns:
 
 | Column | Meaning |
 |---|---|
-| `npi` | the 10-digit NPI, as text |
-| `effective_date` | as-of date of the first snapshot that showed this version (inclusive) |
-| `end_date` | as-of date of the first snapshot in which it was gone (exclusive); NULL while current |
-| `is_current` | true for the latest version of an NPI still in the file |
-| `first_snapshot_id`, `last_snapshot_id` | YYYYMMDD of the first and last snapshot that showed this version |
-| `close_reason` | `changed` (a new version followed), `absent` (the NPI left the file), `moved` (POS tables only: the CCN went to the other POS file), NULL while current |
-| `version_hash` | MD5 of all data columns of the version |
+| `npi`, `enrollment_id` or `ccn` | the key, as text |
+| `effective_date` | date of the first file that showed this version (inclusive) |
+| `end_date` | date of the first file in which it was gone (exclusive); NULL while current |
+| `close_reason` | `changed` (a new version followed) or `absent` (the key left the file); NULL while current |
 
 A new version is created when *any* CMS column changes, including cosmetic edits and CMS-wide
-reformatting (three 2008 and 2009 snapshots re-version almost every provider). `provider_taxonomy`
-joins to `provider` on `(npi, effective_date)`. The `slot` column is a canonical position, not the
+reformatting (three 2008 and 2009 snapshots re-version almost every provider). A table with several rows
+per key (`provider_taxonomy`, `provider_practice_location`, ...) holds every row of the version, and joins
+to `provider` on `(npi, effective_date)`. The `slot` of `provider_taxonomy` is a canonical position, not the
 position in the CMS file: empty slots are dropped, entries are sorted by content, and the slot CMS
-flagged as primary is slot 1. A month in which
+flagged as primary is slot 1, which `provider.primary_taxonomy_code` repeats. A month in which
 CMS only reshuffled slots therefore creates no version. Deactivated providers remain as stubs with
 only `npi` and `deactivation_date` populated.
 
@@ -495,12 +475,9 @@ import only the rows you need.
 python:
 import duckdb
 duckdb.connect().execute(\"\"\"
-    COPY (SELECT p.npi, p.entity_type, p.org_name, p.last_name, p.first_name, p.practice_state, t.taxonomy_code
-          FROM read_parquet('parquet/provider/*/*.parquet', hive_partitioning = true) p
-          LEFT JOIN (SELECT npi, effective_date, taxonomy_code
-                     FROM read_parquet('parquet/provider_taxonomy/*/*.parquet', hive_partitioning = true)
-                     WHERE primary_taxonomy = 'Y') t ON t.npi = p.npi AND t.effective_date = p.effective_date
-          WHERE p.effective_date <= DATE '{ctx.last_as_of}' AND (p.end_date IS NULL OR p.end_date > DATE '{ctx.last_as_of}'))
+    COPY (SELECT npi, entity_type, org_name, last_name, first_name, practice_state, primary_taxonomy_code
+          FROM read_parquet('parquet/provider/*/*.parquet', hive_partitioning = true)
+          WHERE effective_date <= DATE '{ctx.last_as_of}' AND (end_date IS NULL OR end_date > DATE '{ctx.last_as_of}'))
     TO 'registry_{ctx.last_as_of.replace("-", "")}.csv' (HEADER)\"\"\")
 end
 import delimited registry_{ctx.last_as_of.replace("-", "")}.csv, clear stringcols(_all)
@@ -539,9 +516,9 @@ the metadata (dataset type, release `{ctx.release_id}`, CC0 1.0). Please also ci
 ## Releases and editions
 
 A release id is `e<edition>-<last as-of date>-<checksum>`. Within an edition the versioning rules never
-change, so **a later release of the same edition contains every earlier one exactly**: filter to the
-earlier release's last as-of date and compare `snapshots.csv` fingerprints (`*_fingerprint`, md5 over the
-`npi:version_hash` lines of the NPIs valid on that date, sorted by NPI) to confirm row for row. A correction
+change, so **a later release of the same edition contains every earlier one exactly**: the exporter
+refuses to write a release unless the content fingerprint of every earlier file (`*_fingerprint` in
+`snapshots.csv` and the other `*_snapshots.csv`) is unchanged. A correction
 that changes any earlier snapshot starts a new edition and is recorded below. This release is edition {ctx.edition}.
 
 Change log:

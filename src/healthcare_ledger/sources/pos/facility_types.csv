@@ -1,0 +1,20 @@
+facility_type,prvdr_ctgry_cd,prvdr_type_id,cms_label
+hospital,01,,Hospital
+nursing_home,02,20,Skilled Nursing Facility/Nursing Facility (Dually Certified)
+nursing_home,03,20,Skilled Nursing Facility/Nursing Facility (Distinct Part)
+nursing_home,04,20,Skilled Nursing Facility
+nursing_home,10,20,Nursing Facility
+home_health,05,3,Home Health Agency
+psychiatric_residential_treatment,06,4,Psychiatric Residential Treatment Facility
+portable_xray,07,5,Portable X-Ray Supplier
+outpatient_therapy,08,6,Outpatient Physical Therapy/Speech Pathology
+dialysis,09,7,End Stage Renal Disease Facility
+intermediate_care_iid,11,8,Intermediate Care Facility/Individuals with Intellectual Disabilities
+rural_health_clinic,12,9,Rural Health Clinic
+outpatient_rehabilitation,14,10,Comprehensive Outpatient Rehab Facility
+ambulatory_surgical_center,15,11,Ambulatory Surgical Center
+hospice,16,12,Hospice
+organ_procurement,17,13,Organ Procurement Organization
+clinical_laboratory,18,,Clinical Laboratory (in the file until 2012; the separate CLIA file from 2013)
+community_mental_health_center,19,14,Community Mental Health Center
+fqhc,21,15,Federally Qualified Health Center

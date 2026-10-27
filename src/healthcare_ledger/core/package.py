@@ -94,8 +94,8 @@ def _units(manifest: dict) -> dict[str, list[str]]:
         parts = path.split("/")
         if parts[0] not in ("parquet", "csv"):
             continue
-        # parquet/endpoint.parquet, csv/endpoint.csv.gz, parquet/provider/effective_year=2020/data_0.parquet
-        table = parts[1].split(".")[0]
+        # parquet/provider/effective_year=2020/data_0.parquet, csv/facility/effective_year=2024/data_0.csv.gz
+        table = parts[1]
         units.setdefault(f"{parts[0]}_{table}.zip", []).append(path)
     return units
 
@@ -106,8 +106,8 @@ def zenodo_metadata(manifest: dict) -> dict:
     counts = manifest.get("row_counts", {})
     medicare = (f" It also holds {manifest['ppef_snapshots']} quarterly Medicare fee-for-service enrollment extracts (PPEF) "
                 f"as version tables keyed by PECOS enrollment id." if manifest.get("ppef_snapshots") else "")
-    medicare += (f" It also holds {manifest['pos_snapshots']} quarterly Provider of Services (POS) files of Medicare-certified "
-                 f"facilities as version tables keyed by CMS Certification Number." if manifest.get("pos_snapshots") else "")
+    medicare += (f" It also holds {manifest['pos_snapshots']} quarterly Provider of Services (POS) files as one table of "
+                 f"Medicare-certified facilities keyed by CMS Certification Number." if manifest.get("pos_snapshots") else "")
     description = (
         f"<p>Monthly history of every provider in the CMS National Plan and Provider Enumeration System (NPPES), "
         f"{manifest['first_as_of_date']} to {manifest['last_as_of_date']}: {manifest['snapshots']} monthly snapshots as a "

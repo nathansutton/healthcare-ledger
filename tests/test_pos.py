@@ -9,8 +9,9 @@ import duckdb
 import pytest
 
 from conftest import catalog, main_row, write_zip
+from healthcare_ledger import sources
 from healthcare_ledger.cli import main
-from healthcare_ledger.sources.pos.pos import IQIES, QIES, classify, discover_pos, inspect_quarter, quarter_end
+from healthcare_ledger.sources.pos.pos import IQIES, QIES, PosWarehouse, classify, discover_pos, inspect_quarter, quarter_end
 
 QIES_HEADER = ("PRVDR_CTGRY_SBTYP_CD,PRVDR_CTGRY_CD,CITY_NAME,CRTFCTN_DT,FAC_NAME,MDCD_VNDR_NUM,PRVDR_NUM,STATE_CD,ST_ADR,"
                "PHNE_NUM,PGM_TRMNTN_CD,TRMNTN_EXPRTN_DT,ZIP_CD,BED_CNT")
@@ -215,25 +216,42 @@ def test_export_carries_the_pos_tables_and_records_their_sources(tmp_path, pos_s
     assert main(["export", "--warehouse", str(db), "--out", str(out), "--releases", str(releases), "--csv"]) == 0
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["pos_snapshots"] == 3
-    assert manifest["row_counts"]["pos_facility"] == 6 and manifest["row_counts"]["pos_facility_iqies"] == 3
-    con = duckdb.connect()
-    pq = con.execute(f"SELECT ccn, close_reason, effective_year FROM read_parquet('{out}/parquet/pos_facility/*/*.parquet', hive_partitioning=true) ORDER BY 1, 2").fetchall()
-    assert ("017001", "moved", 2020) in pq and len(pq) == 6
-    assert (out / "csv" / "pos_facility_iqies" / "effective_year=2020").exists()
+    assert manifest["row_counts"]["facility"] == 9 and not {"pos_facility", "pos_facility_iqies"} & set(manifest["row_counts"])
+    # one table: a CCN's history runs through the QIES file and on into the iQIES file, with the type under one name
+    import healthcare_ledger
+    lib = healthcare_ledger.connect(out)
+    rows = lib.execute("SELECT ccn, effective_date, end_date, close_reason, facility_type, active, pos_file "
+                       "FROM facility ORDER BY ccn, effective_date").fetchall()
+    q1, q2, q3 = date(2020, 3, 31), date(2020, 6, 30), date(2020, 9, 30)
+    assert rows == [
+        ("010001", q1, None, None, "hospital", True, "qies"),
+        ("010002", q1, q2, "changed", "hospital", False, "qies"),
+        ("010002", q2, None, None, "hospital", False, "qies"),
+        ("010003", q2, q3, "absent", "hospital", True, "qies"),
+        ("017001", q1, q2, "changed", "home_health", True, "qies"),     # moved to the iQIES file
+        ("017001", q2, None, None, "home_health", True, "iqies"),
+        ("017002", q1, q2, "changed", "hospice", True, "qies"),
+        ("017002", q2, q3, "absent", "hospice", True, "iqies"),
+        ("018001", q2, None, None, "hospice", True, "iqies"),
+    ]
+    assert lib.execute("SELECT prvdr_ctgry_cd, prvdr_type_id, rn_cnt FROM facility WHERE ccn = '017001' ORDER BY effective_date").fetchall() == [
+        ("05", None, None), (None, "3", 2.0)]
+    assert (out / "csv" / "facility" / "effective_year=2020").exists()
     with open(out / "pos_snapshots.csv", newline="") as f:
         snaps = list(csv.DictReader(f))
     assert [s["directory"] for s in snaps] == ["2020-Q1", "2020-Q2", "2020-Q3"]
     assert snaps[1]["pos_facility_file"] == "other_data_Q2 2020.csv" and snaps[1]["pos_facility_moved"] == "2"
     assert snaps[0]["pos_facility_iqies_fingerprint"] == "" and len(snaps[2]["pos_facility_iqies_fingerprint"]) == 32
     dd = (out / "data_dictionary.csv").read_text()
-    assert "pos_facility,ccn,VARCHAR,PRVDR_NUM," in dd and "pos_facility_iqies,prvdr_type_id,VARCHAR,prvdr_type_id," in dd
-    assert "pos_facility,crtfctn_dt,DATE,CRTFCTN_DT," in dd and "pos_facility,mdcd_vndr_num,VARCHAR,MDCD_VNDR_NUM," in dd
-    assert "pos_facility,bed_cnt,DOUBLE,BED_CNT," in dd and "pos_facility_iqies,rn_cnt,DOUBLE,rn_cnt," in dd
+    assert "facility,ccn,VARCHAR,PRVDR_NUM," in dd and "facility,prvdr_type_id,VARCHAR,prvdr_type_id," in dd
+    assert "facility,crtfctn_dt,DATE,CRTFCTN_DT," in dd and "facility,mdcd_vndr_num,VARCHAR,MDCD_VNDR_NUM," in dd
+    assert "facility,bed_cnt,DOUBLE,BED_CNT," in dd and "facility,rn_cnt,DOUBLE,RN_CNT," in dd
+    assert "facility,facility_type,VARCHAR," in dd and "facility,active,BOOLEAN," in dd
     readme = (out / "README.md").read_text()
     assert "## Medicare-certified facilities (POS)" in readme and "3 quarters dated 2020-03-31 to 2020-09-30" in readme
     assert (releases / manifest["release_id"] / "pos_snapshots.csv").exists()
     audit = (out / "privacy_audit.csv").read_text()
-    assert "pos_facility,phne_num," in audit and ",FAIL" not in audit
+    assert "facility,phne_num," in audit and ",FAIL" not in audit
     # a second export passes the continuity check against the first, including the POS fingerprints
     assert main(["export", "--warehouse", str(db), "--out", str(out), "--releases", str(releases)]) == 0
 
@@ -266,3 +284,25 @@ def test_schema_file_is_consistent():
         assert all(c.kind == "number" for c in s.columns if c.name.endswith("_cnt"))
         assert all(c.kind == "text" for c in s.columns if c.name.endswith(("_cd", "_sw", "_name")))
     assert len(QIES.columns) > 500 and len(IQIES.columns) > 150
+
+
+def test_facility_prefers_the_iqies_row_when_a_ccn_is_in_both_files(tmp_path):
+    """CMS listed the organ procurement organizations in both files in 2025-Q4 before dropping them from the QIES file:
+    the published facility takes the iQIES version from the quarter it starts and cuts the QIES one there."""
+    from healthcare_ledger.core.connect import open_catalog
+    db = tmp_path / "warehouse"
+    sources.by_name("nppes").warehouse_cls(db).close()
+    PosWarehouse(db).close()
+    con = duckdb.connect(str(db / "pos.duckdb"))
+    q3, q4, q1 = date(2025, 9, 30), date(2025, 12, 31), date(2026, 3, 31)
+    con.executemany("INSERT INTO pos_facility_version (ccn, effective_date, end_date, close_reason, prvdr_ctgry_cd) "
+                    "VALUES (?, ?, ?, ?, '17')", [("05P001", q3, q1, "moved"), ("05P002", q4, q1, "moved")])
+    con.executemany("INSERT INTO pos_facility_iqies_version (ccn, effective_date, end_date, close_reason, prvdr_type_id) "
+                    "VALUES (?, ?, NULL, NULL, '13')", [("05P001", q4), ("05P002", q4)])
+    con.close()
+    con = open_catalog(db, read_only=True)
+    assert con.execute("SELECT ccn, effective_date, end_date, close_reason, facility_type, pos_file FROM facility "
+                       "ORDER BY ALL").fetchall() == [
+        ("05P001", q3, q4, "changed", "organ_procurement", "qies"),
+        ("05P001", q4, None, None, "organ_procurement", "iqies"),
+        ("05P002", q4, None, None, "organ_procurement", "iqies")]     # its QIES version lies inside the iQIES one

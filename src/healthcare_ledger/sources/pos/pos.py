@@ -68,9 +68,8 @@ from ...core import columns, engine, filesources
 from ...core.columns import Column, header_key
 from ...core.engine import Staged, Stats, VersionedWarehouse
 from ...core.privacy import has_token, redact_expr
-from ...core.sql import sql_type
+from ...core.published import Table, interval_columns
 from ...core.errors import UserError
-from ...core.versioning import meta_columns
 
 log = logging.getLogger(__name__)
 
@@ -143,9 +142,6 @@ IQIES = PosStream(
 POS_STREAMS: tuple[PosStream, ...] = (QIES, IQIES)
 POS_STREAM_BY_NAME = {s.name: s for s in POS_STREAMS}
 STREAM_KEY = {"qies": QIES, "iqies": IQIES}
-
-META_COLUMNS = meta_columns(KEY)
-
 
 def free_text_columns(s: PosStream) -> list[str]:
     return [c.name for c in s.columns if c.kind == "text" and FREE_TEXT_RE.search(c.name)]
@@ -364,15 +360,6 @@ def check_problems(con: duckdb.DuckDBPyConnection) -> list[str]:
 
 # --------------------------------------------------------------------- export
 SNAPSHOTS_FILE = "pos_snapshots.csv"
-META_EXPORT = [n for n, _ in META_COLUMNS]
-
-
-def export_tables() -> dict[str, tuple[str, bool]]:
-    """name -> (select sql, partition by year), in the shape export.tables() uses."""
-    return {s.name: (f"SELECT {', '.join(META_EXPORT)}, {', '.join(s.data_columns)} FROM {s.name}_version", True)
-            for s in POS_STREAMS}
-
-
 def snapshots_sql() -> str:
     """One row per POS quarter with per-stream file, counts and fingerprints, for pos_snapshots.csv."""
     joins, cols = [], []
@@ -387,43 +374,86 @@ def snapshots_sql() -> str:
             + ", ".join(cols) + " FROM pos_snapshot s " + " ".join(joins) + " ORDER BY s.snapshot_id")
 
 
-META_DESC = {
-    KEY: "CMS Certification Number (PRVDR_NUM): six or ten characters, the key of every POS file",
-    "effective_date": "Last day of the first quarter whose POS file showed this version (inclusive)",
-    "end_date": "Last day of the first quarter whose POS file no longer showed this version (exclusive); NULL while current",
-    "is_current": "True if this is the latest version and the CCN was present in the latest quarter's file",
-    "first_snapshot_id": "Snapshot id (YYYYMMDD of the quarter end) that first showed this version",
-    "last_snapshot_id": "Snapshot id that last showed this version",
-    "close_reason": "'changed' if superseded by a new version, 'absent' if the CCN left both POS files, 'moved' if it left this file "
-                    "for the other POS file in the same quarter (its history continues there), NULL while current",
-    "version_hash": "MD5 fingerprint of all data columns of this version",
-    "row_seq": "Row number within a multi-row version, ordered by row hash (1 unless CMS repeated a CCN)",
-}
 REDACT_DESC = "Formatted SSNs and EINs and nine-digit numbers are replaced by [REDACTED] (METHODOLOGY 2a)"
+FACILITY_TYPES_FILE = Path(__file__).with_name("facility_types.csv")
 
 
-def data_dictionary_rows() -> list[tuple[str, str, str, str, str]]:
-    rows = []
-    types = {"effective_date": "DATE", "end_date": "DATE", "is_current": "BOOLEAN", "first_snapshot_id": "INTEGER",
-             "last_snapshot_id": "INTEGER", "row_seq": "INTEGER"}
+def facility_types() -> list[dict[str, str]]:
+    """The provider types of both files under one name (``facility_types.csv``): a QIES ``prvdr_ctgry_cd`` and the
+    iQIES ``prvdr_type_id`` CMS moved it to. The iQIES file codes the four nursing home categories as one type."""
+    with open(FACILITY_TYPES_FILE, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def _facility_type_sql() -> str:
+    def case(col: str) -> str:
+        pairs = sorted({(r[col], r["facility_type"]) for r in facility_types() if r[col]})
+        return f"CASE {col} " + " ".join(f"WHEN '{code}' THEN '{name}'" for code, name in pairs) + " END"
+    return f"CASE pos_file WHEN 'qies' THEN {case('prvdr_ctgry_cd')} ELSE {case('prvdr_type_id')} END"
+
+
+def _facility() -> Table:
+    """Both POS files as one table of facilities. A CCN's history runs through the QIES file until CMS moves its
+    provider type and through the iQIES file after, so the version that ends at the move closes as 'changed'. When a
+    CCN is in both files at once (the 58 organ procurement organizations of 2025-Q4) the iQIES row stands and the
+    QIES version is cut where the iQIES one starts."""
     spans, descs = column_spans(), column_descriptions()
-    for s, key in ((QIES, "qies"), (IQIES, "iqies")):
-        for m in META_EXPORT:
-            rows.append((s.name, m, types.get(m, "VARCHAR"), s.key_header if m == KEY else "", META_DESC[m]))
-        redacted = set(free_text_columns(s))
-        for c in s.columns:
-            first, last = spans[(key, c.name)]
-            notes = [descs[(key, c.name)]] if descs[(key, c.name)] else []
-            if c.hash_optional:
-                notes.append(f"In the CMS files from {first} to {last}; NULL otherwise and outside the version hash while NULL")
-            if c.name in redacted:
-                notes.append(REDACT_DESC)
-            if c.kind == "date":
-                notes.append("Date as CMS wrote it (YYYYMMDD, YYYY-MM-DD or MM/DD/YYYY), typed; NULL when it does not parse")
-            elif c.kind == "number":
-                notes.append("Count as CMS wrote it, typed (01, 1 and 1.00 are the same value); NULL when it is not a number")
-            rows.append((s.name, c.name, sql_type(c.kind), c.cms_header, "; ".join(notes)))
-    return rows
+    names = QIES.data_columns + [c for c in IQIES.data_columns if c not in set(QIES.data_columns)]
+    by_name = {c.name: c for s in (IQIES, QIES) for c in s.columns}        # QIES's header where both have the column
+    redacted = set(free_text_columns(QIES)) | set(free_text_columns(IQIES))
+    cols = []
+    for n in names:
+        c = by_name[n]
+        notes = [descs.get(("qies", n)) or descs.get(("iqies", n)) or ""]
+        notes.append("; ".join(f"in the {label} file {spans[(k, n)][0]} to {spans[(k, n)][1]}"
+                               for k, label in (("qies", "QIES"), ("iqies", "iQIES")) if (k, n) in spans))
+        if n in redacted:
+            notes.append(REDACT_DESC)
+        if c.kind == "date":
+            notes.append("Date as CMS wrote it (YYYYMMDD, YYYY-MM-DD or MM/DD/YYYY), typed; NULL when it does not parse")
+        elif c.kind == "number":
+            notes.append("Count as CMS wrote it, typed (01, 1 and 1.00 are the same value); NULL when it is not a number")
+        cols.append((n, c.cms_header, "; ".join(x for x in notes if x)))
+    until = "coalesce(v.end_date, DATE '9999-12-31')"
+    sql = f"""
+        WITH moved AS (SELECT ccn, min(effective_date) AS iqies_from FROM pos_facility_iqies_version GROUP BY ccn),
+        both_files AS (
+            SELECT 'qies' AS pos_file, v.ccn, v.effective_date,
+                   CASE WHEN m.iqies_from < {until} THEN m.iqies_from ELSE v.end_date END AS end_date,
+                   CASE WHEN m.iqies_from < {until} OR v.close_reason = 'moved' THEN 'changed' ELSE v.close_reason END
+                       AS close_reason,
+                   {', '.join(QIES.data_columns)}
+            FROM pos_facility_version v LEFT JOIN moved m USING (ccn)
+            WHERE m.iqies_from IS NULL OR v.effective_date < m.iqies_from
+            UNION ALL BY NAME
+            SELECT 'iqies' AS pos_file, ccn, effective_date, end_date, close_reason, {', '.join(IQIES.data_columns)}
+            FROM pos_facility_iqies_version)
+        SELECT ccn, effective_date, end_date, close_reason, {_facility_type_sql()} AS facility_type,
+               -- the first iQIES file (2023-Q4) leaves the termination code blank for active facilities
+               CASE pos_file WHEN 'iqies' THEN coalesce(pgm_trmntn_cd, '00') = '00'
+                    ELSE coalesce(pgm_trmntn_cd = '00', false) END AS active,
+               pos_file, {', '.join(names)}
+        FROM both_files"""
+    lead = interval_columns(KEY, QIES.key_header, "CMS Certification Number: six or ten characters", "Last day of the quarter",
+                            "the CCN left both POS files")
+    lead += (
+        ("facility_type", "PRVDR_CTGRY_CD / prvdr_type_id",
+         "The provider type under one coding for both files: " + ", ".join(sorted({r["facility_type"] for r in facility_types()}))
+         + " (facility_types.csv)"),
+        ("active", "PGM_TRMNTN_CD", "True when the termination code is 00 (active provider); in the iQIES file a blank code "
+                                   "counts as active, because the first iQIES file leaves it blank for active facilities"),
+        ("pos_file", "", "The POS file this version is from: 'qies' (Hospital & Non-Hospital Facilities, renamed QIES in 2025) "
+                         "or 'iqies' (from 2023-Q4, the provider types CMS has moved; METHODOLOGY 7). The two files code "
+                         "the provider type differently (prvdr_ctgry_cd against prvdr_type_id)"),
+    )
+    return Table("facility", (KEY,),
+                 "one row per CCN per version: a Medicare- or Medicaid-certified hospital, nursing home, home health "
+                 "agency, hospice, dialysis facility, clinic or other institutional provider",
+                 sql, lead + tuple(cols))
+
+
+def tables() -> tuple[Table, ...]:
+    return (_facility(),)
 
 
 # -------------------------------------------------------------------- sources

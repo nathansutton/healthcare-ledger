@@ -125,12 +125,11 @@ def test_export_drops_other_identifiers_and_documents_rules(source, tmp_path):
     out = tmp_path / "export"
     export_all(db, out)
     con = duckdb.connect()
-    assert con.execute(f"SELECT ein, parent_org_tin, parent_org_name FROM read_parquet('{out}/parquet/provider/*/*.parquet')").fetchone() == (
-        None, None, "[REDACTED]")
+    assert con.execute(f"SELECT parent_org_name FROM read_parquet('{out}/parquet/provider/*/*.parquet')").fetchone() == ("[REDACTED]",)
     assert not (out / "parquet" / "provider_other_identifier").exists()
     assert "provider_other_identifier" not in (out / "SHA256SUMS").read_text()
     dd = (out / "data_dictionary.csv").read_text()
-    assert "provider,ein,VARCHAR,Employer Identification Number (EIN),\"Suppressed" in dd
+    assert "ein" not in {r.split(",")[1] for r in dd.splitlines()} and "parent_org_tin" not in dd     # always NULL: not published
     assert "other_id" not in dd
     assert "provider_taxonomy,license_number,VARCHAR,Provider License Number_N," in dd and "known license format" in dd
     audit = (out / "privacy_audit.csv").read_text()

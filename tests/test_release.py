@@ -160,15 +160,24 @@ def test_rolled_back_snapshot_blocks_export(source, tmp_path, releases):
         export_all(db, tmp_path / "export", releases=releases)
 
 
-def _with_dictionary(monkeypatch, transform):
-    changed = dataclasses.replace(NPPES, data_dictionary_rows=lambda: transform(NPPES.data_dictionary_rows()))
+def _with_provider(monkeypatch, select: str, columns):
+    """NPPES publishing ``provider`` as ``select`` over its usual view (``{}`` stands for it), with ``columns(cols)``."""
+    def tables():
+        return tuple(dataclasses.replace(t, sql=select.format(f"({t.sql})"), columns=columns(t.columns))
+                     if t.name == "provider" else t for t in NPPES.tables())
+    changed = dataclasses.replace(NPPES, tables=tables)
     monkeypatch.setattr(sources, "SOURCES", tuple(changed if s is NPPES else s for s in sources.SOURCES))
+
+
+def _without_practice_city(monkeypatch):
+    _with_provider(monkeypatch, "SELECT * EXCLUDE (practice_city) FROM {}",
+                   lambda cols: tuple(c for c in cols if c[0] != "practice_city"))
 
 
 def test_dictionary_added_column_passes(source, tmp_path, releases, monkeypatch):
     db = build(source, tmp_path)
     export_all(db, tmp_path / "export", releases=releases)
-    _with_dictionary(monkeypatch, lambda rows: rows + [("provider", "brand_new", "VARCHAR", "", "")])
+    _with_provider(monkeypatch, "SELECT *, NULL::VARCHAR AS brand_new FROM {}", lambda cols: cols + (("brand_new", "", ""),))
     rid = export_all(db, tmp_path / "export", releases=releases)
     assert rid.startswith("e1-")
 
@@ -176,7 +185,7 @@ def test_dictionary_added_column_passes(source, tmp_path, releases, monkeypatch)
 def test_dictionary_removed_column_blocks(source, tmp_path, releases, monkeypatch):
     db = build(source, tmp_path)
     export_all(db, tmp_path / "export", releases=releases)
-    _with_dictionary(monkeypatch, lambda rows: [r for r in rows if r[1] != "practice_city"])
+    _without_practice_city(monkeypatch)
     with pytest.raises(UserError, match="provider.practice_city .* no longer exported"):
         export_all(db, tmp_path / "export", releases=releases)
 
@@ -184,7 +193,7 @@ def test_dictionary_removed_column_blocks(source, tmp_path, releases, monkeypatc
 def test_dictionary_retyped_column_blocks(source, tmp_path, releases, monkeypatch):
     db = build(source, tmp_path)
     export_all(db, tmp_path / "export", releases=releases)
-    _with_dictionary(monkeypatch, lambda rows: [(t, c, "INTEGER" if c == "practice_city" else ty, h, d) for t, c, ty, h, d in rows])
+    _with_provider(monkeypatch, "SELECT * REPLACE (NULL::INTEGER AS practice_city) FROM {}", lambda cols: cols)
     with pytest.raises(UserError, match="practice_city changed type from VARCHAR to INTEGER"):
         export_all(db, tmp_path / "export", releases=releases)
 
@@ -193,7 +202,7 @@ def test_dictionary_retyped_column_blocks(source, tmp_path, releases, monkeypatc
 def test_new_edition_requires_dated_changelog_then_bumps(source, tmp_path, releases, monkeypatch):
     db = build(source, tmp_path)
     rid1 = export_all(db, tmp_path / "export", releases=releases)
-    _with_dictionary(monkeypatch, lambda rows: [r for r in rows if r[1] != "practice_city"])
+    _without_practice_city(monkeypatch)
     log = tmp_path / "METHODOLOGY.md"
     log.write_text("# M\n\n## 9. Change log\n\n- 2020-01-01: too old\n")
     with pytest.raises(UserError, match="change-log entry .* dated after"):
