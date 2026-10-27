@@ -344,7 +344,8 @@ SHAPE_TOLERANCE = 0.0001    # share of rows
 
 
 def check_problems(con: duckdb.DuckDBPyConnection) -> list[str]:
-    """Privacy (METHODOLOGY 2a, zero tolerance) and shape checks over every loaded pos_* version table; returns the failures."""
+    """Privacy (METHODOLOGY 2a, zero tolerance) and shape checks over every loaded pos_* version table, and the checks of
+    the published facility table (METHODOLOGY 7); returns the failures."""
     if not loaded(con):
         return []
     problems: list[str] = []
@@ -355,6 +356,25 @@ def check_problems(con: duckdb.DuckDBPyConnection) -> list[str]:
         row = con.execute(f"SELECT count(*), {', '.join(f'count(*) FILTER (WHERE {p})' for _, p, _ in checks)} FROM {s.name}_version").fetchone()
         total = row[0]
         problems += [f"{d}: {n} row(s)" for (d, _, tol), n in zip(checks, row[1:]) if n > tol * total]
+    # the published facility: the two files make one history per CCN, losing no QIES version that no iQIES one covers
+    # (a CCN that went back to the QIES file), and every provider type has a name
+    overlapping, uncovered, untyped = con.execute(f"""
+        WITH f AS ({_facility().sql}), n AS (
+            SELECT end_date, lead(effective_date) OVER (PARTITION BY ccn ORDER BY effective_date) AS next_from FROM f)
+        SELECT (SELECT count(*) FROM n WHERE next_from IS NOT NULL AND (end_date IS NULL OR next_from < end_date)),
+               (SELECT count(*) FROM pos_facility_version v
+                WHERE v.effective_date >= (SELECT min(effective_date) FROM pos_facility_iqies_version i WHERE i.ccn = v.ccn)
+                  AND NOT EXISTS (SELECT 1 FROM pos_facility_iqies_version i WHERE i.ccn = v.ccn
+                                  AND i.effective_date <= v.effective_date
+                                  AND (i.end_date IS NULL OR i.end_date > v.effective_date))),
+               (SELECT count(*) FROM f WHERE facility_type IS NULL)""").fetchone()
+    if overlapping:
+        problems.append(f"facility: {overlapping} version(s) overlap the next version of their CCN")
+    if uncovered:
+        problems.append(f"facility: {uncovered} QIES version(s) start after their CCN moved to the iQIES file, outside any "
+                        f"iQIES version, and are left out")
+    if untyped:
+        problems.append(f"facility: {untyped} version(s) have a provider type facility_types.csv does not name")
     return problems
 
 

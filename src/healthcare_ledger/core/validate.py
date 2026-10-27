@@ -11,7 +11,8 @@ Invariants, per stream (NPPES streams keyed by ``npi``; Medicare PPEF streams ke
 * Reconstructing each loaded snapshot by interval lookup yields exactly the
   number of keys that snapshot's file contained.
 
-The streams and their keys come from each loaded versioned source (``Source.validate_streams``), plus each
+The streams and their keys come from each loaded versioned source (``Source.validate_streams``); each published table
+(``core.published``) must have the columns its source declares; plus each
 loaded source's ``check_problems``: the privacy invariants (no tax id or SSN in any version table;
 ``sources/nppes/scrub.py`` for NPPES), for PPEF and POS the shape of their code columns, and for a
 reference source (AHRQ) the shape of its tables. ``export`` runs the versioned sources' checks too and
@@ -26,7 +27,10 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+import duckdb
+
 from .. import sources
+from . import published
 from .connect import open_catalog
 
 log = logging.getLogger(__name__)
@@ -104,6 +108,12 @@ def validate(warehouse: Path) -> list[str]:
     for src in (s for s in present if s.versioned):    # a reference source has no version tables
         for stream, key, bookkeeping, one_row_per_key in src.validate_streams():
             check_stream(stream, key, bookkeeping, one_row_per_key=one_row_per_key)
+    for src in (s for s in present if s.versioned):
+        for t in src.tables():
+            try:
+                published.dictionary_rows(con, t)
+            except (ValueError, duckdb.Error) as e:
+                problems.append(f"published table {t.name}: {e}")
     for src in present:
         found = src.check_problems(con)
         problems += found

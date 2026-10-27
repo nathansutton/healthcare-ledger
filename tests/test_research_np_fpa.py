@@ -147,8 +147,7 @@ def fixture_export(tmp_path_factory) -> Path:
 
 
 def test_notebook_sql_runs_end_to_end_on_a_fixture_export(fixture_export):
-    con = _con()
-    con.execute("SET VARIABLE export = ?", [str(fixture_export)])
+    con = study_con(STUDY, export=fixture_export)
     for block in notebook_sql(NOTEBOOK):
         con.execute(block)
 

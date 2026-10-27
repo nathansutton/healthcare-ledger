@@ -11,6 +11,7 @@ import pytest
 from conftest import catalog, main_row, write_zip
 from healthcare_ledger import sources
 from healthcare_ledger.cli import main
+from healthcare_ledger.sources.pos import pos
 from healthcare_ledger.sources.pos.pos import IQIES, QIES, PosWarehouse, classify, discover_pos, inspect_quarter, quarter_end
 
 QIES_HEADER = ("PRVDR_CTGRY_SBTYP_CD,PRVDR_CTGRY_CD,CITY_NAME,CRTFCTN_DT,FAC_NAME,MDCD_VNDR_NUM,PRVDR_NUM,STATE_CD,ST_ADR,"
@@ -294,6 +295,7 @@ def test_facility_prefers_the_iqies_row_when_a_ccn_is_in_both_files(tmp_path):
     sources.by_name("nppes").warehouse_cls(db).close()
     PosWarehouse(db).close()
     con = duckdb.connect(str(db / "pos.duckdb"))
+    con.execute("INSERT INTO pos_snapshot (snapshot_id, as_of_date, directory, loaded_at) VALUES (20260630, '2026-06-30', '2026-Q2', now())")
     q3, q4, q1 = date(2025, 9, 30), date(2025, 12, 31), date(2026, 3, 31)
     con.executemany("INSERT INTO pos_facility_version (ccn, effective_date, end_date, close_reason, prvdr_ctgry_cd) "
                     "VALUES (?, ?, ?, ?, '17')", [("05P001", q3, q1, "moved"), ("05P002", q4, q1, "moved")])
@@ -306,3 +308,13 @@ def test_facility_prefers_the_iqies_row_when_a_ccn_is_in_both_files(tmp_path):
         ("05P001", q3, q4, "changed", "organ_procurement", "qies"),
         ("05P001", q4, None, None, "organ_procurement", "iqies"),
         ("05P002", q4, None, None, "organ_procurement", "iqies")]     # its QIES version lies inside the iQIES one
+    assert pos.check_problems(con) == []
+    con.close()
+    # a CCN that went back to the QIES file after its iQIES versions ended would lose that QIES version: refused
+    con = duckdb.connect(str(db / "pos.duckdb"))
+    con.execute("UPDATE pos_facility_iqies_version SET end_date = ?, close_reason = 'absent' WHERE ccn = '05P002'", [q1])
+    con.execute("INSERT INTO pos_facility_version (ccn, effective_date, prvdr_ctgry_cd) VALUES ('05P002', ?, '17')", [date(2026, 6, 30)])
+    con.close()
+    con = open_catalog(db, read_only=True)
+    assert pos.check_problems(con) == ["facility: 1 QIES version(s) start after their CCN moved to the iQIES file, outside "
+                                       "any iQIES version, and are left out"]

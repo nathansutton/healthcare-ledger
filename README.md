@@ -43,7 +43,7 @@ The `Makefile` has one target for each command. To extend the panel by one month
 
 ### NPPES (NPPES over time)
 
-Each month, CMS publishes a full copy of the NPI registry, and keeps only the latest copy. The `nppes` source reads an archive of the monthly files and makes an SCD Type 2 panel. The panel has one row for each NPI and version, with the first and last dates CMS showed that version. A change in any published CMS column makes a new version. When an NPI leaves the file, its last version closes with `close_reason = 'absent'`. Tax ids and SSNs are removed before hashing, the 50 "Other Provider Identifier" slots are not published, and every export is scanned for tax ids and SSNs before it is released ([METHODOLOGY.md](docs/METHODOLOGY.md) section 2a).
+Each month, CMS publishes a full copy of the NPI registry, and keeps only the latest copy. The `nppes` source reads an archive of the monthly files and makes an SCD Type 2 panel. The panel has one row for each NPI and version, with the first and last dates CMS showed that version. A change in any published CMS column makes a new version. When an NPI leaves the file, its last version closes with `close_reason = 'absent'`. Tax ids and SSNs are removed before hashing, the 50 "Other Provider Identifier" slots and the always-blank EIN columns are not published, and every export is scanned for tax ids and SSNs before it is released ([METHODOLOGY.md](docs/METHODOLOGY.md) section 2a).
 
 ### Medicare PPEF and POS
 
@@ -55,27 +55,33 @@ The `ahrq` and `medicaid` sources are reference sources: dated files loaded whol
 
 ## Output
 
+The tables are what the registries describe, not how CMS splits its files: one table per kind of record, whatever the number of files behind it, with codes decoded where a researcher would otherwise look them up. Each is a view over the load's version tables, one per CMS file, which stay in the warehouse as the record of what each file said ([METHODOLOGY.md](docs/METHODOLOGY.md) section 4a).
+
 | Table | Grain | Notes |
 |---|---|---|
-| `provider` | NPI × version | 54 scalar CMS columns |
-| `provider_taxonomy` | NPI × version × slot | up to 15 slots, primary taxonomy first |
-| `practice_location`, `other_name` | NPI × version × row | since July 2018 |
-| `endpoint` | NPI × version × row | since March 2019 |
-| `medicare_enrollment` | enrollment id × version | Medicare FFS enrollments (PECOS, the public PPEF file), quarterly from February 2016; optional |
-| `medicare_practice_location`, `medicare_reassignment`, `medicare_secondary_specialty`, `medicare_additional_npi` | enrollment id × version × row | the PPEF sub-files |
-| `medicare_snapshots` | quarterly file | counts and content fingerprints |
-| `pos_facility` | CCN × version | Medicare-certified facilities in the Provider of Services (POS) Hospital & Non-Hospital file, annual from December 2011, quarterly from 2019; optional |
-| `pos_facility_iqies` | CCN × version | facilities in the POS iQIES file, which CMS has been moving provider types into since the fourth quarter of 2023 |
-| `pos_snapshots` | quarterly file | counts and content fingerprints |
-| `snapshots` | monthly file | counts and content fingerprints |
-| `data_dictionary` | column | CMS header for each column |
+| `provider` | NPI × version | the NPPES record of a clinician or organization: `entity_type` (`individual`, `organization`), `primary_taxonomy_code`, names, addresses, dates |
+| `provider_taxonomy` | NPI × version × slot | up to 15 taxonomies with license and state, primary first |
+| `provider_practice_location`, `provider_other_name` | NPI × version × row | secondary practice locations and organization other names, since July 2018 |
+| `provider_endpoint` | NPI × version × row | electronic endpoints (Direct addresses, FHIR servers), since March 2019 |
+| `medicare_enrollment` | enrollment id × version | Medicare fee-for-service enrollments (PECOS, the public PPEF file), quarterly from February 2016, with `enrollee_type` (`individual`, `organization`); optional |
+| `medicare_practice_location`, `medicare_reassignment`, `medicare_secondary_specialty`, `medicare_additional_npi` | enrollment id × version × row | an enrollment's practice locations, the groups it reassigns its benefits to, its other specialties and NPIs |
+| `facility` | CCN × version | every Medicare- or Medicaid-certified hospital, nursing home, home health agency, hospice, dialysis facility and clinic (Provider of Services), annual from December 2011, quarterly from 2019, with `facility_type` and `active`; optional |
+| `snapshots`, `medicare_snapshots`, `pos_snapshots` | file | counts and content fingerprints of each monthly NPPES file and each quarter |
+| `data_dictionary` | column | type, CMS header and notes for each column |
 | `privacy_audit` | column | rows scanned for formatted SSNs and EINs and nine-digit numbers, and the verdict |
 
-Each row has `effective_date` (inclusive), `end_date` (exclusive, NULL while current), `is_current`, `first_snapshot_id`, `last_snapshot_id`, `close_reason` and `version_hash`. The dates are the as-of dates of the CMS files.
+Every table starts with its key (`npi`, `enrollment_id` or `ccn`), `effective_date` (inclusive), `end_date` (exclusive, NULL while current) and `close_reason` (`changed` or `absent`). The dates are the dates of the CMS files: as-of dates for NPPES, extract dates for the PPEF, the last days of quarters for POS. A table with several rows per key holds every row of the version.
 
-The `medicare_*` tables are the same history for CMS's quarterly [Medicare Fee-For-Service Public Provider Enrollment](https://data.cms.gov/provider-characteristics/medicare-provider-supplier-enrollment/medicare-fee-for-service-public-provider-enrollment) files, 2016 to now. Their key is the PECOS enrollment id; `medicare_enrollment.npi` joins them to the NPPES tables. The dates are the extract dates of the quarterly files ([METHODOLOGY.md](docs/METHODOLOGY.md) section 6). They are in a release only when the maintainer loaded the quarters (`load --source-name ppef`).
+The `medicare_*` tables are the same history for CMS's quarterly [Medicare Fee-For-Service Public Provider Enrollment](https://data.cms.gov/provider-characteristics/medicare-provider-supplier-enrollment/medicare-fee-for-service-public-provider-enrollment) files, 2016 to now. Their key is the PECOS enrollment id; `medicare_enrollment.npi` joins them to `provider` ([METHODOLOGY.md](docs/METHODOLOGY.md) section 6). They are in a release only when the maintainer loaded the quarters (`load --source-name ppef`).
 
-The `pos_*` tables are the same history for CMS's quarterly [Provider of Services](https://data.cms.gov/provider-characteristics/hospitals-and-other-facilities/provider-of-services-file-quality-improvement-and-evaluation-system) files: every hospital, nursing home, home health agency, hospice, dialysis facility, surgical center and clinic certified for Medicare, with its address, category, certification and termination dates, ownership, beds, staffing and services, keyed by the CMS Certification Number (`ccn`). CMS publishes two files per quarter since the end of 2023 and moves provider types from the old (QIES) file to the new (iQIES) one; a CCN that moves is closed with `close_reason = 'moved'` in `pos_facility` and continues in `pos_facility_iqies` ([METHODOLOGY.md](docs/METHODOLOGY.md) section 7). The dates are the last days of the quarters. Optional, like the Medicare tables (`load --source-name pos`).
+`facility` is the same history for CMS's quarterly [Provider of Services](https://data.cms.gov/provider-characteristics/hospitals-and-other-facilities/provider-of-services-file-quality-improvement-and-evaluation-system) files: every certified facility with its address, type, certification and termination dates, ownership, beds, staffing and services, keyed by the CMS Certification Number (`ccn`). Since the end of 2023 CMS has been moving provider types from its old certification system (QIES) to a new one (iQIES), and publishes a file for each; `facility` follows a CCN from one file to the other, names its type the same way in both (`facility_types.csv`), and keeps the file a version came from in `pos_file` ([METHODOLOGY.md](docs/METHODOLOGY.md) section 7). Optional, like the Medicare tables (`load --source-name pos`).
+
+```python
+import healthcare_ledger
+con = healthcare_ledger.connect("export")    # a view per table, Parquet read lazily; graph="graph" adds the graph's
+con.sql("SELECT entity_type, count(*) FROM provider WHERE end_date IS NULL GROUP BY 1")
+# with POS loaded: SELECT facility_type, count(*) FROM facility WHERE end_date IS NULL AND active GROUP BY 1
+```
 
 ```sql
 -- the registry as CMS published it on 2019-01-13 (5,844,727 providers in the 2026-10-18 build)
@@ -88,11 +94,7 @@ FROM read_parquet('export/parquet/provider/*/*.parquet', hive_partitioning = tru
 WHERE npi = '1144225327' ORDER BY effective_date;
 ```
 
-```python
-import duckdb
-con = duckdb.connect()
-con.sql("SELECT count(*) FROM read_parquet('export/parquet/provider/*/*.parquet', hive_partitioning=true)")
-```
+Every table is a directory under `parquet/`, hive-partitioned by `effective_year`, so `read_parquet('export/parquet/<table>/*/*.parquet', hive_partitioning = true)` reads any of them without the package.
 
 Each export has a `README.md` with a worked example and recipes for DuckDB, Python, R and Stata. It also has `CITATION.cff`, `data_dictionary.csv`, `snapshots.csv`, `privacy_audit.csv`, `SHA256SUMS` and `manifest.json`. The exporter writes `manifest.json` last. If it is missing, the export is not complete.
 

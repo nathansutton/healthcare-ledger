@@ -371,16 +371,10 @@ def test_notebook_sql_runs_on_a_fixture_graph(warehouse, compendium, medicaid, t
     """Every SQL block of the provider-networks notebook, in order, against the fixture warehouse's graph, with the
     group primitives read from the Parquet files graph-build writes, as the notebook reads them."""
     from conftest import notebook_sql, study_con
-    from healthcare_ledger.derived import primitives
     out = tmp_path / "g"
     build_graph(warehouse, out, compendium=True, medicaid=True)
-    con = study_con(STUDY)
-    for t in ("practitioner", "organization", "hospital", "reassignment", "hospital_link", "post_acute_facility", "post_acute_link",
-              "system", "system_link"):
-        con.execute(f"CREATE VIEW {t} AS SELECT * FROM read_parquet('{out}/{t}.parquet')")
-    for p in primitives.PRIMITIVES:
-        con.execute(f"CREATE VIEW {p.name} AS SELECT * FROM read_parquet('{out}/{p.file}.parquet')")
-    con.execute(f"CREATE VIEW quarters AS SELECT * FROM read_csv('{out}/quarters.csv')")
+    con = study_con(STUDY, graph=out)
+    con.execute("CREATE VIEW physician_q AS SELECT * FROM physician_quarter")     # as the notebook names it
     con.execute("CREATE TABLE hrr AS SELECT * FROM read_csv('../../reference/zip_hrr_2019.csv', all_varchar = true)")
     blocks = notebook_sql(NOTEBOOK, queries=True)
     assert len(blocks) >= 10

@@ -37,10 +37,11 @@ def sql_creating(notebook: Path, table: str) -> str:
     return block
 
 
-def study_con(study: Path):
-    """An in-memory DuckDB that resolves a research notebook's data/ paths against its study directory."""
-    import duckdb
-    con = duckdb.connect()
+def study_con(study: Path, export: Path | None = None, graph: Path | None = None):
+    """An in-memory DuckDB that resolves a research notebook's data/ paths against its study directory, with the
+    tables of an export and a graph as views when given, as the notebook opens them (``healthcare_ledger.connect``)."""
+    import healthcare_ledger
+    con = healthcare_ledger.connect(export, graph)
     con.execute("SET file_search_path = ?", [str(study)])
     return con
 

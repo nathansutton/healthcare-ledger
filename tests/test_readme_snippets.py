@@ -124,4 +124,5 @@ def test_repository_readme_snippets_run(export_dir, tmp_path, monkeypatch):
         _run_sql(sql, tmp_path)
     for code in blocks(text, "python"):
         exec(compile(code, "<repo-readme>", "exec"), {})  # noqa: S102
-    assert "FROM provider\n" not in text and "FROM provider " not in text, "README SQL must read the Parquet files, not a bare table"
+    assert not any("FROM provider\n" in b or "FROM provider " in b for b in sql_blocks), \
+        "README SQL must read the Parquet files, not a bare table (the Python example opens them with healthcare_ledger.connect)"
