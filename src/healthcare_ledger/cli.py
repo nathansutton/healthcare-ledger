@@ -140,7 +140,8 @@ def cmd_sources(a: argparse.Namespace) -> int:
 def cmd_graph_build(a: argparse.Namespace) -> int:
     from .derived.graph import build_graph
     m = build_graph(Path(a.warehouse), Path(a.out), threads=a.threads, memory_limit=a.memory, work_dir=_work(a),
-                    limit=a.limit, compendium=a.compendium, medicaid=a.medicaid)
+                    limit=a.limit, compendium=a.compendium, medicaid=a.medicaid,
+                    ownership=a.ownership)
     print(f"{a.out}: {m['quarters']} quarters {m['first_as_of_date']} to {m['last_as_of_date']}; "
           + ", ".join(f"{k} {v['rows']:,} rows" for k, v in m["tables"].items()))
     return 0
@@ -301,6 +302,10 @@ def build_parser() -> argparse.ArgumentParser:
     gb.add_argument("--compendium", action="store_true",
                     help="also derive the annual system and system_link tables from the AHRQ Compendium source, which "
                          "must be loaded (`load --source-name ahrq`)")
+    gb.add_argument("--ownership", action="store_true",
+                    help="also derive control, firm_member, firm and chain (firms as connected components of ownership, "
+                         "ASPE's hospital and nursing home chains) from the ownership source, which must be loaded "
+                         "(`load --source-name ownership`)")
     gb.add_argument("--medicaid", action="store_true",
                     help="also derive medicaid_volume and main_group (each physician's main group by Medicaid volume) "
                          "from the Medicaid source, which must be loaded (`load --source-name medicaid`)")

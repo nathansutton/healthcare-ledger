@@ -129,7 +129,8 @@ def test_load_help_names_every_source(capsys):
         main(["load", "--source-name", "ppef", "--help"])
     assert e.value.code == 0
     out = capsys.readouterr().out
-    assert "--source-name {nppes,ppef,pos,ahrq,medicaid}" in out
+    from healthcare_ledger import sources
+    assert "--source-name{" + ",".join(s.name for s in sources.SOURCES) + "}" in out.replace("\n", "").replace(" ", "")
 
 
 def test_download_refuses_an_option_of_another_source(tmp_path, capsys):

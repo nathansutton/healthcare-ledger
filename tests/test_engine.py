@@ -356,11 +356,13 @@ def test_each_source_loads_into_its_own_file(source, tmp_path, request):
     each holding only its source's tables, and the catalog sees all of them."""
     import duckdb
 
-    from conftest import catalog, write_ahrq, write_medicaid
+    from conftest import catalog, write_ahrq, write_medicaid, write_mup
     from healthcare_ledger import sources
     write_zip(source, "20200101", "20200112", [main_row("1000000001", entity_type="1", last_name="A")])
     dirs = {"nppes": source, "ppef": request.getfixturevalue("ppef_source"), "pos": request.getfixturevalue("pos_source"),
-            "ahrq": write_ahrq(tmp_path / "ahrq"), "medicaid": write_medicaid(tmp_path / "medicaid")}
+            "ownership": request.getfixturevalue("ownership_source"), "doctors_clinicians": request.getfixturevalue("dac_source"),
+            "ahrq": write_ahrq(tmp_path / "ahrq"), "medicaid": write_medicaid(tmp_path / "medicaid"),
+            "medicare_utilization": write_mup(tmp_path / "mup")}
     warehouse = tmp_path / "warehouse"
     for src in sources.SOURCES:
         if src.versioned:
@@ -371,8 +373,7 @@ def test_each_source_loads_into_its_own_file(source, tmp_path, request):
             src.load(dirs[src.name], warehouse, tmp_path / "work")
         if src.name == "nppes":
             assert [p.name for p in warehouse.iterdir()] == ["nppes.duckdb"]
-    assert sorted(p.name for p in warehouse.iterdir()) == ["ahrq.duckdb", "medicaid.duckdb", "nppes.duckdb", "pos.duckdb",
-                                                                    "ppef.duckdb"]
+    assert sorted(p.name for p in warehouse.iterdir()) == sorted(f"{s.database}.duckdb" for s in sources.SOURCES)
     tables = {}
     for src in sources.SOURCES:
         con = duckdb.connect(str(warehouse / f"{src.database}.duckdb"), read_only=True)

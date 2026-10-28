@@ -419,3 +419,73 @@ def test_reference_data():
         rows = study_rows(STUDY, name)
         assert len({r["enrollment_id"] for r in rows}) == len(rows) > n and {r["provider_type_code"] for r in rows} == {code}
 
+
+
+@pytest.fixture
+def ownership(warehouse: Path) -> Path:
+    """The ownership source in the fixture warehouse, from Q1: hospital H's enrollment and nursing home S's are both
+    controlled by the holding company SYS (a 100% direct owner and an indirect owner with no share given). The twin
+    hospital T, which the address match leaves unlinked, has its CCN from CMS and its own owner until SYS buys it in Q2.
+    A 50-50 joint venture JV owns half of S: no control."""
+    from healthcare_ledger.sources.ownership.ownership import OwnershipWarehouse
+    OwnershipWarehouse(warehouse).close()
+    con = duckdb.connect(str(warehouse / "ownership.duckdb"))
+    con.execute("INSERT INTO ownership_snapshot (snapshot_id, as_of_date, directory, loaded_at) VALUES (20200401, '2020-04-01', '2020-04-01', now())")
+    con.executemany("""INSERT INTO ownership_hospital_enrollment_version (enrollment_id, effective_date, end_date, is_current,
+                       first_snapshot_id, last_snapshot_id, version_hash, row_seq, pac_id, ccn, npi, org_name)
+                       VALUES (?, ?, NULL, true, 0, 0, '', 1, ?, ?, ?, ?)""", [
+        ("OH1", Q[1], "H", "220001", "3000000001", "GENERAL HOSPITAL"), ("OT1", Q[1], "T", "221001", "4000000001", "TWIN HOSPITAL")])
+    con.execute("""INSERT INTO ownership_snf_enrollment_version (enrollment_id, effective_date, end_date, is_current,
+                   first_snapshot_id, last_snapshot_id, version_hash, row_seq, pac_id, ccn, npi, org_name)
+                   VALUES ('OS1', ?, NULL, true, 0, 0, '', 1, 'S', '225000', '6000000001', 'A NURSING HOME')""", [Q[1]])
+    owners = [
+        ("hospital", "OH1", Q[1], None, "H", "SYS", "34", 100.0, "SYS HOLDINGS"),
+        ("hospital", "OT1", Q[1], Q[2], "T", "TOWN", "34", 100.0, "TOWN TRUST"),
+        ("hospital", "OT1", Q[2], None, "T", "SYS", "34", 100.0, "SYS HOLDINGS"),
+        ("snf", "OS1", Q[1], None, "S", "SYS", "35", None, "SYS HOLDINGS"),
+        ("snf", "OS1", Q[1], None, "S", "JV", "34", 50.0, "JOINT VENTURE LLC"),
+    ]
+    for t, eid, start, end, pac, owner, role, pct, name in owners:
+        con.execute(f"""INSERT INTO ownership_{t}_owner_version (enrollment_id, effective_date, end_date, is_current,
+                        first_snapshot_id, last_snapshot_id, version_hash, row_seq, pac_id, owner_pac_id, owner_type,
+                        owner_role_code, ownership_pct, owner_org_name)
+                        VALUES (?, ?, ?, true, 0, 0, '', 1, ?, ?, 'O', ?, ?, ?)""", [eid, start, end, pac, owner, role, pct, name])
+    con.close()
+    return warehouse
+
+
+def test_firms_are_transitive_components_with_stable_ids(warehouse, ownership, tmp_path, monkeypatch):
+    from healthcare_ledger.derived import firms
+    monkeypatch.setattr(firms, "CHAIN_MIN", 2)
+    out = tmp_path / "g"
+    m = build_graph(warehouse, out, ownership=True)
+    assert m["ownership"]["first_release"] == "2020-04-01"
+    d = date.fromisoformat
+    asof = lambda t, q: duckdb.sql(f"SELECT * EXCLUDE (effective_date, end_date) FROM '{out}/{t}.parquet' "   # noqa: E731
+                                   f"WHERE effective_date <= DATE '{q}' AND (end_date IS NULL OR end_date > DATE '{q}') ORDER BY ALL").fetchall()
+    # no ownership release before Q1: no firm rows then
+    assert asof("firm_member", Q[0]) == []
+    # Q1: SYS controls H (direct) and S (indirect, share not given); the joint venture controls nothing. H, its CCN,
+    # S, its CCN and SYS are one firm; T and its CMS-given CCN another with T's owner
+    members = dict(((t, i), f) for t, i, f in asof("firm_member", Q[1]))
+    sys_firm = members[("pac", "SYS")]
+    assert {k for k, f in members.items() if f == sys_firm} == {("pac", "SYS"), ("pac", "H"), ("pac", "S"),
+                                                                 ("ccn", "220001"), ("ccn", "225000")}
+    town_firm = members[("pac", "T")]
+    assert town_firm != sys_firm and members[("ccn", "221001")] == town_firm and members[("pac", "TOWN")] == town_firm
+    assert ("pac", "JV") not in members and members[("pac", "G")] not in (sys_firm, town_firm)   # G is its own firm
+    # Q2: SYS buys T. The merged firm keeps SYS's id (it holds most of the members); T's firm id ends
+    members2 = dict(((t, i), f) for t, i, f in asof("firm_member", Q[2]))
+    assert members2[("pac", "T")] == members2[("ccn", "221001")] == sys_firm
+    assert ("pac", "TOWN") not in members2
+    rows = duckdb.sql(f"SELECT firm_id, effective_date, end_date FROM '{out}/firm.parquet' WHERE firm_id = '{town_firm}'").fetchall()
+    assert rows == [(town_firm, d(Q[1]), d(Q[2]))]
+    firm = {r[0]: r[1:] for r in asof("firm", Q[2])}
+    assert firm[sys_firm] == ("SYS HOLDINGS", 3, 2, 1, 3)        # organizations H, S, T; hospitals 220001, 221001; one SNF
+    # ASPE chains (minimum lowered to two for the fixture): SYS's two hospitals in Q2
+    assert asof("chain", Q[2]) == [("hospital", "220001", "SYS", "SYS HOLDINGS", 2), ("hospital", "221001", "SYS", "SYS HOLDINGS", 2)]
+    # the crosswalk carries CMS's own enrollment -> CCN edges and the firm edges
+    x = duckdb.sql(f"""SELECT from_id, to_id, source FROM '{out}/crosswalk.parquet'
+                       WHERE source IN ('ownership_enrollment') OR (source = 'firm_member' AND from_id = 'T') ORDER BY ALL""").fetchall()
+    assert x == [("OH1", "220001", "ownership_enrollment"), ("OS1", "225000", "ownership_enrollment"),
+                 ("OT1", "221001", "ownership_enrollment"), ("T", sys_firm, "firm_member"), ("T", town_firm, "firm_member")]

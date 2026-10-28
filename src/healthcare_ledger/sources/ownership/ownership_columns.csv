@@ -1,0 +1,365 @@
+facility_type,file_kind,name,cms_header,aliases,kind,hash_optional,first_date,last_date,description
+fqhc,enrollment,enrollment_state,ENROLLMENT STATE,,text,no,2023-10-28,2026-10-01,State of the enrollment
+fqhc,enrollment,provider_type_code,PROVIDER TYPE CODE,,text,no,2023-10-28,2026-10-01,"Medicare provider type of the enrollment (00-09 hospital, 00-85 critical access hospital, 00-18 skilled nursing facility, ...)"
+fqhc,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2023-10-28,2026-10-01,Description of the provider type
+fqhc,enrollment,npi,NPI,,text,no,2023-10-28,2026-10-01,NPI of the enrollment
+fqhc,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2023-10-28,2026-10-01,Y when the enrollment has more than one NPI
+fqhc,enrollment,ccn,CCN,,text,no,2023-10-28,2026-10-01,CMS Certification Number of the facility
+fqhc,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-10-28,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+fqhc,enrollment,org_name,ORGANIZATION NAME,,text,no,2023-10-28,2026-10-01,Legal business name of the enrolled entity
+fqhc,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2023-10-28,2026-10-01,Doing-business-as name
+fqhc,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2023-10-28,2026-10-01,Date of incorporation
+fqhc,enrollment,incorporation_state,INCORPORATION STATE,,text,no,2023-10-28,2026-10-01,State of incorporation
+fqhc,enrollment,organization_structure,ORGANIZATION TYPE STRUCTURE,,text,no,2023-10-28,2026-10-01,"Corporation, LLC, partnership, other"
+fqhc,enrollment,organization_other_type_text,ORGANIZATION OTHER TYPE TEXT,,text,no,2023-10-28,2026-10-01,Free text when the structure is other
+fqhc,enrollment,proprietary_nonprofit_code,PROPRIETARY_NONPROFIT,,text,no,2023-10-28,2026-10-01,P (proprietary) or N (nonprofit); CMS's header was PROPRIETARY_NONPROFIT in the 2022-11 to 2023-06 hospital files
+fqhc,enrollment,address_line_1,ADDRESS LINE 1,,text,no,2023-10-28,2026-10-01,Practice address
+fqhc,enrollment,address_line_2,ADDRESS LINE 2,,text,no,2023-10-28,2026-10-01,"Practice address, second line"
+fqhc,enrollment,city,CITY,,text,no,2023-10-28,2026-10-01,Practice city
+fqhc,enrollment,state,STATE,,text,no,2023-10-28,2026-10-01,Practice state
+fqhc,enrollment,zip,ZIP CODE,,text,no,2023-10-28,2026-10-01,Practice ZIP code
+fqhc,enrollment,phone,TELEPHONE NUMBER,,text,yes,2025-10-01,2026-10-01,Practice telephone
+fqhc,owner,pac_id,ASSOCIATE ID,,text,no,2023-10-28,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+fqhc,owner,org_name,ORGANIZATION NAME,,text,no,2023-10-28,2026-10-01,Legal business name of the enrolled entity
+fqhc,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2023-10-28,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
+fqhc,owner,owner_type,TYPE - OWNER,,text,no,2023-10-28,2026-10-01,I (individual) or O (organization)
+fqhc,owner,owner_role_code,ROLE CODE - OWNER,,text,no,2023-10-28,2026-10-01,"Role: 34 5% or greater direct ownership, 35 5% or greater indirect ownership, 36 general partnership, 37 limited partnership, 38 W-2 managing employee, 39 operational/managerial control, 40 corporate officer, 41 corporate director, 42 contracted managing employee, 43 5% or greater security interest, 44 5% or greater mortgage interest, 45 member in an LLC"
+fqhc,owner,owner_role_text,ROLE TEXT - OWNER,,text,no,2023-10-28,2026-10-01,Description of the role
+fqhc,owner,owner_association_date,ASSOCIATION DATE - OWNER,,date,no,2023-10-28,2026-10-01,Date the owner's association with the enrollment began
+fqhc,owner,owner_first_name,FIRST NAME - OWNER,,text,no,2023-10-28,2026-10-01,Owner's first name (individuals); NULL when it contains a digit
+fqhc,owner,owner_middle_name,MIDDLE NAME - OWNER,,text,no,2023-10-28,2026-10-01,Owner's middle name (individuals); NULL when it contains a digit
+fqhc,owner,owner_last_name,LAST NAME - OWNER,,text,no,2023-10-28,2026-10-01,Owner's last name (individuals); NULL when it contains a digit
+fqhc,owner,owner_title,TITLE - OWNER,,text,no,2023-10-28,2026-10-01,Owner's title (individuals)
+fqhc,owner,owner_org_name,ORGANIZATION NAME - OWNER,,text,no,2023-10-28,2026-10-01,Owner's legal name (organizations)
+fqhc,owner,owner_dba_name,DOING BUSINESS AS NAME - OWNER,,text,no,2023-10-28,2026-10-01,Owner's doing-business-as name (organizations)
+fqhc,owner,owner_address_line_1,ADDRESS LINE 1 - OWNER,,text,no,2023-10-28,2026-10-01,Owner's address (organizations)
+fqhc,owner,owner_address_line_2,ADDRESS LINE 2 - OWNER,,text,no,2023-10-28,2026-10-01,"Owner's address, second line"
+fqhc,owner,owner_city,CITY - OWNER,,text,no,2023-10-28,2026-10-01,Owner's city
+fqhc,owner,owner_state,STATE - OWNER,,text,no,2023-10-28,2026-10-01,Owner's state
+fqhc,owner,owner_zip,ZIP CODE - OWNER,,text,no,2023-10-28,2026-10-01,Owner's ZIP code
+fqhc,owner,ownership_pct,PERCENTAGE OWNERSHIP,,number,no,2023-10-28,2026-10-01,"Share of the enrollment the owner holds, percent (direct and indirect owners; often NULL)"
+fqhc,owner,owner_created_for_acquisition_flag,CREATED FOR ACQUISITION - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner was created to acquire the provider
+fqhc,owner,owner_corporation_flag,CORPORATION - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is a corporation
+fqhc,owner,owner_llc_flag,LLC - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is an LLC
+fqhc,owner,owner_medical_provider_flag,MEDICAL PROVIDER SUPPLIER - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is a medical provider or supplier
+fqhc,owner,owner_management_services_flag,MANAGEMENT SERVICES COMPANY - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is a management services company
+fqhc,owner,owner_medical_staffing_flag,MEDICAL STAFFING COMPANY - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is a medical staffing company
+fqhc,owner,owner_holding_company_flag,HOLDING COMPANY - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is a holding company
+fqhc,owner,owner_investment_firm_flag,INVESTMENT FIRM - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is an investment firm
+fqhc,owner,owner_financial_institution_flag,FINANCIAL INSTITUTION - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is a financial institution
+fqhc,owner,owner_consulting_firm_flag,CONSULTING FIRM - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is a consulting firm
+fqhc,owner,owner_for_profit_flag,FOR PROFIT - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is for-profit
+fqhc,owner,owner_non_profit_flag,NON PROFIT - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is nonprofit
+fqhc,owner,owner_other_type_flag,OTHER TYPE - OWNER,,text,no,2023-10-28,2026-10-01,Y when the owner is another type of organization
+fqhc,owner,owner_other_type_text,OTHER TYPE TEXT - OWNER,,text,no,2023-10-28,2026-10-01,Free text describing the other type
+fqhc,owner,owner_private_equity_flag,PRIVATE EQUITY COMPANY - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is a private equity company (from the 2025-04 files)
+fqhc,owner,owner_reit_flag,REIT - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is a real estate investment trust (from the 2025-04 files)
+fqhc,owner,owner_chain_home_office_flag,CHAIN HOME OFFICE - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is a chain home office (from the 2025-04 files)
+fqhc,owner,owner_owned_by_another_flag,OWNED BY ANOTHER ORG OR IND - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is itself owned by another organization or individual (from the 2025-04 files)
+hha,enrollment,enrollment_state,ENROLLMENT STATE,,text,no,2023-04-01,2026-10-01,State of the enrollment
+hha,enrollment,provider_type_code,PROVIDER TYPE CODE,,text,no,2023-04-01,2026-10-01,"Medicare provider type of the enrollment (00-09 hospital, 00-85 critical access hospital, 00-18 skilled nursing facility, ...)"
+hha,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2023-04-01,2026-10-01,Description of the provider type
+hha,enrollment,npi,NPI,,text,no,2023-04-01,2026-10-01,NPI of the enrollment
+hha,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2023-04-01,2026-10-01,Y when the enrollment has more than one NPI
+hha,enrollment,ccn,CCN,,text,no,2023-04-01,2026-10-01,CMS Certification Number of the facility
+hha,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-04-01,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hha,enrollment,org_name,ORGANIZATION NAME,,text,no,2023-04-01,2026-10-01,Legal business name of the enrolled entity
+hha,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2023-04-01,2026-10-01,Doing-business-as name
+hha,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2023-04-01,2026-10-01,Date of incorporation
+hha,enrollment,incorporation_state,INCORPORATION STATE,,text,no,2023-04-01,2026-10-01,State of incorporation
+hha,enrollment,organization_structure,ORGANIZATION TYPE STRUCTURE,,text,no,2023-04-01,2026-10-01,"Corporation, LLC, partnership, other"
+hha,enrollment,organization_other_type_text,ORGANIZATION OTHER TYPE TEXT,,text,no,2023-04-01,2026-10-01,Free text when the structure is other
+hha,enrollment,proprietary_nonprofit_code,PROPRIETARY_NONPROFIT,,text,no,2023-04-01,2026-10-01,P (proprietary) or N (nonprofit); CMS's header was PROPRIETARY_NONPROFIT in the 2022-11 to 2023-06 hospital files
+hha,enrollment,address_line_1,ADDRESS LINE 1,,text,no,2023-04-01,2026-10-01,Practice address
+hha,enrollment,address_line_2,ADDRESS LINE 2,,text,no,2023-04-01,2026-10-01,"Practice address, second line"
+hha,enrollment,city,CITY,,text,no,2023-04-01,2026-10-01,Practice city
+hha,enrollment,state,STATE,,text,no,2023-04-01,2026-10-01,Practice state
+hha,enrollment,zip,ZIP CODE,,text,no,2023-04-01,2026-10-01,Practice ZIP code
+hha,enrollment,practice_location_type,PRACTICE LOCATION TYPE,,text,no,2023-04-01,2026-10-01,Type of practice location
+hha,enrollment,location_other_type_text,LOCATION OTHER TYPE TEXT,,text,no,2023-04-01,2026-10-01,Free text when the location type is other
+hha,owner,pac_id,ASSOCIATE ID,,text,no,2023-04-01,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hha,owner,org_name,ORGANIZATION NAME,,text,no,2023-04-01,2026-10-01,Legal business name of the enrolled entity
+hha,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2023-04-01,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
+hha,owner,owner_type,TYPE - OWNER,,text,no,2023-04-01,2026-10-01,I (individual) or O (organization)
+hha,owner,owner_role_code,ROLE CODE - OWNER,,text,no,2023-04-01,2026-10-01,"Role: 34 5% or greater direct ownership, 35 5% or greater indirect ownership, 36 general partnership, 37 limited partnership, 38 W-2 managing employee, 39 operational/managerial control, 40 corporate officer, 41 corporate director, 42 contracted managing employee, 43 5% or greater security interest, 44 5% or greater mortgage interest, 45 member in an LLC"
+hha,owner,owner_role_text,ROLE TEXT - OWNER,,text,no,2023-04-01,2026-10-01,Description of the role
+hha,owner,owner_association_date,ASSOCIATION DATE - OWNER,,date,no,2023-04-01,2026-10-01,Date the owner's association with the enrollment began
+hha,owner,owner_first_name,FIRST NAME - OWNER,,text,no,2023-04-01,2026-10-01,Owner's first name (individuals); NULL when it contains a digit
+hha,owner,owner_middle_name,MIDDLE NAME - OWNER,,text,no,2023-04-01,2026-10-01,Owner's middle name (individuals); NULL when it contains a digit
+hha,owner,owner_last_name,LAST NAME - OWNER,,text,no,2023-04-01,2026-10-01,Owner's last name (individuals); NULL when it contains a digit
+hha,owner,owner_title,TITLE - OWNER,,text,no,2023-04-01,2026-10-01,Owner's title (individuals)
+hha,owner,owner_org_name,ORGANIZATION NAME - OWNER,,text,no,2023-04-01,2026-10-01,Owner's legal name (organizations)
+hha,owner,owner_dba_name,DOING BUSINESS AS NAME - OWNER,,text,no,2023-04-01,2026-10-01,Owner's doing-business-as name (organizations)
+hha,owner,owner_address_line_1,ADDRESS LINE 1 - OWNER,,text,no,2023-04-01,2026-10-01,Owner's address (organizations)
+hha,owner,owner_address_line_2,ADDRESS LINE 2 - OWNER,,text,no,2023-04-01,2026-10-01,"Owner's address, second line"
+hha,owner,owner_city,CITY - OWNER,,text,no,2023-04-01,2026-10-01,Owner's city
+hha,owner,owner_state,STATE - OWNER,,text,no,2023-04-01,2026-10-01,Owner's state
+hha,owner,owner_zip,ZIP CODE - OWNER,,text,no,2023-04-01,2026-10-01,Owner's ZIP code
+hha,owner,ownership_pct,PERCENTAGE OWNERSHIP,,number,no,2023-04-01,2026-10-01,"Share of the enrollment the owner holds, percent (direct and indirect owners; often NULL)"
+hha,owner,owner_created_for_acquisition_flag,CREATED FOR ACQUISITION - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner was created to acquire the provider
+hha,owner,owner_corporation_flag,CORPORATION - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is a corporation
+hha,owner,owner_llc_flag,LLC - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is an LLC
+hha,owner,owner_medical_provider_flag,MEDICAL PROVIDER SUPPLIER - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is a medical provider or supplier
+hha,owner,owner_management_services_flag,MANAGEMENT SERVICES COMPANY - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is a management services company
+hha,owner,owner_medical_staffing_flag,MEDICAL STAFFING COMPANY - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is a medical staffing company
+hha,owner,owner_holding_company_flag,HOLDING COMPANY - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is a holding company
+hha,owner,owner_investment_firm_flag,INVESTMENT FIRM - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is an investment firm
+hha,owner,owner_financial_institution_flag,FINANCIAL INSTITUTION - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is a financial institution
+hha,owner,owner_consulting_firm_flag,CONSULTING FIRM - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is a consulting firm
+hha,owner,owner_for_profit_flag,FOR PROFIT - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is for-profit
+hha,owner,owner_non_profit_flag,NON PROFIT - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is nonprofit
+hha,owner,owner_other_type_flag,OTHER TYPE - OWNER,,text,no,2023-04-01,2026-10-01,Y when the owner is another type of organization
+hha,owner,owner_other_type_text,OTHER TYPE TEXT - OWNER,,text,no,2023-04-01,2026-10-01,Free text describing the other type
+hha,owner,owner_private_equity_flag,PRIVATE EQUITY COMPANY - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is a private equity company (from the 2025-04 files)
+hha,owner,owner_reit_flag,REIT - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is a real estate investment trust (from the 2025-04 files)
+hha,owner,owner_chain_home_office_flag,CHAIN HOME OFFICE - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is a chain home office (from the 2025-04 files)
+hha,owner,owner_owned_by_another_flag,OWNED BY ANOTHER ORG OR IND - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is itself owned by another organization or individual (from the 2025-04 files)
+hospice,enrollment,enrollment_state,ENROLLMENT STATE,,text,no,2023-04-01,2026-10-01,State of the enrollment
+hospice,enrollment,provider_type_code,PROVIDER TYPE CODE,,text,no,2023-04-01,2026-10-01,"Medicare provider type of the enrollment (00-09 hospital, 00-85 critical access hospital, 00-18 skilled nursing facility, ...)"
+hospice,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2023-04-01,2026-10-01,Description of the provider type
+hospice,enrollment,npi,NPI,,text,no,2023-04-01,2026-10-01,NPI of the enrollment
+hospice,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2023-04-01,2026-10-01,Y when the enrollment has more than one NPI
+hospice,enrollment,ccn,CCN,,text,no,2023-04-01,2026-10-01,CMS Certification Number of the facility
+hospice,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-04-01,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hospice,enrollment,org_name,ORGANIZATION NAME,,text,no,2023-04-01,2026-10-01,Legal business name of the enrolled entity
+hospice,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2023-04-01,2026-10-01,Doing-business-as name
+hospice,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2023-04-01,2026-10-01,Date of incorporation
+hospice,enrollment,incorporation_state,INCORPORATION STATE,,text,no,2023-04-01,2026-10-01,State of incorporation
+hospice,enrollment,organization_structure,ORGANIZATION TYPE STRUCTURE,,text,no,2023-04-01,2026-10-01,"Corporation, LLC, partnership, other"
+hospice,enrollment,organization_other_type_text,ORGANIZATION OTHER TYPE TEXT,,text,no,2023-04-01,2026-10-01,Free text when the structure is other
+hospice,enrollment,proprietary_nonprofit_code,PROPRIETARY_NONPROFIT,,text,no,2023-04-01,2026-10-01,P (proprietary) or N (nonprofit); CMS's header was PROPRIETARY_NONPROFIT in the 2022-11 to 2023-06 hospital files
+hospice,enrollment,address_line_1,ADDRESS LINE 1,,text,no,2023-04-01,2026-10-01,Practice address
+hospice,enrollment,address_line_2,ADDRESS LINE 2,,text,no,2023-04-01,2026-10-01,"Practice address, second line"
+hospice,enrollment,city,CITY,,text,no,2023-04-01,2026-10-01,Practice city
+hospice,enrollment,state,STATE,,text,no,2023-04-01,2026-10-01,Practice state
+hospice,enrollment,zip,ZIP CODE,,text,no,2023-04-01,2026-10-01,Practice ZIP code
+hospice,owner,pac_id,ASSOCIATE ID,,text,no,2023-04-02,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hospice,owner,org_name,ORGANIZATION NAME,,text,no,2023-04-02,2026-10-01,Legal business name of the enrolled entity
+hospice,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2023-04-02,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
+hospice,owner,owner_type,TYPE - OWNER,,text,no,2023-04-02,2026-10-01,I (individual) or O (organization)
+hospice,owner,owner_role_code,ROLE CODE - OWNER,,text,no,2023-04-02,2026-10-01,"Role: 34 5% or greater direct ownership, 35 5% or greater indirect ownership, 36 general partnership, 37 limited partnership, 38 W-2 managing employee, 39 operational/managerial control, 40 corporate officer, 41 corporate director, 42 contracted managing employee, 43 5% or greater security interest, 44 5% or greater mortgage interest, 45 member in an LLC"
+hospice,owner,owner_role_text,ROLE TEXT - OWNER,,text,no,2023-04-02,2026-10-01,Description of the role
+hospice,owner,owner_association_date,ASSOCIATION DATE - OWNER,,date,no,2023-04-02,2026-10-01,Date the owner's association with the enrollment began
+hospice,owner,owner_first_name,FIRST NAME - OWNER,,text,no,2023-04-02,2026-10-01,Owner's first name (individuals); NULL when it contains a digit
+hospice,owner,owner_middle_name,MIDDLE NAME - OWNER,,text,no,2023-04-02,2026-10-01,Owner's middle name (individuals); NULL when it contains a digit
+hospice,owner,owner_last_name,LAST NAME - OWNER,,text,no,2023-04-02,2026-10-01,Owner's last name (individuals); NULL when it contains a digit
+hospice,owner,owner_title,TITLE - OWNER,,text,no,2023-04-02,2026-10-01,Owner's title (individuals)
+hospice,owner,owner_org_name,ORGANIZATION NAME - OWNER,,text,no,2023-04-02,2026-10-01,Owner's legal name (organizations)
+hospice,owner,owner_dba_name,DOING BUSINESS AS NAME - OWNER,,text,no,2023-04-02,2026-10-01,Owner's doing-business-as name (organizations)
+hospice,owner,owner_address_line_1,ADDRESS LINE 1 - OWNER,,text,no,2023-04-02,2026-10-01,Owner's address (organizations)
+hospice,owner,owner_address_line_2,ADDRESS LINE 2 - OWNER,,text,no,2023-04-02,2026-10-01,"Owner's address, second line"
+hospice,owner,owner_city,CITY - OWNER,,text,no,2023-04-02,2026-10-01,Owner's city
+hospice,owner,owner_state,STATE - OWNER,,text,no,2023-04-02,2026-10-01,Owner's state
+hospice,owner,owner_zip,ZIP CODE - OWNER,,text,no,2023-04-02,2026-10-01,Owner's ZIP code
+hospice,owner,ownership_pct,PERCENTAGE OWNERSHIP,,number,no,2023-04-02,2026-10-01,"Share of the enrollment the owner holds, percent (direct and indirect owners; often NULL)"
+hospice,owner,owner_created_for_acquisition_flag,CREATED FOR ACQUISITION - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner was created to acquire the provider
+hospice,owner,owner_corporation_flag,CORPORATION - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is a corporation
+hospice,owner,owner_llc_flag,LLC - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is an LLC
+hospice,owner,owner_medical_provider_flag,MEDICAL PROVIDER SUPPLIER - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is a medical provider or supplier
+hospice,owner,owner_management_services_flag,MANAGEMENT SERVICES COMPANY - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is a management services company
+hospice,owner,owner_medical_staffing_flag,MEDICAL STAFFING COMPANY - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is a medical staffing company
+hospice,owner,owner_holding_company_flag,HOLDING COMPANY - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is a holding company
+hospice,owner,owner_investment_firm_flag,INVESTMENT FIRM - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is an investment firm
+hospice,owner,owner_financial_institution_flag,FINANCIAL INSTITUTION - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is a financial institution
+hospice,owner,owner_consulting_firm_flag,CONSULTING FIRM - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is a consulting firm
+hospice,owner,owner_for_profit_flag,FOR PROFIT - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is for-profit
+hospice,owner,owner_non_profit_flag,NON PROFIT - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is nonprofit
+hospice,owner,owner_other_type_flag,OTHER TYPE - OWNER,,text,no,2023-04-02,2026-10-01,Y when the owner is another type of organization
+hospice,owner,owner_other_type_text,OTHER TYPE TEXT - OWNER,,text,no,2023-04-02,2026-10-01,Free text describing the other type
+hospice,owner,owner_private_equity_flag,PRIVATE EQUITY COMPANY - OWNER,,text,yes,2025-04-02,2026-10-01,Y when the owner is a private equity company (from the 2025-04 files)
+hospice,owner,owner_reit_flag,REIT - OWNER,,text,yes,2025-04-02,2026-10-01,Y when the owner is a real estate investment trust (from the 2025-04 files)
+hospice,owner,owner_chain_home_office_flag,CHAIN HOME OFFICE - OWNER,,text,yes,2025-04-02,2026-10-01,Y when the owner is a chain home office (from the 2025-04 files)
+hospice,owner,owner_owned_by_another_flag,OWNED BY ANOTHER ORG OR IND - OWNER,,text,yes,2025-04-02,2026-10-01,Y when the owner is itself owned by another organization or individual (from the 2025-04 files)
+hospital,enrollment,enrollment_state,ENROLLMENT STATE,,text,no,2022-11-21,2026-10-01,State of the enrollment
+hospital,enrollment,provider_type_code,PROVIDER TYPE CODE,,text,no,2022-11-21,2026-10-01,"Medicare provider type of the enrollment (00-09 hospital, 00-85 critical access hospital, 00-18 skilled nursing facility, ...)"
+hospital,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2022-11-21,2026-10-01,Description of the provider type
+hospital,enrollment,npi,NPI,,text,no,2022-11-21,2026-10-01,NPI of the enrollment
+hospital,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2022-11-21,2026-10-01,Y when the enrollment has more than one NPI
+hospital,enrollment,ccn,CCN,,text,no,2022-11-21,2026-10-01,CMS Certification Number of the facility
+hospital,enrollment,pac_id,ASSOCIATE ID,,text,no,2022-11-21,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hospital,enrollment,org_name,ORGANIZATION NAME,,text,no,2022-11-21,2026-10-01,Legal business name of the enrolled entity
+hospital,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2022-11-21,2026-10-01,Doing-business-as name
+hospital,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2022-11-21,2026-10-01,Date of incorporation
+hospital,enrollment,incorporation_state,INCORPORATION STATE,,text,no,2022-11-21,2026-10-01,State of incorporation
+hospital,enrollment,organization_structure,ORGANIZATION TYPE STRUCTURE,,text,no,2022-11-21,2026-10-01,"Corporation, LLC, partnership, other"
+hospital,enrollment,organization_other_type_text,ORGANIZATION OTHER TYPE TEXT,,text,no,2022-11-21,2026-10-01,Free text when the structure is other
+hospital,enrollment,proprietary_nonprofit_code,PROPRIETARY_NONPROFIT,PROPRIETARY NONPROFIT,text,no,2022-11-21,2026-10-01,P (proprietary) or N (nonprofit); CMS's header was PROPRIETARY_NONPROFIT in the 2022-11 to 2023-06 hospital files
+hospital,enrollment,address_line_1,ADDRESS LINE 1,,text,no,2022-11-21,2026-10-01,Practice address
+hospital,enrollment,address_line_2,ADDRESS LINE 2,,text,no,2022-11-21,2026-10-01,"Practice address, second line"
+hospital,enrollment,city,CITY,,text,no,2022-11-21,2026-10-01,Practice city
+hospital,enrollment,state,STATE,,text,no,2022-11-21,2026-10-01,Practice state
+hospital,enrollment,zip,ZIP CODE,,text,no,2022-11-21,2026-10-01,Practice ZIP code
+hospital,enrollment,practice_location_type,PRACTICE LOCATION TYPE,,text,no,2022-11-21,2026-10-01,Type of practice location
+hospital,enrollment,location_other_type_text,LOCATION OTHER TYPE TEXT,,text,no,2022-11-21,2026-10-01,Free text when the location type is other
+hospital,enrollment,subgroup_general_flag,SUBGROUP - GENERAL,,text,no,2022-11-21,2026-10-01,Hospital subgroup: General (Y/N)
+hospital,enrollment,subgroup_acute_care_flag,SUBGROUP - ACUTE CARE,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Acute Care (Y/N)
+hospital,enrollment,subgroup_alcohol_drug_flag,SUBGROUP - ALCOHOL DRUG,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Alcohol Drug (Y/N)
+hospital,enrollment,subgroup_childrens_flag,SUBGROUP - CHILDRENS,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Childrens (Y/N)
+hospital,enrollment,subgroup_long_term_flag,SUBGROUP - LONG-TERM,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Long-Term (Y/N)
+hospital,enrollment,subgroup_psychiatric_flag,SUBGROUP - PSYCHIATRIC,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Psychiatric (Y/N)
+hospital,enrollment,subgroup_rehabilitation_flag,SUBGROUP - REHABILITATION,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Rehabilitation (Y/N)
+hospital,enrollment,subgroup_short_term_flag,SUBGROUP - SHORT-TERM,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Short-Term (Y/N)
+hospital,enrollment,subgroup_swing_bed_approved_flag,SUBGROUP - SWING-BED APPROVED,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Swing-Bed Approved (Y/N)
+hospital,enrollment,subgroup_psychiatric_unit_flag,SUBGROUP - PSYCHIATRIC UNIT,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Psychiatric Unit (Y/N)
+hospital,enrollment,subgroup_rehabilitation_unit_flag,SUBGROUP - REHABILITATION UNIT,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Rehabilitation Unit (Y/N)
+hospital,enrollment,subgroup_specialty_hospital_flag,SUBGROUP - SPECIALTY HOSPITAL,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Specialty Hospital (Y/N)
+hospital,enrollment,subgroup_other_flag,SUBGROUP - OTHER,,text,no,2022-11-21,2026-10-01,Hospital subgroup: Other (Y/N)
+hospital,enrollment,subgroup_other_text,SUBGROUP - OTHER TEXT,,text,no,2022-11-21,2026-10-01,Free text for the other subgroup
+hospital,enrollment,reh_conversion_flag,REH CONVERSION FLAG,,text,yes,2023-07-17,2026-10-01,Y when the hospital converted to a rural emergency hospital
+hospital,enrollment,reh_conversion_date,REH CONVERSION DATE,,date,yes,2023-07-17,2026-10-01,Date of the conversion to a rural emergency hospital
+hospital,enrollment,cah_or_hospital_ccn,CAH OR HOSPITAL CCN,,text,yes,2023-07-17,2026-10-01,CCN of the critical access hospital or hospital the REH converted from
+hospital,owner,pac_id,ASSOCIATE ID,,text,no,2022-11-14,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hospital,owner,org_name,ORGANIZATION NAME,,text,no,2022-11-14,2026-10-01,Legal business name of the enrolled entity
+hospital,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2022-11-14,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
+hospital,owner,owner_type,TYPE - OWNER,,text,no,2022-11-14,2026-10-01,I (individual) or O (organization)
+hospital,owner,owner_role_code,ROLE CODE - OWNER,,text,no,2022-11-14,2026-10-01,"Role: 34 5% or greater direct ownership, 35 5% or greater indirect ownership, 36 general partnership, 37 limited partnership, 38 W-2 managing employee, 39 operational/managerial control, 40 corporate officer, 41 corporate director, 42 contracted managing employee, 43 5% or greater security interest, 44 5% or greater mortgage interest, 45 member in an LLC"
+hospital,owner,owner_role_text,ROLE TEXT - OWNER,,text,no,2022-11-14,2026-10-01,Description of the role
+hospital,owner,owner_association_date,ASSOCIATION DATE - OWNER,,date,no,2022-11-14,2026-10-01,Date the owner's association with the enrollment began
+hospital,owner,owner_first_name,FIRST NAME - OWNER,,text,no,2022-11-14,2026-10-01,Owner's first name (individuals); NULL when it contains a digit
+hospital,owner,owner_middle_name,MIDDLE NAME - OWNER,,text,no,2022-11-14,2026-10-01,Owner's middle name (individuals); NULL when it contains a digit
+hospital,owner,owner_last_name,LAST NAME - OWNER,,text,no,2022-11-14,2026-10-01,Owner's last name (individuals); NULL when it contains a digit
+hospital,owner,owner_title,TITLE - OWNER,,text,no,2022-11-14,2026-10-01,Owner's title (individuals)
+hospital,owner,owner_org_name,ORGANIZATION NAME - OWNER,,text,no,2022-11-14,2026-10-01,Owner's legal name (organizations)
+hospital,owner,owner_dba_name,DOING BUSINESS AS NAME - OWNER,,text,no,2022-11-14,2026-10-01,Owner's doing-business-as name (organizations)
+hospital,owner,owner_address_line_1,ADDRESS LINE 1 - OWNER,,text,no,2022-11-14,2026-10-01,Owner's address (organizations)
+hospital,owner,owner_address_line_2,ADDRESS LINE 2 - OWNER,,text,no,2022-11-14,2026-10-01,"Owner's address, second line"
+hospital,owner,owner_city,CITY - OWNER,,text,no,2022-11-14,2026-10-01,Owner's city
+hospital,owner,owner_state,STATE - OWNER,,text,no,2022-11-14,2026-10-01,Owner's state
+hospital,owner,owner_zip,ZIP CODE - OWNER,,text,no,2022-11-14,2026-10-01,Owner's ZIP code
+hospital,owner,ownership_pct,PERCENTAGE OWNERSHIP,,number,no,2022-11-14,2026-10-01,"Share of the enrollment the owner holds, percent (direct and indirect owners; often NULL)"
+hospital,owner,owner_created_for_acquisition_flag,CREATED FOR ACQUISITION - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner was created to acquire the provider
+hospital,owner,owner_corporation_flag,CORPORATION - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is a corporation
+hospital,owner,owner_llc_flag,LLC - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is an LLC
+hospital,owner,owner_medical_provider_flag,MEDICAL PROVIDER SUPPLIER - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is a medical provider or supplier
+hospital,owner,owner_management_services_flag,MANAGEMENT SERVICES COMPANY - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is a management services company
+hospital,owner,owner_medical_staffing_flag,MEDICAL STAFFING COMPANY - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is a medical staffing company
+hospital,owner,owner_holding_company_flag,HOLDING COMPANY - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is a holding company
+hospital,owner,owner_investment_firm_flag,INVESTMENT FIRM - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is an investment firm
+hospital,owner,owner_financial_institution_flag,FINANCIAL INSTITUTION - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is a financial institution
+hospital,owner,owner_consulting_firm_flag,CONSULTING FIRM - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is a consulting firm
+hospital,owner,owner_for_profit_flag,FOR PROFIT - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is for-profit
+hospital,owner,owner_non_profit_flag,NON PROFIT - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is nonprofit
+hospital,owner,owner_other_type_flag,OTHER TYPE - OWNER,,text,no,2022-11-14,2026-10-01,Y when the owner is another type of organization
+hospital,owner,owner_other_type_text,OTHER TYPE TEXT - OWNER,,text,no,2022-11-14,2026-10-01,Free text describing the other type
+hospital,owner,owner_private_equity_flag,PRIVATE EQUITY COMPANY - OWNER,,text,yes,2025-04-02,2026-10-01,Y when the owner is a private equity company (from the 2025-04 files)
+hospital,owner,owner_reit_flag,REIT - OWNER,,text,yes,2025-04-02,2026-10-01,Y when the owner is a real estate investment trust (from the 2025-04 files)
+hospital,owner,owner_chain_home_office_flag,CHAIN HOME OFFICE - OWNER,,text,yes,2025-04-02,2026-10-01,Y when the owner is a chain home office (from the 2025-04 files)
+hospital,owner,owner_owned_by_another_flag,OWNED BY ANOTHER ORG OR IND - OWNER,,text,yes,2025-04-02,2026-10-01,Y when the owner is itself owned by another organization or individual (from the 2025-04 files)
+rhc,enrollment,enrollment_state,ENROLLMENT STATE,,text,no,2023-10-29,2026-10-01,State of the enrollment
+rhc,enrollment,provider_type_code,PROVIDER TYPE CODE,,text,no,2023-10-29,2026-10-01,"Medicare provider type of the enrollment (00-09 hospital, 00-85 critical access hospital, 00-18 skilled nursing facility, ...)"
+rhc,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2023-10-29,2026-10-01,Description of the provider type
+rhc,enrollment,npi,NPI,,text,no,2023-10-29,2026-10-01,NPI of the enrollment
+rhc,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2023-10-29,2026-10-01,Y when the enrollment has more than one NPI
+rhc,enrollment,ccn,CCN,,text,no,2023-10-29,2026-10-01,CMS Certification Number of the facility
+rhc,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-10-29,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+rhc,enrollment,org_name,ORGANIZATION NAME,,text,no,2023-10-29,2026-10-01,Legal business name of the enrolled entity
+rhc,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2023-10-29,2026-10-01,Doing-business-as name
+rhc,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2023-10-29,2026-10-01,Date of incorporation
+rhc,enrollment,incorporation_state,INCORPORATION STATE,,text,no,2023-10-29,2026-10-01,State of incorporation
+rhc,enrollment,organization_structure,ORGANIZATION TYPE STRUCTURE,,text,no,2023-10-29,2026-10-01,"Corporation, LLC, partnership, other"
+rhc,enrollment,organization_other_type_text,ORGANIZATION OTHER TYPE TEXT,,text,no,2023-10-29,2026-10-01,Free text when the structure is other
+rhc,enrollment,proprietary_nonprofit_code,PROPRIETARY_NONPROFIT,,text,no,2023-10-29,2026-10-01,P (proprietary) or N (nonprofit); CMS's header was PROPRIETARY_NONPROFIT in the 2022-11 to 2023-06 hospital files
+rhc,enrollment,address_line_1,ADDRESS LINE 1,,text,no,2023-10-29,2026-10-01,Practice address
+rhc,enrollment,address_line_2,ADDRESS LINE 2,,text,no,2023-10-29,2026-10-01,"Practice address, second line"
+rhc,enrollment,city,CITY,,text,no,2023-10-29,2026-10-01,Practice city
+rhc,enrollment,state,STATE,,text,no,2023-10-29,2026-10-01,Practice state
+rhc,enrollment,zip,ZIP CODE,,text,no,2023-10-29,2026-10-01,Practice ZIP code
+rhc,enrollment,phone,TELEPHONE NUMBER,,text,yes,2025-10-01,2026-10-01,Practice telephone
+rhc,owner,pac_id,ASSOCIATE ID,,text,no,2023-10-29,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+rhc,owner,org_name,ORGANIZATION NAME,,text,no,2023-10-29,2026-10-01,Legal business name of the enrolled entity
+rhc,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2023-10-29,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
+rhc,owner,owner_type,TYPE - OWNER,,text,no,2023-10-29,2026-10-01,I (individual) or O (organization)
+rhc,owner,owner_role_code,ROLE CODE - OWNER,,text,no,2023-10-29,2026-10-01,"Role: 34 5% or greater direct ownership, 35 5% or greater indirect ownership, 36 general partnership, 37 limited partnership, 38 W-2 managing employee, 39 operational/managerial control, 40 corporate officer, 41 corporate director, 42 contracted managing employee, 43 5% or greater security interest, 44 5% or greater mortgage interest, 45 member in an LLC"
+rhc,owner,owner_role_text,ROLE TEXT - OWNER,,text,no,2023-10-29,2026-10-01,Description of the role
+rhc,owner,owner_association_date,ASSOCIATION DATE - OWNER,,date,no,2023-10-29,2026-10-01,Date the owner's association with the enrollment began
+rhc,owner,owner_first_name,FIRST NAME - OWNER,,text,no,2023-10-29,2026-10-01,Owner's first name (individuals); NULL when it contains a digit
+rhc,owner,owner_middle_name,MIDDLE NAME - OWNER,,text,no,2023-10-29,2026-10-01,Owner's middle name (individuals); NULL when it contains a digit
+rhc,owner,owner_last_name,LAST NAME - OWNER,,text,no,2023-10-29,2026-10-01,Owner's last name (individuals); NULL when it contains a digit
+rhc,owner,owner_title,TITLE - OWNER,,text,no,2023-10-29,2026-10-01,Owner's title (individuals)
+rhc,owner,owner_org_name,ORGANIZATION NAME - OWNER,,text,no,2023-10-29,2026-10-01,Owner's legal name (organizations)
+rhc,owner,owner_dba_name,DOING BUSINESS AS NAME - OWNER,,text,no,2023-10-29,2026-10-01,Owner's doing-business-as name (organizations)
+rhc,owner,owner_address_line_1,ADDRESS LINE 1 - OWNER,,text,no,2023-10-29,2026-10-01,Owner's address (organizations)
+rhc,owner,owner_address_line_2,ADDRESS LINE 2 - OWNER,,text,no,2023-10-29,2026-10-01,"Owner's address, second line"
+rhc,owner,owner_city,CITY - OWNER,,text,no,2023-10-29,2026-10-01,Owner's city
+rhc,owner,owner_state,STATE - OWNER,,text,no,2023-10-29,2026-10-01,Owner's state
+rhc,owner,owner_zip,ZIP CODE - OWNER,,text,no,2023-10-29,2026-10-01,Owner's ZIP code
+rhc,owner,ownership_pct,PERCENTAGE OWNERSHIP,,number,no,2023-10-29,2026-10-01,"Share of the enrollment the owner holds, percent (direct and indirect owners; often NULL)"
+rhc,owner,owner_created_for_acquisition_flag,CREATED FOR ACQUISITION - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner was created to acquire the provider
+rhc,owner,owner_corporation_flag,CORPORATION - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is a corporation
+rhc,owner,owner_llc_flag,LLC - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is an LLC
+rhc,owner,owner_medical_provider_flag,MEDICAL PROVIDER SUPPLIER - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is a medical provider or supplier
+rhc,owner,owner_management_services_flag,MANAGEMENT SERVICES COMPANY - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is a management services company
+rhc,owner,owner_medical_staffing_flag,MEDICAL STAFFING COMPANY - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is a medical staffing company
+rhc,owner,owner_holding_company_flag,HOLDING COMPANY - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is a holding company
+rhc,owner,owner_investment_firm_flag,INVESTMENT FIRM - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is an investment firm
+rhc,owner,owner_financial_institution_flag,FINANCIAL INSTITUTION - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is a financial institution
+rhc,owner,owner_consulting_firm_flag,CONSULTING FIRM - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is a consulting firm
+rhc,owner,owner_for_profit_flag,FOR PROFIT - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is for-profit
+rhc,owner,owner_non_profit_flag,NON PROFIT - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is nonprofit
+rhc,owner,owner_other_type_flag,OTHER TYPE - OWNER,,text,no,2023-10-29,2026-10-01,Y when the owner is another type of organization
+rhc,owner,owner_other_type_text,OTHER TYPE TEXT - OWNER,,text,no,2023-10-29,2026-10-01,Free text describing the other type
+rhc,owner,owner_private_equity_flag,PRIVATE EQUITY COMPANY - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is a private equity company (from the 2025-04 files)
+rhc,owner,owner_reit_flag,REIT - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is a real estate investment trust (from the 2025-04 files)
+rhc,owner,owner_chain_home_office_flag,CHAIN HOME OFFICE - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is a chain home office (from the 2025-04 files)
+rhc,owner,owner_owned_by_another_flag,OWNED BY ANOTHER ORG OR IND - OWNER,,text,yes,2025-04-01,2026-10-01,Y when the owner is itself owned by another organization or individual (from the 2025-04 files)
+snf,enrollment,enrollment_state,ENROLLMENT STATE,,text,no,2022-09-20,2026-10-01,State of the enrollment
+snf,enrollment,provider_type_code,PROVIDER TYPE CODE,,text,no,2022-09-20,2026-10-01,"Medicare provider type of the enrollment (00-09 hospital, 00-85 critical access hospital, 00-18 skilled nursing facility, ...)"
+snf,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2022-09-20,2026-10-01,Description of the provider type
+snf,enrollment,npi,NPI,,text,no,2022-09-20,2026-10-01,NPI of the enrollment
+snf,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2022-09-20,2026-10-01,Y when the enrollment has more than one NPI
+snf,enrollment,ccn,CCN,,text,no,2022-09-20,2026-10-01,CMS Certification Number of the facility
+snf,enrollment,pac_id,ASSOCIATE ID,,text,no,2022-09-20,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+snf,enrollment,org_name,ORGANIZATION NAME,,text,no,2022-09-20,2026-10-01,Legal business name of the enrolled entity
+snf,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2022-09-20,2026-10-01,Doing-business-as name
+snf,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2022-09-20,2026-10-01,Date of incorporation
+snf,enrollment,incorporation_state,INCORPORATION STATE,,text,no,2022-09-20,2026-10-01,State of incorporation
+snf,enrollment,organization_structure,ORGANIZATION TYPE STRUCTURE,,text,no,2022-09-20,2026-10-01,"Corporation, LLC, partnership, other"
+snf,enrollment,organization_other_type_text,ORGANIZATION OTHER TYPE TEXT,,text,no,2022-09-20,2026-10-01,Free text when the structure is other
+snf,enrollment,proprietary_nonprofit_code,PROPRIETARY_NONPROFIT,,text,no,2022-09-20,2026-10-01,P (proprietary) or N (nonprofit); CMS's header was PROPRIETARY_NONPROFIT in the 2022-11 to 2023-06 hospital files
+snf,enrollment,nursing_home_name,NURSING HOME PROVIDER NAME,,text,no,2022-09-20,2026-10-01,Nursing home name (SNF files)
+snf,enrollment,affiliation_entity_name,AFFILIATION ENTITY NAME,,text,no,2022-09-20,2026-10-01,Affiliated entity (chain) name CMS assigns nursing homes (SNF files)
+snf,enrollment,affiliation_entity_id,AFFILIATION ENTITY ID,,text,no,2022-09-20,2026-10-01,Affiliated entity (chain) id CMS assigns nursing homes (SNF files)
+snf,enrollment,address_line_1,ADDRESS LINE 1,,text,no,2022-09-20,2026-10-01,Practice address
+snf,enrollment,address_line_2,ADDRESS LINE 2,,text,no,2022-09-20,2026-10-01,"Practice address, second line"
+snf,enrollment,city,CITY,,text,no,2022-09-20,2026-10-01,Practice city
+snf,enrollment,state,STATE,,text,no,2022-09-20,2026-10-01,Practice state
+snf,enrollment,zip,ZIP CODE,,text,no,2022-09-20,2026-10-01,Practice ZIP code
+snf,owner,pac_id,ASSOCIATE ID,,text,no,2022-09-20,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+snf,owner,org_name,ORGANIZATION NAME,,text,no,2022-09-20,2026-10-01,Legal business name of the enrolled entity
+snf,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2022-09-20,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
+snf,owner,owner_type,TYPE - OWNER,,text,no,2022-09-20,2026-10-01,I (individual) or O (organization)
+snf,owner,owner_role_code,ROLE CODE - OWNER,,text,no,2022-09-20,2026-10-01,"Role: 34 5% or greater direct ownership, 35 5% or greater indirect ownership, 36 general partnership, 37 limited partnership, 38 W-2 managing employee, 39 operational/managerial control, 40 corporate officer, 41 corporate director, 42 contracted managing employee, 43 5% or greater security interest, 44 5% or greater mortgage interest, 45 member in an LLC"
+snf,owner,owner_role_text,ROLE TEXT - OWNER,,text,no,2022-09-20,2026-10-01,Description of the role
+snf,owner,owner_association_date,ASSOCIATION DATE - OWNER,,date,no,2022-09-20,2026-10-01,Date the owner's association with the enrollment began
+snf,owner,owner_first_name,FIRST NAME - OWNER,,text,no,2022-09-20,2026-10-01,Owner's first name (individuals); NULL when it contains a digit
+snf,owner,owner_middle_name,MIDDLE NAME - OWNER,,text,no,2022-09-20,2026-10-01,Owner's middle name (individuals); NULL when it contains a digit
+snf,owner,owner_last_name,LAST NAME - OWNER,,text,no,2022-09-20,2026-10-01,Owner's last name (individuals); NULL when it contains a digit
+snf,owner,owner_title,TITLE - OWNER,,text,no,2022-09-20,2026-10-01,Owner's title (individuals)
+snf,owner,owner_org_name,ORGANIZATION NAME - OWNER,,text,no,2022-09-20,2026-10-01,Owner's legal name (organizations)
+snf,owner,owner_dba_name,DOING BUSINESS AS NAME - OWNER,,text,no,2022-09-20,2026-10-01,Owner's doing-business-as name (organizations)
+snf,owner,owner_address_line_1,ADDRESS LINE 1 - OWNER,,text,no,2022-09-20,2026-10-01,Owner's address (organizations)
+snf,owner,owner_address_line_2,ADDRESS LINE 2 - OWNER,,text,no,2022-09-20,2026-10-01,"Owner's address, second line"
+snf,owner,owner_city,CITY - OWNER,,text,no,2022-09-20,2026-10-01,Owner's city
+snf,owner,owner_state,STATE - OWNER,,text,no,2022-09-20,2026-10-01,Owner's state
+snf,owner,owner_zip,ZIP CODE - OWNER,,text,no,2022-09-20,2026-10-01,Owner's ZIP code
+snf,owner,ownership_pct,PERCENTAGE OWNERSHIP,,number,no,2022-09-20,2026-10-01,"Share of the enrollment the owner holds, percent (direct and indirect owners; often NULL)"
+snf,owner,owner_created_for_acquisition_flag,CREATED FOR ACQUISITION - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner was created to acquire the provider
+snf,owner,owner_corporation_flag,CORPORATION - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is a corporation
+snf,owner,owner_llc_flag,LLC - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is an LLC
+snf,owner,owner_medical_provider_flag,MEDICAL PROVIDER SUPPLIER - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is a medical provider or supplier
+snf,owner,owner_management_services_flag,MANAGEMENT SERVICES COMPANY - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is a management services company
+snf,owner,owner_medical_staffing_flag,MEDICAL STAFFING COMPANY - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is a medical staffing company
+snf,owner,owner_holding_company_flag,HOLDING COMPANY - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is a holding company
+snf,owner,owner_investment_firm_flag,INVESTMENT FIRM - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is an investment firm
+snf,owner,owner_financial_institution_flag,FINANCIAL INSTITUTION - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is a financial institution
+snf,owner,owner_consulting_firm_flag,CONSULTING FIRM - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is a consulting firm
+snf,owner,owner_for_profit_flag,FOR PROFIT - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is for-profit
+snf,owner,owner_non_profit_flag,NON PROFIT - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is nonprofit
+snf,owner,owner_other_type_flag,OTHER TYPE - OWNER,,text,no,2022-09-20,2026-10-01,Y when the owner is another type of organization
+snf,owner,owner_other_type_text,OTHER TYPE TEXT - OWNER,,text,no,2022-09-20,2026-10-01,Free text describing the other type
+snf,owner,owner_private_equity_flag,PRIVATE EQUITY COMPANY - OWNER,,text,yes,2024-11-01,2026-10-01,Y when the owner is a private equity company (from the 2025-04 files)
+snf,owner,owner_reit_flag,REIT - OWNER,,text,yes,2024-11-01,2026-10-01,Y when the owner is a real estate investment trust (from the 2025-04 files)
+snf,owner,owner_chain_home_office_flag,CHAIN HOME OFFICE - OWNER,,text,yes,2024-11-01,2026-10-01,Y when the owner is a chain home office (from the 2025-04 files)
+snf,owner,owner_trust_flag,TRUST OR TRUSTEE - OWNER,,text,yes,2024-11-01,2026-10-01,Y when the owner is a trust or trustee (SNF files from 2024-11)
+snf,owner,owner_parent_company_flag,PARENT COMPANY - OWNER,,text,yes,2024-11-01,2026-10-01,Y when the owner is a parent company (SNF files from 2024-11)
+snf,owner,owner_owned_by_another_flag,OWNED BY ANOTHER ORG OR IND - OWNER,,text,yes,2024-11-01,2026-10-01,Y when the owner is itself owned by another organization or individual (from the 2025-04 files)

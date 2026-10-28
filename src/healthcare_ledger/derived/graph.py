@@ -77,7 +77,7 @@ from pathlib import Path
 
 from .. import __version__
 from ..core.connect import configure, open_catalog, source_file
-from . import crosswalk, primitives
+from . import crosswalk, firms, primitives
 
 log = logging.getLogger(__name__)
 
@@ -118,6 +118,19 @@ TABLES = (
           "active POS nursing homes and home health agencies (QIES, then iQIES)"),
     Table("post_acute_link", ("enrollment_id",), ("organization_pac_id", "npi", "ccn", "facility_type", "match_rule"),
           "skilled nursing facility or home health enrollment matched to its POS CCN"),
+)
+# with --ownership, from the first quarter on or after the first ownership release (derived/firms.py)
+FIRM_TABLES = (
+    Table("control", ("owner_pac_id", "pac_id"), ("owner_name",),
+          "organization (PAC id) controlling a facility enrollment's legal entity: a 5%+ direct or indirect owner with "
+          "more than half of it or an unreported share (CMS All Owners)"),
+    Table("firm_member", ("node_type", "node_id"), ("firm_id",),
+          "organization or owner (pac) or facility (ccn) -> its firm, the connected component of control and "
+          "enrollment -> CCN edges, with ids carried over between quarters"),
+    Table("firm", ("firm_id",), ("name", "n_organizations", "n_hospitals", "n_post_acute", "n_facilities"),
+          "firms (connected components of control) with counts of organizations, hospitals and post-acute facilities"),
+    Table("chain", ("chain_type", "ccn"), ("chain_owner_pac_id", "chain_name", "chain_size"),
+          "hospital and nursing home chains by ASPE's ultimate-owner method (Welch et al. 2023), three or more facilities"),
 )
 # built from the quarter's tables above, advanced like them, and written with the annual system edges appended
 CROSSWALK = Table("crosswalk", crosswalk.KEY, crosswalk.ATTRS, crosswalk.DESCRIPTION)
@@ -240,13 +253,17 @@ class GraphBuilder:
     files attached read-only (``core.connect.open_catalog``)."""
 
     def __init__(self, warehouse: Path, *, threads: int | None = None, memory_limit: str | None = None,
-                 work_dir: Path | None = None, compendium: bool = False, medicaid: bool = False):
-        # tables the build creates stay in memory; with the Compendium or Medicaid, its source file must be there too
-        require = ["nppes", *(["ahrq"] if compendium else []), *(["medicaid"] if medicaid else [])]
+                 work_dir: Path | None = None, compendium: bool = False, medicaid: bool = False, ownership: bool = False):
+        # tables the build creates stay in memory; with the Compendium, Medicaid or ownership, its source file must be
+        # there too
+        require = ["nppes", *(["ahrq"] if compendium else []), *(["medicaid"] if medicaid else []),
+                   *(["ownership"] if ownership else [])]
         self.con = open_catalog(warehouse, read_only=True, require=require if len(require) > 1 else None)
         self.work_dir = work_dir
         self.compendium = compendium
         self.medicaid = medicaid
+        self.ownership = ownership
+        self.ownership_from: str | None = None     # the first ownership release, set by build()
         self.threads, self.memory_limit = threads, memory_limit
         if work_dir:
             work_dir.mkdir(parents=True, exist_ok=True)
@@ -288,13 +305,25 @@ class GraphBuilder:
                             f"`healthcare-ledger load --source-name medicaid` (fetch the zip with `download --source-name "
                             f"medicaid`)", exit_code=2)
 
+    def _require_ownership(self) -> None:
+        from .. import sources
+        from ..core.errors import UserError
+        src = sources.by_name("ownership")
+        if not src.loaded(self.con):
+            raise UserError("--ownership needs the ownership source in the warehouse; load it with "
+                            "`healthcare-ledger load --source-name ownership` (fetch the files with `download --source-name "
+                            "ownership`)", exit_code=2)
+        self.ownership_from = self.con.execute("SELECT min(as_of_date)::VARCHAR FROM ownership_snapshot").fetchone()[0]
+
     def build(self, limit: int | None = None) -> list[dict]:
         self._require()
         if self.compendium:
             self._require_compendium()
         if self.medicaid:
             self._require_medicaid()
-        for t in (*TABLES, CROSSWALK):
+        if self.ownership:
+            self._require_ownership()
+        for t in (*TABLES, *FIRM_TABLES, CROSSWALK):
             self.con.execute(f"DROP TABLE IF EXISTS {t.name}_open; DROP TABLE IF EXISTS {t.name}_closed")
         for snapshot_id, d in self.quarters()[:limit]:
             started = time.time()
@@ -314,7 +343,13 @@ class GraphBuilder:
             con.execute(f"CREATE OR REPLACE TEMP TABLE {t.name} AS {sql[t.name]}")
             self._advance(t, d)
             stat[f"n_{t.name}"] = con.execute(f"SELECT count(*) FROM {t.name}").fetchone()[0]
-        con.execute(f"CREATE OR REPLACE TEMP TABLE {CROSSWALK.name} AS {crosswalk.quarter_sql(d)}")
+        with_firms = self.ownership and d >= self.ownership_from
+        if with_firms:
+            stat.update(firms.build_quarter(con, d))
+            for t in FIRM_TABLES:
+                self._advance(t, d)
+                stat[f"n_{t.name}"] = con.execute(f"SELECT count(*) FROM {t.name}").fetchone()[0]
+        con.execute(f"CREATE OR REPLACE TEMP TABLE {CROSSWALK.name} AS {crosswalk.quarter_sql(d, firms=with_firms)}")
         self._advance(CROSSWALK, d)
         stat.update(zip(
             ("n_reassignment_rows", "n_reassignment_dropped", "n_hospital_enrollments"),
@@ -358,7 +393,8 @@ class GraphBuilder:
     def write(self, out: Path, warehouse: Path) -> dict:
         out.mkdir(parents=True, exist_ok=True)
         tables = {}
-        for t in TABLES:
+        built = {r[0] for r in self.con.execute("SELECT table_name FROM duckdb_tables()").fetchall()}
+        for t in (*TABLES, *(t for t in FIRM_TABLES if f"{t.name}_open" in built)):
             path = out / f"{t.name}.parquet"
             self.con.execute(f"""
                 COPY ({self._intervals(t)} ORDER BY {", ".join(t.key)}, effective_date)
@@ -386,7 +422,9 @@ class GraphBuilder:
         n = self.con.execute(f"SELECT count(*) FROM '{path}'").fetchone()[0]
         tables[t.name] = {"rows": n, "key": [*t.key, "effective_date"], "description": t.description}
         with open(out / "quarters.csv", "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=list(self.stats[0]))
+            # the firm counts start with the first ownership quarter; earlier quarters leave them empty
+            fields = list(dict.fromkeys(k for st in self.stats for k in st))
+            w = csv.DictWriter(f, fieldnames=fields)
             w.writeheader()
             w.writerows(self.stats)
         # the group primitives read the tables just written, as a study opens them
@@ -405,6 +443,9 @@ class GraphBuilder:
             "facility_types": list(FACILITY_TYPES),
             "tables": tables,
         }
+        if self.ownership:
+            manifest["ownership"] = {"source": "CMS Enrollments and All Owners files", "first_release": self.ownership_from,
+                                     "control_roles": list(firms.CONTROL_ROLES), "chain_min": firms.CHAIN_MIN}
         if compendium_years:
             manifest["compendium"] = {"source": "AHRQ Compendium of U.S. Health Systems", "years": compendium_years}
         (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -415,8 +456,8 @@ class GraphBuilder:
 
 
 def build_graph(warehouse: Path, out: Path, *, limit: int | None = None, compendium: bool = False, medicaid: bool = False,
-                **kw) -> dict:
-    g = GraphBuilder(warehouse, compendium=compendium, medicaid=medicaid, **kw)
+                ownership: bool = False, **kw) -> dict:
+    g = GraphBuilder(warehouse, compendium=compendium, medicaid=medicaid, ownership=ownership, **kw)
     try:
         g.build(limit)
         return g.write(out, warehouse)
