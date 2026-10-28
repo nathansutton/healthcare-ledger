@@ -295,6 +295,14 @@ COVERAGE_BREAKS: dict[int, tuple[float, str]] = {
     20180401: (0.10, "the April 2018 file, which CMS rebuilt in August 2019, leaves out 95,199 of the 1,056,035 NPIs of "
                      "December 2017 (9.0%) across every state and specialty and adds 56,733; 17,258 of the 95,199 are "
                      "back in July 2018"),
+    20190401: (0.06, "the April 2019 file, four months after December 2018, drops 56,976 of 1,049,233 NPIs (5.4%) across "
+                     "every state and specialty while listing 6,255 more NPIs in all; 6,056 of them are back in July 2019, "
+                     "so it is turnover over a longer gap, not a damaged file"),
+    20200801: (0.09, "the August 2020 file, the first archived after December 2019 (eight months), drops 95,931 of "
+                     "1,125,486 NPIs (8.5%) in every state, 7.7 to 11.8% of each large one, while listing 10,668 more NPIs "
+                     "in all; 6,778 are back in October 2020"),
+    20220901: (0.07, "the September 2022 file, five months after April 2022, drops 71,751 of 1,210,173 NPIs (5.9%), 6 to 8% "
+                     "of each large state, while listing 9,626 more NPIs in all; 15,243 are back in December 2022"),
 }
 
 

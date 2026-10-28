@@ -16,11 +16,11 @@ health clinic enrollment, its direct and indirect owners by their own PECOS asso
     nursing homes is a chain in ASPE's sense, not a firm here).
 ``firm_member``
     every organization (PAC id), facility (CCN) and controlling owner (PAC id) in force on the quarter, with the firm
-    it belongs to: the connected component of the ultimate-owner edges (below) plus the enrollment -> CCN edges:
-    CMS's own CCN from the Enrollments files, and the graph's hospital and post-acute address links for the CCNs
-    those files do not cover (where both exist and disagree, 240 CCNs in mid-2023, an address link would join two
-    legal entities that CMS keeps apart). A component is transitive: when A
-    controls B and B controls hospital C, A, B and C share a firm.
+    it belongs to: the connected component of the edges legal entity -> its one ultimate owner (``ultimate_owner_sql``;
+    every control edge instead would let joint ventures join their partners' systems) and enrollment -> CCN: CMS's own
+    CCN from the Enrollments files, and the graph's hospital and post-acute address links for the CCNs those files do
+    not cover (where both exist and disagree, 240 CCNs in mid-2023, an address link would join two legal entities that
+    CMS keeps apart). A component is transitive: when A controls B and B controls hospital C, A, B and C share a firm.
 ``firm``
     each firm on the quarter with its counts of organizations, hospitals and post-acute facilities and a name (the
     controlling owner with the most facilities, else the organization with the most).
