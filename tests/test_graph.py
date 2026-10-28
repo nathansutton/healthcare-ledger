@@ -451,6 +451,7 @@ def ownership(warehouse: Path) -> Path:
     """The ownership source in the fixture warehouse, from Q1: hospital H's enrollment and nursing home S's are both
     controlled by the holding company SYS (a 100% direct owner and an indirect owner with no share given). The twin
     hospital T, which the address match leaves unlinked, has its CCN from CMS and its own owner until SYS buys it in Q2.
+    SYS's intermediate holding company MID is listed as H's indirect owner too.
     A 50-50 joint venture JV owns half of S: no control."""
     from healthcare_ledger.sources.ownership.ownership import OwnershipWarehouse
     OwnershipWarehouse(warehouse).close()
@@ -465,6 +466,7 @@ def ownership(warehouse: Path) -> Path:
                    VALUES ('OS1', ?, NULL, true, 0, 0, '', 1, 'S', '225000', '6000000001', 'A NURSING HOME')""", [Q[1]])
     owners = [
         ("hospital", "OH1", Q[1], None, "H", "SYS", "34", 100.0, "SYS HOLDINGS"),
+        ("hospital", "OH1", Q[1], None, "H", "MID", "35", 100.0, "SYS MIDCO LLC"),
         ("hospital", "OT1", Q[1], Q[2], "T", "TOWN", "34", 100.0, "TOWN TRUST"),
         ("hospital", "OT1", Q[2], None, "T", "SYS", "34", 100.0, "SYS HOLDINGS"),
         ("snf", "OS1", Q[1], None, "S", "SYS", "35", None, "SYS HOLDINGS"),
@@ -494,7 +496,8 @@ def test_firms_are_transitive_components_with_stable_ids(warehouse, ownership, t
     # S, its CCN and SYS are one firm; T and its CMS-given CCN another with T's owner
     members = dict(((t, i), f) for t, i, f in asof("firm_member", Q[1]))
     sys_firm = members[("pac", "SYS")]
-    assert {k for k, f in members.items() if f == sys_firm} == {("pac", "SYS"), ("pac", "H"), ("pac", "S"),
+    # H's ultimate owner is SYS, which reaches more facilities than its holding company MID; MID joins as a leaf
+    assert {k for k, f in members.items() if f == sys_firm} == {("pac", "SYS"), ("pac", "MID"), ("pac", "H"), ("pac", "S"),
                                                                  ("ccn", "220001"), ("ccn", "225000")}
     town_firm = members[("pac", "T")]
     assert town_firm != sys_firm and members[("ccn", "221001")] == town_firm and members[("pac", "TOWN")] == town_firm
@@ -514,6 +517,9 @@ def test_firms_are_transitive_components_with_stable_ids(warehouse, ownership, t
                        WHERE source IN ('ownership_enrollment') OR (source = 'firm_member' AND from_id = 'T') ORDER BY ALL""").fetchall()
     assert x == [("OH1", "220001", "ownership_enrollment"), ("OS1", "225000", "ownership_enrollment"),
                  ("OT1", "221001", "ownership_enrollment"), ("T", sys_firm, "firm_member"), ("T", town_firm, "firm_member")]
+    # a rebuild into the same directory without --ownership leaves no firm tables behind
+    build_graph(warehouse, out)
+    assert not any((out / f"{t}.parquet").exists() for t in ("control", "firm_member", "firm", "chain"))
 
 
 @pytest.fixture

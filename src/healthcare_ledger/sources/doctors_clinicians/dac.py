@@ -53,6 +53,7 @@ import csv
 import hashlib
 import logging
 import re
+import signal
 import subprocess
 import zipfile
 from collections.abc import Iterator
@@ -185,7 +186,8 @@ def open_member(zip_path: Path, member: str) -> Iterator[IO[bytes]]:
         yield proc.stdout
     finally:
         proc.stdout.close()
-        if proc.wait() != 0:
+        # -SIGPIPE: the reader stopped early on purpose (inspect_file reads two lines) and closed the pipe on unzip
+        if proc.wait() not in (0, -signal.SIGPIPE):
             raise RuntimeError(f"unzip failed on {zip_path.name}:{member}: {proc.stderr.read().decode(errors='replace')[:200]}")
 
 

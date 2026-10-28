@@ -17,7 +17,9 @@ health clinic enrollment, its direct and indirect owners by their own PECOS asso
 ``firm_member``
     every organization (PAC id), facility (CCN) and controlling owner (PAC id) in force on the quarter, with the firm
     it belongs to: the connected component of the edges legal entity -> its one ultimate owner (``ultimate_owner_sql``;
-    every control edge instead would let joint ventures join their partners' systems) and enrollment -> CCN: CMS's own
+    every control edge instead would let joint ventures join their partners' systems), each controlling owner that is
+    no entity's ultimate owner -> the entity it controls with the most facilities (``attach_sql``), and enrollment ->
+    CCN: CMS's own
     CCN from the Enrollments files, and the graph's hospital and post-acute address links only for a facility type
     the quarter's Enrollments files do not cover. An address link joins two legal entities CMS keeps apart where they
     share an address: a long-term care hospital inside its host hospital, a CCN CMS no longer lists. A component is
@@ -173,6 +175,23 @@ def ultimate_owner_sql() -> str:
         QUALIFY row_number() OVER (PARTITION BY c.pac_id ORDER BY r.n DESC, c.owner_pac_id) = 1"""
 
 
+def attach_sql() -> str:
+    """Each controlling owner left without an edge by ``ultimate_owner_sql`` (an intermediate holding company or a
+    joint-venture partner that no entity chose as its ultimate owner, and not itself an enrolled legal entity) with the
+    one entity it controls that holds the most facilities, ties broken by PAC id. Such an owner has no other edge, so
+    this one edge makes it a leaf of that entity's firm and cannot join two firms; without it the owner would be a firm
+    of its own with no facilities."""
+    return """
+        WITH reach AS (SELECT pac_id, count(DISTINCT ccn) AS n FROM fenr GROUP BY 1),
+        stranded AS (
+            SELECT DISTINCT owner_pac_id FROM control
+            EXCEPT SELECT owner_pac_id FROM ultimate
+            EXCEPT SELECT pac_id FROM ultimate
+            EXCEPT SELECT pac_id FROM fenr)
+        SELECT c.owner_pac_id, c.pac_id FROM control c JOIN stranded USING (owner_pac_id) LEFT JOIN reach r USING (pac_id)
+        QUALIFY row_number() OVER (PARTITION BY c.owner_pac_id ORDER BY coalesce(r.n, 0) DESC, c.pac_id) = 1"""
+
+
 def build_quarter(con: duckdb.DuckDBPyConnection, d: str) -> dict[str, int]:
     """Create the quarter's temp tables ``control``, ``firm_member``, ``firm`` and ``chain`` from the published
     ownership tables and the graph's own temp tables of the quarter (``organization``, ``hospital_link``,
@@ -185,19 +204,19 @@ def build_quarter(con: duckdb.DuckDBPyConnection, d: str) -> dict[str, int]:
         UNION SELECT 'pac:' || pac_id FROM fenr
         UNION SELECT 'ccn:' || ccn FROM fenr WHERE ccn IS NOT NULL
         UNION SELECT 'pac:' || owner_pac_id FROM control"""
+    # each owned legal entity hangs from one ultimate owner (ultimate_owner_sql), not from every owner it reports:
+    # with every control edge, joint ventures and unreported shares join unrelated systems into one component
+    con.execute(f"CREATE OR REPLACE TEMP TABLE ultimate AS {ultimate_owner_sql()}")
+    con.execute(f"CREATE OR REPLACE TEMP TABLE attach AS {attach_sql()}")
     edges = """
-        SELECT 'pac:' || owner_pac_id AS a, 'pac:' || pac_id AS b FROM control
+        SELECT 'pac:' || owner_pac_id AS a, 'pac:' || pac_id AS b FROM ultimate
+        UNION SELECT 'pac:' || owner_pac_id, 'pac:' || pac_id FROM attach
         UNION SELECT 'pac:' || pac_id, 'ccn:' || ccn FROM fenr WHERE ccn IS NOT NULL
         UNION SELECT 'pac:' || organization_pac_id, 'ccn:' || ccn FROM hospital_link
         WHERE NOT EXISTS (SELECT 1 FROM fenr WHERE facility_type = 'hospital')
         UNION SELECT 'pac:' || organization_pac_id, 'ccn:' || ccn FROM post_acute_link l
         WHERE NOT EXISTS (SELECT 1 FROM fenr WHERE facility_type = CASE l.facility_type WHEN 'nursing_home' THEN 'snf'
                                                                                          ELSE 'hha' END)"""
-    # each owned legal entity hangs from one ultimate owner (ultimate_owner_sql), not from every owner it reports:
-    # with every control edge, joint ventures and unreported shares join unrelated systems into one component
-    con.execute(f"CREATE OR REPLACE TEMP TABLE ultimate AS {ultimate_owner_sql()}")
-    edges = edges.replace("SELECT 'pac:' || owner_pac_id AS a, 'pac:' || pac_id AS b FROM control",
-                          "SELECT 'pac:' || owner_pac_id AS a, 'pac:' || pac_id AS b FROM ultimate")
     rounds = components(con, nodes, edges, "comp")
     label_firms(con, d)
     con.execute("""

@@ -119,3 +119,18 @@ def test_header_fix_by_layout_width():
     assert dac.header_fix(lines(short), row42, "x") == (dac.HEADER_2016, False)
     with pytest.raises(ValueError, match="no known layout fits"):
         dac.header_fix(lines(["NPI", "Other"]), row42, "x")
+
+
+def test_inspecting_a_deflate64_member_reads_two_lines_through_unzip(tmp_path, monkeypatch):
+    """zipfile cannot read Deflate64, so open_member pipes it through ``unzip -p``; inspect_file stops after two lines
+    and closes the pipe, which kills unzip with SIGPIPE once the member is bigger than the pipe buffer. That exit is
+    expected, not a failure."""
+    path = tmp_path / "2015" / "doc_archive_06_2015.zip"
+    path.parent.mkdir()
+    body = ",".join(HEADER_2014) + "\n" + ("1234567890," + ",".join("x" * 40 for _ in HEADER_2014[1:]) + "\n") * 5_000
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("National_Downloadable_File.csv", body)
+    # a member zipfile reads goes through zipfile; stand in for Deflate64 by making deflate look unsupported
+    monkeypatch.setattr(zipfile, "ZIP_DEFLATED", -1)
+    snap = dac.inspect_file(path)
+    assert snap.member == "National_Downloadable_File.csv" and snap.header is None

@@ -469,6 +469,10 @@ class GraphBuilder:
 
     def write(self, out: Path, warehouse: Path) -> dict:
         out.mkdir(parents=True, exist_ok=True)
+        # a rebuild into the same directory must not leave an earlier build's tables behind: the primitives read
+        # listed_reassignment when it is there, and a stale firm or Medicaid table would sit beside a manifest without it
+        for f in (*out.glob("*.parquet"), out / "quarters.csv", out / "manifest.json"):
+            f.unlink(missing_ok=True)
         tables = {}
         built = {r[0] for r in self.con.execute("SELECT table_name FROM duckdb_tables()").fetchall()}
         for t in (*TABLES, *(t for t in (*FIRM_TABLES, *DAC_TABLES) if f"{t.name}_open" in built)):
