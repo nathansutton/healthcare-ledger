@@ -186,6 +186,15 @@ def number_norm(expr: str) -> str:
     return f"coalesce(CAST(try_cast({expr} AS DOUBLE) AS VARCHAR), {expr})"
 
 
+# (snapshot id, facility type) -> (the share of absent enrollments let through, why): drops above the 5% guard that were
+# checked; both files of the type
+COVERAGE_BREAKS: dict[tuple[int, str], tuple[float, str]] = {
+    (20260717, "hospice"): (
+        0.07, "the July 2026 hospice file drops 395 of 6,066 hospices (6.5%), 280 of them in California and most of the "
+              "rest in Texas, Nevada and Arizona, the states of CMS's 2023 enhanced oversight of hospices; the owner file "
+              "of the same release drops the same enrollments"),
+}
+
 _TYPED = {"date": ("try_strptime({c}, '%Y-%m-%d')::DATE", "try_strptime({c}, '%Y-%m-%d') IS NULL"),
           "number": ("try_cast({c} AS DOUBLE)", "try_cast({c} AS DOUBLE) IS NULL")}
 
@@ -240,7 +249,14 @@ class OwnershipWarehouse(VersionedWarehouse):
         return False
 
     def counted_absent(self, st, delta: str, out) -> int:
-        # every stream is a whole file of its type: an enrollment missing from it has left the file
+        # every stream is a whole file of its type: an enrollment missing from it has left the file. A drop checked and
+        # found real (COVERAGE_BREAKS) is let through up to its own limit and no further
+        allowed = COVERAGE_BREAKS.get((st.snapshot_id, st.stream.facility_type))
+        prev = out.n_changed + out.n_unchanged + out.n_absent
+        if allowed is not None and prev and out.n_absent <= allowed[0] * prev:
+            log.warning("%s %s: %d of %d enrollments absent (%.1f%%), a known break: %s", st.snapshot_id, st.stream.name,
+                        out.n_absent, prev, 100 * out.n_absent / prev, allowed[1])
+            return 0
         return out.n_absent
 
     def typed_select(self, stream: OwnershipStream) -> tuple[list[str], dict[str, list[str]]]:

@@ -15,6 +15,18 @@ Can the public CMS files in this warehouse be joined into one graph of who pract
 | Median MSA share of physicians in systems | Machta et al. 2020; Furukawa et al. 2020 | **Reproduces by specialty.** 2018: cardiology 57 (Machta 55), hematology-oncology 54 (57), dermatology 6 (6). National share 43 and 46 percent in 2016 and 2018, against Furukawa's 40 and 51. |
 | Physicians billing through an organization in a health system | Luo et al. 2024 (full measure); AHRQ Compendium | **Reproduces AHRQ, brackets Luo.** On AHRQ's own tax ids, the graph's fractional share in a system is within 1.4 points of MD-PPAS every year (52 to 62 percent, 2016 to 2022). Over all physicians it rises from 43 to 53 percent, a few points above Luo et al.'s 43.5 percent for 2019, whose 75-percent-of-billing rule is stricter. Oncology and cardiology are the most integrated and gain 12 points. |
 
+## Firms over time: `firms_over_time.ipynb`
+
+The graph above is one hop: a practitioner reassigns to an organization, an organization's hospital enrollment matches a CCN. [`firms_over_time.ipynb`](firms_over_time.ipynb) adds three public sources that make it transitive and weighted, and replicates the studies that used them. CMS's monthly **All Owners** and **Enrollments** files (2022 on) name every facility's owners by associate id; `graph-build --ownership` turns them into **firms**, connected components of legal entity → ultimate owner and enrollment → CCN edges whose ids carry over from quarter to quarter, and into ASPE's **chains**. The archived **Physician Compare** files (2014-2022) are the claims filter the PPEF lacks: a clinician is listed under a group only with Medicare claims under it in the past year. CMS's **Medicare utilization** files give each physician's office visits by setting.
+
+| Measure | Paper | Result |
+|---|---|---|
+| Hospital chains by ultimate owner, December 2022 | ASPE (Welch, Xu, De Lew and Sommers 2023) | **Replicates.** 256 chains of three or more holding 56.5% of hospitals, against 243 and 56.1%; the eleven largest in ASPE's order, each within six hospitals. 59.6% by September 2026. |
+| Nursing home chains, September 2022 | ASPE (Welch, Oliveira, Blanco and Sommers 2023) | **Exact.** The ten largest chains to the facility and every size band within two SNFs. ASPE's ownership method agrees with CMS's own chains on 84 to 89% of its pairs and finds half of CMS's. |
+| Health systems | AHRQ Compendium, 2022-2023 | **Firms are as precise as chains and find more.** 69 to 70% of the hospital pairs a firm makes are in one AHRQ system; firms find 45 to 54% of AHRQ's pairs (chains 43 to 50%). Acquisitions show as dated merges (UnitedHealth and Amedisys, 2025). |
+| Hospital-related tax ids with the network and name steps; service location | Luo et al. 2024; Neprash et al. 2015 | **Still a floor.** The two steps add 3.8 points by 2026 (22.1%), against Luo et al.'s 43.5% in 2019: the All Owners files cover facilities, not the practices a system owns. 12% of physicians bill their office visits in hospital settings; the two measures agree on a third of each other's integrated physicians, as Luo et al. found (38%). |
+| Physicians by group size on Physician Compare | Muhlestein and Smith 2016 | **Within a point.** 34.4% in groups of 100 or more and 36.0% in groups of nine or fewer in the November 2015 file, against 35.1 and 35.3%. Claims-filtered weights cut the per-tax-id error against MD-PPAS by 10 to 25%. |
+
 ## Why the graph is built this way
 
 A survey of the literature before building set three rules.
@@ -45,12 +57,12 @@ Patient-sharing and referral networks (Barnett et al., *HSR* 2011; Landon et al.
 
 Each of these is a published measure the graph is ready for, and none is done here.
 
-1. **Ownership edges.** Load CMS's monthly All Owners files (hospitals, nursing homes, home health agencies, hospices, from late 2022). They give direct and indirect owners by associate id, with private-equity and REIT flags. This would follow ASPE's ultimate-owner method (Welch, Xu, De Lew and Sommers, 2023).
-2. **Systems after 2023.** AHRQ's group practice files stop at 2022; the graph carries them into 2023, which an associate id's year-to-year stability supports and an address match to AHRQ's outpatient sites does not (section 6). After that, components over ownership edges, the step Luo et al. took with Schedule R, with section 6 as the benchmark.
-3. **Other facilities.** Nursing homes and home health agencies are nodes now; hospices and dialysis facilities would follow the same rules.
-4. **Staleness.** Use archived Doctors and Clinicians files (claims-filtered group membership; quarterly from 2014, captured by the Internet Archive through 2022) to measure how much of the remaining 3 to 5 point gap to Muhlestein and Smith comes from stale reassignments, and as a Medicare-side main-group rule beside the Medicaid one.
-5. **Tax ids.** Insurers' Transparency in Coverage price files list provider groups by tax id and NPI. Only the current month is published, so they serve as a check of the associate-id stand-in and of which reassignments are current, going forward.
-6. **Fulton's primary care.** Find what in SK&A's universe or ownership roll-up puts 39 percent of MSAs above 2,500 for primary care, against the graph's 21.
+Done in `firms_over_time.ipynb`: ownership edges and ASPE's ultimate-owner method (its sections 1 and 2), systems after 2023 as ownership components scored against AHRQ (section 3), and the Doctors and Clinicians claims filter as a weight, which closes most of the gap to Muhlestein and Smith (section 5). Its own next steps are in its last cell.
+
+1. **Physician practices in firms.** The All Owners files cover Part A facilities, so a system's physician groups join its firm only through a shared associate id. IRS Form 990 Schedule R, the source of Luo et al.'s network step, would add the practices a system controls under other tax ids.
+2. **Other facilities.** Hospices, FQHCs and rural health clinics are in the ownership files and the firms; dialysis facilities are not.
+3. **Tax ids.** Insurers' Transparency in Coverage price files list provider groups by tax id and NPI. Only the current month is published, so they serve as a check of the associate-id stand-in and of which reassignments are current, going forward.
+4. **Fulton's primary care.** Find what in SK&A's universe or ownership roll-up puts 39 percent of MSAs above 2,500 for primary care, against the graph's 21.
 
 ## Running it
 
@@ -60,9 +72,16 @@ uv run healthcare-ledger download --source-name ahrq   # optional, for section 6
 uv run healthcare-ledger load --source-name ahrq       # optional: data/warehouse/ahrq.duckdb
 uv run healthcare-ledger download --source-name medicaid   # optional, for section 4b: the pinned HHS zip into data/medicaid (3.8 GB)
 uv run healthcare-ledger load --source-name medicaid       # optional: data/warehouse/medicaid.duckdb (about a minute)
-uv run healthcare-ledger graph-build --out graph --compendium --medicaid   # a few minutes; drop --compendium without ahrq, --medicaid without medicaid
+uv run healthcare-ledger download --source-name ownership             # for firms_over_time.ipynb: the facility owner files (about 4 GB)
+uv run healthcare-ledger load --source-name ownership
+uv run healthcare-ledger download --source-name doctors_clinicians    # the archived Physician Compare files (about 7 GB)
+uv run healthcare-ledger load --source-name doctors_clinicians
+uv run healthcare-ledger download --source-name medicare_utilization  # the Medicare by-provider-and-service files (about 30 GB)
+uv run healthcare-ledger load --source-name medicare_utilization
+uv run healthcare-ledger export                                       # firms_over_time.ipynb reads the ownership and Physician Compare tables from the export
+uv run healthcare-ledger graph-build --out graph --compendium --medicaid --ownership --doctors-clinicians --medicare-utilization   # about ten minutes; drop an option without its source
 export LEDGER_GRAPH=$PWD/graph                                             # default: the repository's graph/
-uv run jupyter lab research/provider-networks/provider_networks.ipynb
+uv run jupyter lab research/provider-networks/   # provider_networks.ipynb, then firms_over_time.ipynb
 ```
 
 Without `--medicaid`, section 4b runs on empty tables and shows nothing; without `--compendium`, so does section 6. The group primitives (`physician_q`, `physician_edge`, `group_size`, and with `--medicaid` `medicaid_volume` and `main_group`) come from `graph-build`, which runs the SQL files in `src/healthcare_ledger/derived/sql/` (METHODOLOGY section 8c); the notebook shows each file above the cell that first reads it. Each other table (`link_check`, `facility_check`, `size_shares`, `physician_specialty`, `market_hhi`, `compendium_q`, `ahrq_edge`, `system_org`, `firm_share`, `msa_hhi`, `hrr_hhi`) is built in DuckDB SQL in the cell that first needs it, with the reasoning just above it.

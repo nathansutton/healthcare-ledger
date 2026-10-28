@@ -66,3 +66,23 @@ def test_load_versions_owners_by_enrollment(tmp_path, ownership_source):
     assert ownership.check_problems(con) == []
     con.close()
     assert main(["validate", "--warehouse", str(db)]) == 0
+
+
+def test_absent_guard_with_a_known_break(tmp_path, monkeypatch):
+    """A release that drops more than 5% of a type's enrollments is refused, unless the release and type are a checked
+    break (COVERAGE_BREAKS), which lets that drop through and no larger one."""
+    from conftest import ENR, _snf, _write_owner_csv
+    src = tmp_path / "ownership"
+    ids = [f"O2000010100{i:04d}" for i in range(1000)]
+    _write_owner_csv(src / "2023-01-01" / "SNF_Enrollments.csv", ENR, [_snf(e, "1111111111", f"{i:06d}", "A") for i, e in enumerate(ids)])
+    _write_owner_csv(src / "2023-02-01" / "SNF_Enrollments.csv", ENR, [_snf(e, "1111111111", f"{i:06d}", "A") for i, e in enumerate(ids[60:])])
+    db, work = tmp_path / "warehouse", tmp_path / "work"
+    load = ["load", "--source-name", "ownership", "--source", str(src), "--warehouse", str(db), "--work", str(work)]
+    assert main(load) == 1
+    monkeypatch.setitem(ownership.COVERAGE_BREAKS, (20230201, "snf"), (0.05, "too small for this drop"))
+    assert main(load) == 1
+    monkeypatch.setitem(ownership.COVERAGE_BREAKS, (20230201, "snf"), (0.07, "checked"))
+    assert main(load) == 0
+    con = catalog(db, read_only=True)
+    assert con.execute("SELECT n_absent FROM ownership_snapshot_stream WHERE snapshot_id = 20230201").fetchone() == (60,)
+    con.close()

@@ -16,5 +16,5 @@ s AS (SELECT year, npi, sum(allowed) AS allowed, sum(services) AS services,
       GROUP BY ALL)
 SELECT pr.as_of_date, pr.pac_id AS practitioner_pac_id, s.year, s.allowed, s.services,
        coalesce(s.em_facility, 0) AS em_facility, coalesce(s.em_office, 0) AS em_office,
-       s.em_facility / nullif(coalesce(s.em_facility, 0) + coalesce(s.em_office, 0), 0) AS facility_em_share
+       coalesce(s.em_facility, 0) / nullif(coalesce(s.em_facility, 0) + coalesce(s.em_office, 0), 0) AS facility_em_share
 FROM s JOIN pr ON pr.y = s.year AND pr.npi = s.npi

@@ -18,9 +18,10 @@ health clinic enrollment, its direct and indirect owners by their own PECOS asso
     every organization (PAC id), facility (CCN) and controlling owner (PAC id) in force on the quarter, with the firm
     it belongs to: the connected component of the edges legal entity -> its one ultimate owner (``ultimate_owner_sql``;
     every control edge instead would let joint ventures join their partners' systems) and enrollment -> CCN: CMS's own
-    CCN from the Enrollments files, and the graph's hospital and post-acute address links for the CCNs those files do
-    not cover (where both exist and disagree, 240 CCNs in mid-2023, an address link would join two legal entities that
-    CMS keeps apart). A component is transitive: when A controls B and B controls hospital C, A, B and C share a firm.
+    CCN from the Enrollments files, and the graph's hospital and post-acute address links only for a facility type
+    the quarter's Enrollments files do not cover. An address link joins two legal entities CMS keeps apart where they
+    share an address: a long-term care hospital inside its host hospital, a CCN CMS no longer lists. A component is
+    transitive: when A controls B and B controls hospital C, A, B and C share a firm.
 ``firm``
     each firm on the quarter with its counts of organizations, hospitals and post-acute facilities and a name (the
     controlling owner with the most facilities, else the organization with the most).
@@ -188,9 +189,10 @@ def build_quarter(con: duckdb.DuckDBPyConnection, d: str) -> dict[str, int]:
         SELECT 'pac:' || owner_pac_id AS a, 'pac:' || pac_id AS b FROM control
         UNION SELECT 'pac:' || pac_id, 'ccn:' || ccn FROM fenr WHERE ccn IS NOT NULL
         UNION SELECT 'pac:' || organization_pac_id, 'ccn:' || ccn FROM hospital_link
-        WHERE ccn NOT IN (SELECT ccn FROM fenr WHERE ccn IS NOT NULL)
-        UNION SELECT 'pac:' || organization_pac_id, 'ccn:' || ccn FROM post_acute_link
-        WHERE ccn NOT IN (SELECT ccn FROM fenr WHERE ccn IS NOT NULL)"""
+        WHERE NOT EXISTS (SELECT 1 FROM fenr WHERE facility_type = 'hospital')
+        UNION SELECT 'pac:' || organization_pac_id, 'ccn:' || ccn FROM post_acute_link l
+        WHERE NOT EXISTS (SELECT 1 FROM fenr WHERE facility_type = CASE l.facility_type WHEN 'nursing_home' THEN 'snf'
+                                                                                         ELSE 'hha' END)"""
     # each owned legal entity hangs from one ultimate owner (ultimate_owner_sql), not from every owner it reports:
     # with every control edge, joint ventures and unreported shares join unrelated systems into one component
     con.execute(f"CREATE OR REPLACE TEMP TABLE ultimate AS {ultimate_owner_sql()}")
