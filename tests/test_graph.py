@@ -138,6 +138,16 @@ def medicaid(warehouse: Path) -> Path:
     return warehouse
 
 
+@pytest.fixture
+def medicare(warehouse: Path, tmp_path: Path) -> Path:
+    """The Medicare utilization source in the fixture warehouse: P1 (NPI 1000000001) billed 30 office visits in a
+    facility and 10 in an office in 2019 (conftest.write_mup)."""
+    from conftest import write_mup
+    from healthcare_ledger.sources.medicare_utilization.load import load as load_mup
+    load_mup(write_mup(tmp_path / "mup"), warehouse, tmp_path / "work")
+    return warehouse
+
+
 def test_reassignments_roll_up_to_associate_ids_with_intervals(warehouse, tmp_path):
     out = tmp_path / "g"
     build_graph(warehouse, out)
@@ -316,15 +326,18 @@ STUDY = Path(__file__).resolve().parent.parent / "research" / "provider-networks
 NOTEBOOK = STUDY / "provider_networks.ipynb"
 
 
-def test_group_primitives(warehouse, medicaid, tmp_path):
-    """graph-build writes the group primitives from derived/sql/; the Medicaid ones only with --medicaid."""
+def test_group_primitives(warehouse, medicaid, medicare, tmp_path):
+    """graph-build writes the group primitives from derived/sql/; the Medicaid ones only with --medicaid, the Medicare
+    one only with --medicare-utilization; edge_weight always, falling back to 1/k without the sources."""
     from healthcare_ledger.derived import primitives
     out = tmp_path / "g"
     m = build_graph(warehouse, out)
     assert [f for f in m["tables"] if f in {p.file for p in primitives.PRIMITIVES}] == \
-        ["physician_quarter", "physician_edge", "group_size"]
+        ["physician_quarter", "physician_edge", "group_size", "edge_weight"]
     assert not (out / "main_group.parquet").exists()
-    m = build_graph(warehouse, out, medicaid=True)
+    assert duckdb.sql(f"SELECT count(*) FROM '{out}/edge_weight.parquet' WHERE w_listed <> w_fractional OR listed IS NOT NULL "
+                      f"OR w_medicaid IS NOT NULL").fetchone() == (0,)
+    m = build_graph(warehouse, out, medicaid=True, medicare_utilization=True)
     assert m["tables"]["main_group"] == {"rows": 2, "key": ["as_of_date", "practitioner_pac_id"],
                                          "description": primitives.MEDICAID[1].description,
                                          "sql": "derived/sql/main_group.sql"}
@@ -335,6 +348,10 @@ def test_group_primitives(warehouse, medicaid, tmp_path):
     con.execute(f"CREATE VIEW quarters AS SELECT * FROM read_csv('{out}/quarters.csv')")
     con.execute(f"ATTACH '{medicaid / 'medicaid.duckdb'}' AS medicaid (READ_ONLY)")
     con.execute("CREATE VIEW medicaid_spending AS SELECT * FROM medicaid.medicaid_spending")
+    con.execute(f"ATTACH '{medicare / 'medicare_utilization.duckdb'}' AS medicare (READ_ONLY)")
+    con.execute("CREATE VIEW medicare_service AS SELECT * FROM medicare.medicare_utilization_service")
+    con.execute("CREATE TABLE listed_reassignment (practitioner_pac_id VARCHAR, organization_pac_id VARCHAR, "
+                "effective_date DATE, end_date DATE)")
     for p in primitives.PRIMITIVES:
         primitives.create(con, p.name)
         for a, b in ((p.name, f"'{out}/{p.file}.parquet'"), (f"'{out}/{p.file}.parquet'", p.name)):
@@ -342,6 +359,14 @@ def test_group_primitives(warehouse, medicaid, tmp_path):
     # P2 reassigns to G and H in Q0 and Q2 and only to H in Q1
     assert con.execute(f"SELECT organization_pac_id, k FROM '{out}/physician_edge.parquet' "
                        f"WHERE practitioner_pac_id = 'P2' AND as_of_date = '{Q[1]}'").fetchall() == [("H", 1)]
+    # P1's 2019 Medicare office visits on the first quarter after 2019: three in four in a facility
+    assert con.execute(f"SELECT as_of_date::VARCHAR, em_facility, em_office, facility_em_share, allowed "
+                       f"FROM '{out}/medicare_volume.parquet' WHERE practitioner_pac_id = 'P1'").fetchall() == \
+        [(Q[0], 30.0, 10.0, 0.75, 30 * 80.0 + 10 * 100.0)]
+    # P2's Medicaid dollars in 2019 were 500 through H and 100 through G: the weights on the first quarter after 2019
+    assert con.execute(f"SELECT organization_pac_id, w_fractional, w_medicaid FROM '{out}/edge_weight.parquet' "
+                       f"WHERE practitioner_pac_id = 'P2' AND as_of_date = '{Q[0]}' ORDER BY 1").fetchall() == \
+        [("G", 0.5, 100 / 600), ("H", 0.5, 500 / 600)]
 
 
 def test_medicaid_needs_the_medicaid_source(warehouse, tmp_path):
@@ -354,11 +379,11 @@ def test_medicaid_needs_the_medicaid_source(warehouse, tmp_path):
 
 
 def test_notebook_shows_each_primitive_sql():
-    """The markdown cell above each use of a group primitive shows its derived/sql file as it is, and no code cell
-    builds one."""
+    """A markdown cell of the study's notebooks, above the first use of each group primitive, shows its derived/sql file
+    as it is, and no code cell builds one."""
     import json
     from healthcare_ledger.derived import primitives
-    cells = json.loads(NOTEBOOK.read_text())["cells"]
+    cells = [c for nb in sorted(STUDY.glob("*.ipynb")) for c in json.loads(nb.read_text())["cells"]]
     markdown = "".join("".join(c["source"]) for c in cells if c["cell_type"] == "markdown")
     code = "".join("".join(c["source"]) for c in cells if c["cell_type"] == "code")
     for p in primitives.PRIMITIVES:
@@ -419,3 +444,111 @@ def test_reference_data():
         rows = study_rows(STUDY, name)
         assert len({r["enrollment_id"] for r in rows}) == len(rows) > n and {r["provider_type_code"] for r in rows} == {code}
 
+
+
+@pytest.fixture
+def ownership(warehouse: Path) -> Path:
+    """The ownership source in the fixture warehouse, from Q1: hospital H's enrollment and nursing home S's are both
+    controlled by the holding company SYS (a 100% direct owner and an indirect owner with no share given). The twin
+    hospital T, which the address match leaves unlinked, has its CCN from CMS and its own owner until SYS buys it in Q2.
+    SYS's intermediate holding company MID is listed as H's indirect owner too.
+    A 50-50 joint venture JV owns half of S: no control."""
+    from healthcare_ledger.sources.ownership.ownership import OwnershipWarehouse
+    OwnershipWarehouse(warehouse).close()
+    con = duckdb.connect(str(warehouse / "ownership.duckdb"))
+    con.execute("INSERT INTO ownership_snapshot (snapshot_id, as_of_date, directory, loaded_at) VALUES (20200401, '2020-04-01', '2020-04-01', now())")
+    con.executemany("""INSERT INTO ownership_hospital_enrollment_version (enrollment_id, effective_date, end_date, is_current,
+                       first_snapshot_id, last_snapshot_id, version_hash, row_seq, pac_id, ccn, npi, org_name)
+                       VALUES (?, ?, NULL, true, 0, 0, '', 1, ?, ?, ?, ?)""", [
+        ("OH1", Q[1], "H", "220001", "3000000001", "GENERAL HOSPITAL"), ("OT1", Q[1], "T", "221001", "4000000001", "TWIN HOSPITAL")])
+    con.execute("""INSERT INTO ownership_snf_enrollment_version (enrollment_id, effective_date, end_date, is_current,
+                   first_snapshot_id, last_snapshot_id, version_hash, row_seq, pac_id, ccn, npi, org_name)
+                   VALUES ('OS1', ?, NULL, true, 0, 0, '', 1, 'S', '225000', '6000000001', 'A NURSING HOME')""", [Q[1]])
+    owners = [
+        ("hospital", "OH1", Q[1], None, "H", "SYS", "34", 100.0, "SYS HOLDINGS"),
+        ("hospital", "OH1", Q[1], None, "H", "MID", "35", 100.0, "SYS MIDCO LLC"),
+        ("hospital", "OT1", Q[1], Q[2], "T", "TOWN", "34", 100.0, "TOWN TRUST"),
+        ("hospital", "OT1", Q[2], None, "T", "SYS", "34", 100.0, "SYS HOLDINGS"),
+        ("snf", "OS1", Q[1], None, "S", "SYS", "35", None, "SYS HOLDINGS"),
+        ("snf", "OS1", Q[1], None, "S", "JV", "34", 50.0, "JOINT VENTURE LLC"),
+    ]
+    for t, eid, start, end, pac, owner, role, pct, name in owners:
+        con.execute(f"""INSERT INTO ownership_{t}_owner_version (enrollment_id, effective_date, end_date, is_current,
+                        first_snapshot_id, last_snapshot_id, version_hash, row_seq, pac_id, owner_pac_id, owner_type,
+                        owner_role_code, ownership_pct, owner_org_name)
+                        VALUES (?, ?, ?, true, 0, 0, '', 1, ?, ?, 'O', ?, ?, ?)""", [eid, start, end, pac, owner, role, pct, name])
+    con.close()
+    return warehouse
+
+
+def test_firms_are_transitive_components_with_stable_ids(warehouse, ownership, tmp_path, monkeypatch):
+    from healthcare_ledger.derived import firms
+    monkeypatch.setattr(firms, "CHAIN_MIN", 2)
+    out = tmp_path / "g"
+    m = build_graph(warehouse, out, ownership=True)
+    assert m["ownership"]["first_release"] == "2020-04-01"
+    d = date.fromisoformat
+    asof = lambda t, q: duckdb.sql(f"SELECT * EXCLUDE (effective_date, end_date) FROM '{out}/{t}.parquet' "   # noqa: E731
+                                   f"WHERE effective_date <= DATE '{q}' AND (end_date IS NULL OR end_date > DATE '{q}') ORDER BY ALL").fetchall()
+    # no ownership release before Q1: no firm rows then
+    assert asof("firm_member", Q[0]) == []
+    # Q1: SYS controls H (direct) and S (indirect, share not given); the joint venture controls nothing. H, its CCN,
+    # S, its CCN and SYS are one firm; T and its CMS-given CCN another with T's owner
+    members = dict(((t, i), f) for t, i, f in asof("firm_member", Q[1]))
+    sys_firm = members[("pac", "SYS")]
+    # H's ultimate owner is SYS, which reaches more facilities than its holding company MID; MID joins as a leaf
+    assert {k for k, f in members.items() if f == sys_firm} == {("pac", "SYS"), ("pac", "MID"), ("pac", "H"), ("pac", "S"),
+                                                                 ("ccn", "220001"), ("ccn", "225000")}
+    town_firm = members[("pac", "T")]
+    assert town_firm != sys_firm and members[("ccn", "221001")] == town_firm and members[("pac", "TOWN")] == town_firm
+    assert ("pac", "JV") not in members and members[("pac", "G")] not in (sys_firm, town_firm)   # G is its own firm
+    # Q2: SYS buys T. The merged firm keeps SYS's id (it holds most of the members); T's firm id ends
+    members2 = dict(((t, i), f) for t, i, f in asof("firm_member", Q[2]))
+    assert members2[("pac", "T")] == members2[("ccn", "221001")] == sys_firm
+    assert ("pac", "TOWN") not in members2
+    rows = duckdb.sql(f"SELECT firm_id, effective_date, end_date FROM '{out}/firm.parquet' WHERE firm_id = '{town_firm}'").fetchall()
+    assert rows == [(town_firm, d(Q[1]), d(Q[2]))]
+    firm = {r[0]: r[1:] for r in asof("firm", Q[2])}
+    assert firm[sys_firm] == ("SYS HOLDINGS", 3, 2, 1, 3)        # organizations H, S, T; hospitals 220001, 221001; one SNF
+    # ASPE chains (minimum lowered to two for the fixture): SYS's two hospitals in Q2
+    assert asof("chain", Q[2]) == [("hospital", "220001", "SYS", "SYS HOLDINGS", 2), ("hospital", "221001", "SYS", "SYS HOLDINGS", 2)]
+    # the crosswalk carries CMS's own enrollment -> CCN edges and the firm edges
+    x = duckdb.sql(f"""SELECT from_id, to_id, source FROM '{out}/crosswalk.parquet'
+                       WHERE source IN ('ownership_enrollment') OR (source = 'firm_member' AND from_id = 'T') ORDER BY ALL""").fetchall()
+    assert x == [("OH1", "220001", "ownership_enrollment"), ("OS1", "225000", "ownership_enrollment"),
+                 ("OT1", "221001", "ownership_enrollment"), ("T", sys_firm, "firm_member"), ("T", town_firm, "firm_member")]
+    # a rebuild into the same directory without --ownership leaves no firm tables behind
+    build_graph(warehouse, out)
+    assert not any((out / f"{t}.parquet").exists() for t in ("control", "firm_member", "firm", "chain"))
+
+
+@pytest.fixture
+def doctors_clinicians(warehouse: Path) -> Path:
+    """The Doctors and Clinicians source in the fixture warehouse: one vintage, 2019-12-01, listing P1 under G and P2
+    under H only (P2's reassignment to G had no claims), with P2 affiliated with hospital 220001."""
+    from healthcare_ledger.sources.doctors_clinicians.dac import DacWarehouse
+    DacWarehouse(warehouse).close()
+    con = duckdb.connect(str(warehouse / "doctors_clinicians.duckdb"))
+    con.execute("INSERT INTO dac_snapshot (snapshot_id, as_of_date, directory, loaded_at) VALUES (20191201, '2019-12-01', '2019', now())")
+    con.executemany("""INSERT INTO dac_clinician_version (npi, effective_date, end_date, is_current, first_snapshot_id,
+                       last_snapshot_id, version_hash, row_seq, ind_pac_id, org_pac_id, hosp_afl_1_ccn)
+                       VALUES (?, '2019-12-01', NULL, true, 20191201, 20191201, '', 1, ?, ?, ?)""", [
+        ("1000000001", "P1", "G", None), ("1000000002", "P2", "H", "220001")])
+    con.close()
+    return warehouse
+
+
+def test_doctors_clinicians_lists_claims_filtered_pairs_within_a_window(warehouse, doctors_clinicians, tmp_path):
+    out = tmp_path / "g"
+    m = build_graph(warehouse, out, doctors_clinicians=True)
+    d = date.fromisoformat
+    assert m["doctors_clinicians"]["vintages"] == ["2019-12-01"]
+    # the vintage covers Q0 and Q1 (within 184 days) and not Q2 (213 days), where its pairs close
+    assert duckdb.sql(f"SELECT * FROM '{out}/listed_reassignment.parquet' ORDER BY ALL").fetchall() == [
+        ("P1", "G", d(Q[0]), d(Q[2])), ("P2", "H", d(Q[0]), d(Q[2]))]
+    assert duckdb.sql(f"SELECT * FROM '{out}/hospital_affiliation.parquet'").fetchall() == [("P2", "220001", d(Q[0]), d(Q[2]))]
+    w = duckdb.sql(f"""SELECT as_of_date, organization_pac_id, k, listed, w_listed FROM '{out}/edge_weight.parquet'
+                       WHERE practitioner_pac_id = 'P2' ORDER BY ALL""").fetchall()
+    # P2 reassigns to G and H; Doctors and Clinicians lists H only, so H carries P2 while a vintage covers the quarter
+    assert w == [(d(Q[0]), "G", 2, False, 0.0), (d(Q[0]), "H", 2, True, 1.0), (d(Q[1]), "H", 1, True, 1.0),
+                 (d(Q[2]), "G", 2, None, 0.5), (d(Q[2]), "H", 2, None, 0.5)]

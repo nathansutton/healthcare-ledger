@@ -1,0 +1,47 @@
+name,cms_header,aliases,kind,hash_optional,description
+enrollment_id,Ind_enrl_ID,Professional Enrollment ID,text,no,"PECOS enrollment id of the clinician (I followed by 14 digits), the key of the PPEF enrollment file"
+ind_pac_id,Ind_PAC_ID,PAC ID,text,no,PECOS associate id (PAC id) of the clinician
+last_name,lst_nm,Last Name,text,no,Last name; NULL when it contains a digit
+first_name,frst_nm,First Name,text,no,First name; NULL when it contains a digit
+middle_name,mid_nm,Middle Name,text,no,Middle name; NULL when it contains a digit
+suffix,suff,Suffix,text,no,"Name suffix (JR, III, ...)"
+gender,gndr,Gender,text,no,M or F (U in some vintages)
+credential,Cred,Credential,text,no,"Credential (MD, DO, NP, PA, ...); NULL when it holds nine digits"
+medical_school,Med_sch,Medical school name,text,no,Medical or professional school; OTHER when not in CMS's list
+graduation_year,Grd_yr,Graduation year,int,no,Year of graduation from that school
+primary_specialty,pri_spec,Primary specialty,text,no,Primary Medicare specialty
+secondary_specialty_1,sec_spec_1,Secondary specialty 1,text,no,First secondary specialty
+secondary_specialty_2,sec_spec_2,Secondary specialty 2,text,no,Second secondary specialty
+secondary_specialty_3,sec_spec_3,Secondary specialty 3,text,no,Third secondary specialty
+secondary_specialty_4,sec_spec_4,Secondary specialty 4,text,no,Fourth secondary specialty
+secondary_specialties,sec_spec_all,All secondary specialties,text,no,"Every secondary specialty, comma separated"
+telehealth_flag,Telehlth,,text,yes,Y when the clinician offers telehealth (only in the later vintages)
+org_name,org_nm,Organization legal name,text,no,Legal business name of the group practice the clinician reassigns benefits to; NULL for a clinician billing on their own
+org_dba_name,Organization DBA name,,text,yes,Doing-business-as name of the group (only in the 2014-12 to 2015 vintages)
+org_pac_id,org_pac_id,Group Practice PAC ID,text,no,PECOS associate id (PAC id) of the group practice; the graph's organization key
+num_org_mem,num_org_mem,Number of Group Practice members,int,no,Number of clinicians in the group practice (CMS's count)
+address_line_1,adr_ln_1,Line 1 Street Address,text,no,Practice address
+address_line_2,adr_ln_2,Line 2 Street Address,text,no,"Practice address, second line"
+address_line_2_suppressed_flag,ln_2_sprs,Marker of address line 2 suppression,text,no,Y when CMS suppressed the second address line on Physician Compare
+city,cty,City,text,no,Practice city
+state,st,State,text,no,Practice state
+zip,zip,Zip Code,text,no,"Practice ZIP code, five or nine digits as CMS wrote it"
+phone,phn_numbr,Phone Number,text,yes,Practice phone number (from the 2016 vintages)
+hosp_afl_1_ccn,hosp_afl_1,Claims based hospital affiliation CCN 1|Hospital affiliation CCN 1,text,no,CCN of the first hospital the clinician is affiliated with (from Medicare claims)
+hosp_afl_1_lbn,hosp_afl_lbn_1,Claims based hospital affiliation LBN 1|Hospital affiliation LBN 1,text,no,Legal business name of that hospital
+hosp_afl_2_ccn,hosp_afl_2,Claims based hospital affiliation CCN 2|Hospital affiliation CCN 2,text,no,CCN of the second affiliated hospital
+hosp_afl_2_lbn,hosp_afl_lbn_2,Claims based hospital affiliation LBN 2|Hospital affiliation LBN 2,text,no,Legal business name of that hospital
+hosp_afl_3_ccn,hosp_afl_3,Claims based hospital affiliation CCN 3|Hospital affiliation CCN 3,text,no,CCN of the third affiliated hospital
+hosp_afl_3_lbn,hosp_afl_lbn_3,Claims based hospital affiliation LBN 3|Hospital affiliation LBN 3,text,no,Legal business name of that hospital
+hosp_afl_4_ccn,hosp_afl_4,Claims based hospital affiliation CCN 4|Hospital affiliation CCN 4,text,no,CCN of the fourth affiliated hospital
+hosp_afl_4_lbn,hosp_afl_lbn_4,Claims based hospital affiliation LBN 4|Hospital affiliation LBN 4,text,no,Legal business name of that hospital
+hosp_afl_5_ccn,hosp_afl_5,Claims based hospital affiliation CCN 5|Hospital affiliation CCN 5,text,no,CCN of the fifth affiliated hospital
+hosp_afl_5_lbn,hosp_afl_lbn_5,Claims based hospital affiliation LBN 5|Hospital affiliation LBN 5,text,no,Legal business name of that hospital
+assignment_flag,ind_assgn,Professional accepts Medicare Assignment|assgn,text,no,"Y when the clinician accepts Medicare assignment, M when they may"
+group_assignment_flag,grp_assgn,,text,yes,"Y when the group accepts Medicare assignment, M when it may (only in the later vintages)"
+erx_flag,Participating in eRx,,text,yes,Y when the clinician took part in the Electronic Prescribing incentive program
+pqrs_flag,Reported Quality Measures,Participating in PQRS|PQRS,text,yes,"Y when the clinician took part in the Physician Quality Reporting System (reported quality measures, from 2016)"
+ehr_flag,Used electronic health records,Participating in EHR|EHR,text,yes,"Y when the clinician took part in the EHR incentive program (used electronic health records, from 2016)"
+pqrs_moc_flag,Participated in the Medicare Maintenance of Certification Program.,Received PQRS Maintenance of Certification Program Incentive,text,yes,Y when the clinician took part in the Maintenance of Certification Program (the PQRS incentive until 2015)
+million_hearts_flag,Committed to heart health through the Million Hearts® initiative.,Participated in Million Hearts|MHI,text,yes,Y when the clinician took part in the Million Hearts initiative
+address_id_code,adrs_id,,text,yes,CMS's id of the practice address (only in the later vintages)

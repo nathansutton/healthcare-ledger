@@ -61,12 +61,18 @@ validate:
 
 # Derive the provider graph (docs/METHODOLOGY.md section 8) from the NPPES, PPEF and POS tables into $(GRAPH).
 # COMPENDIUM=1 also writes the AHRQ system tables (section 8a) from the ahrq source (make download load SOURCE_NAME=ahrq);
-# MEDICAID=1 the Medicaid main-group tables (section 8c) from the medicaid source (make download load SOURCE_NAME=medicaid).
+# MEDICAID=1 the Medicaid main-group tables (section 8c) from the medicaid source (make download load SOURCE_NAME=medicaid);
+# OWNERSHIP=1 the firm and chain tables (section 8d), DAC=1 the claims-filtered membership (section 8e) and MEDICARE=1
+# medicare_volume (section 8c), each from its source.
 GRAPH ?= graph
 COMPENDIUM ?=
 MEDICAID ?=
+OWNERSHIP ?=
+DAC ?=
+MEDICARE ?=
 graph:
-	uv run healthcare-ledger graph-build --warehouse $(WAREHOUSE) --out $(GRAPH) --work $(WORK) $(RES) $(if $(COMPENDIUM),--compendium) $(if $(MEDICAID),--medicaid)
+	uv run healthcare-ledger graph-build --warehouse $(WAREHOUSE) --out $(GRAPH) --work $(WORK) $(RES) $(if $(COMPENDIUM),--compendium) $(if $(MEDICAID),--medicaid) \
+	  $(if $(OWNERSHIP),--ownership) $(if $(DAC),--doctors-clinicians) $(if $(MEDICARE),--medicare-utilization)
 
 verify:
 	uv run healthcare-ledger verify --warehouse $(WAREHOUSE) $(SRC) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)

@@ -11,12 +11,15 @@ from __future__ import annotations
 from ..core.errors import UserError
 from .ahrq import SOURCE as AHRQ
 from .base import Source
+from .doctors_clinicians import SOURCE as DAC
 from .medicaid import SOURCE as MEDICAID
+from .medicare_utilization import SOURCE as MEDICARE_UTILIZATION
 from .nppes import SOURCE as NPPES
+from .ownership import SOURCE as OWNERSHIP
 from .pos import SOURCE as POS
 from .ppef import SOURCE as PPEF
 
-SOURCES: tuple[Source, ...] = (NPPES, PPEF, POS, AHRQ, MEDICAID)
+SOURCES: tuple[Source, ...] = (NPPES, PPEF, POS, OWNERSHIP, DAC, AHRQ, MEDICAID, MEDICARE_UTILIZATION)
 
 
 def by_name(name: str) -> Source:

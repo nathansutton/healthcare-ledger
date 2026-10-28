@@ -282,7 +282,9 @@ class VersionedWarehouse:
             src = mapping[col.name]
             sel.append(f"NULL::VARCHAR AS {col.name}" if src is None else f"{self.column_expr(s, col, q(src))} AS {col.name}")
         stg = f"stg_{s.name}"
-        c.execute(f"CREATE OR REPLACE TEMP TABLE {stg} AS SELECT {', '.join(sel)} FROM {raw} WHERE {k} IS NOT NULL")
+        # the filter is on the trimmed key: in the WHERE of the SELECT itself, ``{k}`` would name the raw column, where a
+        # blank key is still a space
+        c.execute(f"CREATE OR REPLACE TEMP TABLE {stg} AS SELECT * FROM (SELECT {', '.join(sel)} FROM {raw}) WHERE {k} IS NOT NULL")
         c.execute(f"DROP TABLE {raw}")
         self.post_stage(s, stg)
         n_rows, n_keys = c.execute(f"SELECT count(*), count(DISTINCT {k}) FROM {stg}").fetchone()

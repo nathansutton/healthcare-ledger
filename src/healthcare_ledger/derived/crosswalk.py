@@ -35,9 +35,15 @@ DESCRIPTION = ("interval-dated edges npi -> enrollment -> pac and enrollment -> 
                "-> AHRQ system by Compendium year")
 
 
-def quarter_sql(d: str) -> str:
+def quarter_sql(d: str, *, firms: bool = False) -> str:
     """The SELECT giving the quarterly edges on date d, from the graph's temp tables enr, hospital_link and
-    post_acute_link of that quarter and the PPEF additional NPIs in force that day."""
+    post_acute_link of that quarter and the PPEF additional NPIs in force that day; with ``firms``, also the CMS
+    Enrollments files' enrollment -> CCN edges (temp table fenr) and the pac or ccn -> firm edges (firm_member)."""
+    extra = """
+        UNION ALL
+        SELECT DISTINCT 'enrollment', enrollment_id, 'ccn', ccn, 'ownership_enrollment', 'registry' FROM fenr WHERE ccn IS NOT NULL
+        UNION ALL
+        SELECT node_type, node_id, 'firm', firm_id, 'firm_member', 'component' FROM firm_member""" if firms else ""
     return f"""
         SELECT DISTINCT 'npi' AS from_type, npi AS from_id, 'enrollment' AS to_type, enrollment_id AS to_id,
                'ppef_enrollment' AS source, 'registry' AS method
@@ -52,7 +58,7 @@ def quarter_sql(d: str) -> str:
         UNION ALL
         SELECT 'enrollment', enrollment_id, 'ccn', ccn, 'hospital_link', 'match_rule_' || match_rule FROM hospital_link
         UNION ALL
-        SELECT 'enrollment', enrollment_id, 'ccn', ccn, 'post_acute_link', 'match_rule_' || match_rule FROM post_acute_link"""
+        SELECT 'enrollment', enrollment_id, 'ccn', ccn, 'post_acute_link', 'match_rule_' || match_rule FROM post_acute_link{extra}"""
 
 
 def system_edges_sql() -> str:

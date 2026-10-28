@@ -112,6 +112,20 @@ make graph GRAPH=graph COMPENDIUM=1 MEDICAID=1
 
 The load extracts the 12 GB CSV into the work directory, reads it with explicit types and deletes it; a header other than HHS's seven columns stops it. HHS's dataset page is https://opendata.hhs.gov/datasets/medicaid-provider-spending; each release has its own dated directory under the pinned url (the pinned one is `2026-02-09`). A new release means a new row in `releases/medicaid_sources.csv` in place of the old one (url, bytes, sha256), then `make download load SOURCE_NAME=medicaid`. If HHS stops serving the pinned bytes, set its origin to `archive` and empty its url, as `releases/sources.csv` does.
 
+## Facility ownership, Doctors and Clinicians, Medicare utilization
+
+Three more sources feed the graph's firms and weights (`research/provider-networks/firms_over_time.ipynb`).
+
+**Ownership** (`ownership`, versioned; METHODOLOGY section 7a). CMS's Enrollments and All Owners files for hospitals, SNFs, home health agencies, hospices, FQHCs and RHCs, one directory per release date under `data/ownership/YYYY-MM-DD/` with CMS's file names inside. `releases/ownership_sources.csv` pins every loaded file with its data.cms.gov url, so `make download SOURCE_NAME=ownership` rebuilds the directories. New releases are in `https://data.cms.gov/data.json` as datasets titled `Hospital All Owners : <date>`, `Skilled Nursing Facility Enrollments : <date>` and so on; put each release's files in a directory named by the extract date in their names (or the dataset's date when the name has none), then `make load SOURCE_NAME=ownership` and `make sources SOURCE_NAME=ownership`, and fill in the urls. When CMS republishes a release (`..._update.csv`), keep only the update. A release that drops more than 5% of a type's enrollments is refused; the July 2026 hospice file is one, listed in `COVERAGE_BREAKS` in `sources/ownership/ownership.py` with its own limit after checking that the drops were real (METHODOLOGY 7a); a new one needs the same check. `reset --source-name ownership --yes` drops only `ownership.duckdb`'s tables; a full reload takes about two minutes.
+
+**Doctors and Clinicians** (`doctors_clinicians`, versioned; section 7b). The archived quarterly files, 2014 to 2022, from the Internet Archive (data.cms.gov's provider-data site refuses scripts; do not work around it). `make download SOURCE_NAME=doctors_clinicians` fetches the zips `releases/doctors_clinicians_sources.csv` pins into `data/dac/raw/<year>/` and checks the CSV inside each; `make load SOURCE_NAME=doctors_clinicians` loads them in date order (about a minute a vintage). The loader reads the zips themselves. Vintages whose drop exceeds the 5% guard but was checked and found real are listed with their own limit in `COVERAGE_BREAKS` in `sources/doctors_clinicians/dac.py` (April 2018, April 2019, August 2020, September 2022: each after a gap of four months or more between archived files, each with more clinicians in all than the file before); a new archive file that trips the guard needs the same check before it is added there.
+
+**Medicare utilization** (`medicare_utilization`, reference; section 7c). One CSV per year of the Medicare Physician & Other Practitioners by Provider and Service files, pinned in `releases/medicare_utilization_sources.csv`; `make download load SOURCE_NAME=medicare_utilization` puts them in `data/mup/raw` (about 30 GB) and rebuilds `medicare_utilization.duckdb` (a few minutes, 98 million rows). CMS publishes a new year each spring and re-releases earlier years with new file names; a new year is a new row.
+
+```bash
+make graph GRAPH=graph COMPENDIUM=1 MEDICAID=1 OWNERSHIP=1 DAC=1 MEDICARE=1    # about ten minutes
+```
+
 ## Out-of-order month
 
 The loader does not append a month that is older than the newest loaded snapshot. This is a breaking correction. To insert the month, run `healthcare-ledger rollback --to <month before>` and then `make load`. If you do not want the month, remove the zip from `data/raw/`.

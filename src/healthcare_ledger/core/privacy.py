@@ -102,8 +102,8 @@ REDACTED = "[REDACTED]"
 LICENSE_COLUMNS = tuple(f"license_number_{i}" for i in range(1, 16))
 CREDENTIAL_COLUMNS: tuple[str, ...] = ("credential", "other_credential", "ao_credential")
 # text columns that hold numbers by design; the token rule does not apply to them
-_NOT_FREE_TEXT_RE = re.compile(r"(^|_)(postal_code|zip|phone|phone_ext|fax|code|flag)$"
-                               r"|^(npi|replacement_npi|pac_id|receiving_enrollment_id|state|country|sex)$")
+_NOT_FREE_TEXT_RE = re.compile(r"(^|_)(postal_code|zip|phone|phone_ext|fax|code|flag|pac_id|ccn|entity_id)$"
+                               r"|^(npi|replacement_npi|receiving_enrollment_id|state|country|sex)$")
 
 FORMATS_FILE = Path(__file__).with_name("license_formats.csv")
 LICENSE_FORMAT_MIN_NPIS = 25
@@ -178,7 +178,8 @@ def license_bad(col: str, state: str, cross: str) -> str:
 
 # ---------------------------------------------------------------------- audit
 AUDIT_FILE = "privacy_audit.csv"
-EXEMPT_RE = re.compile(r"(^|_)(postal_code|zip|zip_cd|phone|phone_ext|fax|phne_num)$|^(npi|enrollment_id|pac_id|receiving_enrollment_id|ccn)$"
+EXEMPT_RE = re.compile(r"(^|_)(postal_code|zip|zip_cd|phone|phone_ext|fax|phne_num|pac_id|ccn|entity_id)$"
+                       r"|^(npi|enrollment_id|receiving_enrollment_id)$"
                        # code columns: a taxonomy code such as 390200000X holds nine digits by design
                        r"|(^|_)(code|state|country|type|group|flag|sex)$|^primary_taxonomy$")
 SSN_FMT = r"(^|[^0-9])[0-9]{3}[ .-][0-9]{2}[ .-][0-9]{4}([^0-9]|$)"

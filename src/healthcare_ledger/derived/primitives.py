@@ -20,6 +20,19 @@ With the Medicaid source (``graph-build --medicaid``), two more from its ``medic
     after 31 December Y.
 ``main_group``
     each physician's group by plurality of that volume (ties broken by organization PAC id).
+
+With the Medicare utilization source (``graph-build --medicare-utilization``), from its ``medicare_utilization_service``:
+
+``medicare_volume``
+    a physician's Medicare Part B allowed dollars and services in year Y, and their office visits billed in a facility
+    and in an office, on the first quarter on or after 31 December Y.
+
+Always, last:
+
+``edge_weight``
+    each physician edge with ``w_fractional`` (1/k), ``w_listed`` (spread over the groups the Doctors and Clinicians
+    file lists, where a vintage covers the quarter; from ``graph-build --doctors-clinicians``) and ``w_medicaid`` (the
+    edge's share of the physician's Medicaid dollars). A weight a build lacks the source for falls back to 1/k or NULL.
 """
 
 from __future__ import annotations
@@ -59,7 +72,17 @@ MEDICAID = (
     Primitive("main_group", "main_group", ("as_of_date", "practitioner_pac_id"),
               "each physician's group by plurality of Medicaid volume (ties broken by organization PAC id)"),
 )
-PRIMITIVES = GROUP + MEDICAID
+MEDICARE = (
+    Primitive("medicare_volume", "medicare_volume", ("as_of_date", "practitioner_pac_id"),
+              "a physician's Medicare Part B allowed dollars, services and office visits billed in a facility and in an "
+              "office in year Y, on the first quarter on or after 31 December Y"),
+)
+WEIGHTS = (
+    Primitive("edge_weight", "edge_weight", ("as_of_date", "practitioner_pac_id", "organization_pac_id"),
+              "each physician edge with w_fractional (1/k), w_listed (over the groups Doctors and Clinicians lists) and "
+              "w_medicaid (share of the physician's Medicaid dollars)"),
+)
+PRIMITIVES = GROUP + MEDICAID + MEDICARE + WEIGHTS
 
 
 def sql(name: str) -> str:
@@ -71,8 +94,8 @@ def create(con: duckdb.DuckDBPyConnection, name: str) -> None:
     con.execute(f"CREATE TABLE {name} AS\n{sql(name)}")
 
 
-def build(graph: Path, *, medicaid: Path | None = None, threads: int | None = None, memory_limit: str | None = None,
-          work_dir: Path | None = None) -> dict[str, dict]:
+def build(graph: Path, *, medicaid: Path | None = None, medicare: Path | None = None, threads: int | None = None,
+          memory_limit: str | None = None, work_dir: Path | None = None) -> dict[str, dict]:
     """Write the primitives' Parquet files into the graph directory ``graph``, which must already hold the graph's
     tables and quarters.csv; with ``medicaid`` (the Medicaid source's DuckDB file), also the two Medicaid tables.
     Returns the manifest entry of each file written."""
@@ -88,6 +111,19 @@ def build(graph: Path, *, medicaid: Path | None = None, threads: int | None = No
             con.execute("CREATE VIEW medicaid_spending AS "
                         "SELECT billing_npi, servicing_npi, month, paid FROM medicaid.medicaid_spending")
             todo += MEDICAID
+        else:
+            con.execute("CREATE TABLE medicaid_volume (as_of_date DATE, practitioner_pac_id VARCHAR, "
+                        "organization_pac_id VARCHAR, medicaid_paid DOUBLE)")
+        if medicare:
+            con.execute(f"ATTACH '{medicare}' AS medicare (READ_ONLY)")
+            con.execute("CREATE VIEW medicare_service AS SELECT year, npi, hcpcs, place_of_service, services, allowed "
+                        "FROM medicare.medicare_utilization_service")
+            todo += MEDICARE
+        listed = graph / "listed_reassignment.parquet"
+        con.execute(f"CREATE VIEW listed_reassignment AS SELECT * FROM read_parquet('{listed}')" if listed.exists() else
+                    "CREATE TABLE listed_reassignment (practitioner_pac_id VARCHAR, organization_pac_id VARCHAR, "
+                    "effective_date DATE, end_date DATE)")
+        todo += WEIGHTS
         tables = {}
         for p in todo:
             create(con, p.name)

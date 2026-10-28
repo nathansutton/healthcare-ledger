@@ -53,7 +53,27 @@ These are keyed by ``year``, not by quarter: the Compendium describes a calendar
     the group primitives studies share (derived/primitives.py, SQL in derived/sql/): physicians by quarter, their
     reassignment edges with ``k``, and each organization's size as a headcount and as the sum of ``1/k``. With
     ``--medicaid``, ``medicaid_volume`` and ``main_group`` too, from the Medicaid source (``load --source-name
-    medicaid``): each physician's main group by plurality of Medicaid volume.
+    medicaid``): each physician's main group by plurality of Medicaid volume; with ``--medicare-utilization``,
+    ``medicare_volume``; and always ``edge_weight``, each edge's weights.
+
+With ``--ownership`` (the ``ownership`` source: CMS's facility Enrollments and All Owners files, from 2022), on the
+quarters from the first ownership release (derived/firms.py):
+
+``control``
+    organization (PAC id) -> facility enrollment's legal entity it controls: a 5%+ direct or indirect owner with more
+    than half of it or an unreported share.
+``firm_member``, ``firm``
+    organizations and facilities in firms, the connected components of legal entity -> ultimate owner and enrollment ->
+    CCN edges, with firm ids carried over from quarter to quarter.
+``chain``
+    hospital and nursing home chains by ASPE's ultimate-owner method.
+
+With ``--doctors-clinicians`` (the archived Physician Compare files, 2014-2022), on the quarters a vintage covers:
+
+``listed_reassignment``
+    practitioner -> organization pairs CMS lists (Medicare claims under the group in the past 12 months).
+``hospital_affiliation``
+    practitioner -> hospital CCN, CMS's claims-based affiliations.
 
 ``crosswalk``
     the links between identifiers those tables hold, as one long table of edges npi -> enrollment -> pac and
@@ -77,7 +97,7 @@ from pathlib import Path
 
 from .. import __version__
 from ..core.connect import configure, open_catalog, source_file
-from . import crosswalk, primitives
+from . import crosswalk, firms, primitives
 
 log = logging.getLogger(__name__)
 
@@ -119,6 +139,28 @@ TABLES = (
     Table("post_acute_link", ("enrollment_id",), ("organization_pac_id", "npi", "ccn", "facility_type", "match_rule"),
           "skilled nursing facility or home health enrollment matched to its POS CCN"),
 )
+# with --ownership, from the first quarter on or after the first ownership release (derived/firms.py)
+FIRM_TABLES = (
+    Table("control", ("owner_pac_id", "pac_id"), ("owner_name",),
+          "organization (PAC id) controlling a facility enrollment's legal entity: a 5%+ direct or indirect owner with "
+          "more than half of it or an unreported share (CMS All Owners)"),
+    Table("firm_member", ("node_type", "node_id"), ("firm_id",),
+          "organization or owner (pac) or facility (ccn) -> its firm, the connected component of control and "
+          "enrollment -> CCN edges, with ids carried over between quarters"),
+    Table("firm", ("firm_id",), ("name", "n_organizations", "n_hospitals", "n_post_acute", "n_facilities"),
+          "firms (connected components of control) with counts of organizations, hospitals and post-acute facilities"),
+    Table("chain", ("chain_type", "ccn"), ("chain_owner_pac_id", "chain_name", "chain_size"),
+          "hospital and nursing home chains by ASPE's ultimate-owner method (Welch et al. 2023), three or more facilities"),
+)
+# with --doctors-clinicians, on the quarters within DAC_WINDOW_DAYS of a Doctors and Clinicians vintage
+DAC_TABLES = (
+    Table("listed_reassignment", ("practitioner_pac_id", "organization_pac_id"), (),
+          "practitioner -> organization pair in the Doctors and Clinicians file in force on the quarter: CMS lists a "
+          "clinician under a group only with Medicare claims under it in the preceding 12 months"),
+    Table("hospital_affiliation", ("practitioner_pac_id", "ccn"), (),
+          "practitioner -> hospital (CCN) in the Doctors and Clinicians file's claims-based hospital affiliations"),
+)
+DAC_WINDOW_DAYS = 184       # a vintage describes the quarters up to six months after it
 # built from the quarter's tables above, advanced like them, and written with the annual system edges appended
 CROSSWALK = Table("crosswalk", crosswalk.KEY, crosswalk.ATTRS, crosswalk.DESCRIPTION)
 
@@ -240,13 +282,22 @@ class GraphBuilder:
     files attached read-only (``core.connect.open_catalog``)."""
 
     def __init__(self, warehouse: Path, *, threads: int | None = None, memory_limit: str | None = None,
-                 work_dir: Path | None = None, compendium: bool = False, medicaid: bool = False):
-        # tables the build creates stay in memory; with the Compendium or Medicaid, its source file must be there too
-        require = ["nppes", *(["ahrq"] if compendium else []), *(["medicaid"] if medicaid else [])]
+                 work_dir: Path | None = None, compendium: bool = False, medicaid: bool = False, ownership: bool = False,
+                 doctors_clinicians: bool = False, medicare_utilization: bool = False):
+        # tables the build creates stay in memory; with the Compendium, Medicaid or ownership, its source file must be
+        # there too
+        require = ["nppes", *(["ahrq"] if compendium else []), *(["medicaid"] if medicaid else []),
+                   *(["ownership"] if ownership else []), *(["doctors_clinicians"] if doctors_clinicians else []),
+                   *(["medicare_utilization"] if medicare_utilization else [])]
         self.con = open_catalog(warehouse, read_only=True, require=require if len(require) > 1 else None)
         self.work_dir = work_dir
         self.compendium = compendium
         self.medicaid = medicaid
+        self.ownership = ownership
+        self.ownership_from: str | None = None     # the first ownership release, set by build()
+        self.doctors_clinicians = doctors_clinicians
+        self.medicare_utilization = medicare_utilization
+        self.dac_vintages: list[str] = []          # the Doctors and Clinicians snapshot dates, set by build()
         self.threads, self.memory_limit = threads, memory_limit
         if work_dir:
             work_dir.mkdir(parents=True, exist_ok=True)
@@ -288,13 +339,44 @@ class GraphBuilder:
                             f"`healthcare-ledger load --source-name medicaid` (fetch the zip with `download --source-name "
                             f"medicaid`)", exit_code=2)
 
+    def _require_ownership(self) -> None:
+        from .. import sources
+        from ..core.errors import UserError
+        src = sources.by_name("ownership")
+        if not src.loaded(self.con):
+            raise UserError("--ownership needs the ownership source in the warehouse; load it with "
+                            "`healthcare-ledger load --source-name ownership` (fetch the files with `download --source-name "
+                            "ownership`)", exit_code=2)
+        self.ownership_from = self.con.execute("SELECT min(as_of_date)::VARCHAR FROM ownership_snapshot").fetchone()[0]
+
+    def _require_dac(self) -> None:
+        from .. import sources
+        from ..core.errors import UserError
+        if not sources.by_name("doctors_clinicians").loaded(self.con):
+            raise UserError("--doctors-clinicians needs the doctors_clinicians source in the warehouse; load it with "
+                            "`healthcare-ledger load --source-name doctors_clinicians`", exit_code=2)
+        self.dac_vintages = [r[0] for r in self.con.execute(
+            "SELECT as_of_date::VARCHAR FROM dac_snapshot ORDER BY 1").fetchall()]
+
+    def _dac_vintage(self, d: str) -> str | None:
+        """The latest Doctors and Clinicians vintage on or before d, if it is at most DAC_WINDOW_DAYS older."""
+        from datetime import date
+        prior = [v for v in self.dac_vintages if v <= d]
+        if not prior or (date.fromisoformat(d) - date.fromisoformat(prior[-1])).days > DAC_WINDOW_DAYS:
+            return None
+        return prior[-1]
+
     def build(self, limit: int | None = None) -> list[dict]:
         self._require()
         if self.compendium:
             self._require_compendium()
         if self.medicaid:
             self._require_medicaid()
-        for t in (*TABLES, CROSSWALK):
+        if self.ownership:
+            self._require_ownership()
+        if self.doctors_clinicians:
+            self._require_dac()
+        for t in (*TABLES, *FIRM_TABLES, *DAC_TABLES, CROSSWALK):
             self.con.execute(f"DROP TABLE IF EXISTS {t.name}_open; DROP TABLE IF EXISTS {t.name}_closed")
         for snapshot_id, d in self.quarters()[:limit]:
             started = time.time()
@@ -314,7 +396,37 @@ class GraphBuilder:
             con.execute(f"CREATE OR REPLACE TEMP TABLE {t.name} AS {sql[t.name]}")
             self._advance(t, d)
             stat[f"n_{t.name}"] = con.execute(f"SELECT count(*) FROM {t.name}").fetchone()[0]
-        con.execute(f"CREATE OR REPLACE TEMP TABLE {CROSSWALK.name} AS {crosswalk.quarter_sql(d)}")
+        with_firms = self.ownership and d >= self.ownership_from
+        if with_firms:
+            stat.update(firms.build_quarter(con, d))
+            for t in FIRM_TABLES:
+                self._advance(t, d)
+                stat[f"n_{t.name}"] = con.execute(f"SELECT count(*) FROM {t.name}").fetchone()[0]
+        vintage = self._dac_vintage(d) if self.doctors_clinicians else None
+        if vintage:
+            # the vintage's rows (the versions in force on its own date), by the clinician's and the group's PAC ids
+            dac = (f"(SELECT * FROM doctors_clinicians WHERE effective_date <= DATE '{vintage}' "
+                   f"AND (end_date IS NULL OR end_date > DATE '{vintage}'))")
+            con.execute(f"""CREATE OR REPLACE TEMP TABLE listed_reassignment AS
+                SELECT DISTINCT ind_pac_id AS practitioner_pac_id, org_pac_id AS organization_pac_id FROM {dac}
+                WHERE ind_pac_id IS NOT NULL AND org_pac_id IS NOT NULL""")
+            con.execute(f"""CREATE OR REPLACE TEMP TABLE hospital_affiliation AS
+                SELECT DISTINCT ind_pac_id AS practitioner_pac_id, ccn FROM (
+                    SELECT ind_pac_id, unnest([hosp_afl_1_ccn, hosp_afl_2_ccn, hosp_afl_3_ccn, hosp_afl_4_ccn,
+                                               hosp_afl_5_ccn]) AS ccn FROM {dac})
+                WHERE ind_pac_id IS NOT NULL AND ccn IS NOT NULL""")
+            stat["dac_vintage"] = vintage
+            for t in DAC_TABLES:
+                self._advance(t, d)
+                stat[f"n_{t.name}"] = con.execute(f"SELECT count(*) FROM {t.name}").fetchone()[0]
+        elif self.doctors_clinicians:
+            # outside the window the pairs are not known: close what is open, open nothing
+            for t in DAC_TABLES:
+                if con.execute(f"SELECT count(*) FROM duckdb_tables() WHERE table_name = '{t.name}_open'").fetchone()[0]:
+                    con.execute(f"CREATE OR REPLACE TEMP TABLE {t.name} AS SELECT {', '.join(t.key + t.attrs)} "
+                                f"FROM {t.name}_open LIMIT 0")
+                    self._advance(t, d)
+        con.execute(f"CREATE OR REPLACE TEMP TABLE {CROSSWALK.name} AS {crosswalk.quarter_sql(d, firms=with_firms)}")
         self._advance(CROSSWALK, d)
         stat.update(zip(
             ("n_reassignment_rows", "n_reassignment_dropped", "n_hospital_enrollments"),
@@ -357,8 +469,13 @@ class GraphBuilder:
 
     def write(self, out: Path, warehouse: Path) -> dict:
         out.mkdir(parents=True, exist_ok=True)
+        # a rebuild into the same directory must not leave an earlier build's tables behind: the primitives read
+        # listed_reassignment when it is there, and a stale firm or Medicaid table would sit beside a manifest without it
+        for f in (*out.glob("*.parquet"), out / "quarters.csv", out / "manifest.json"):
+            f.unlink(missing_ok=True)
         tables = {}
-        for t in TABLES:
+        built = {r[0] for r in self.con.execute("SELECT table_name FROM duckdb_tables()").fetchall()}
+        for t in (*TABLES, *(t for t in (*FIRM_TABLES, *DAC_TABLES) if f"{t.name}_open" in built)):
             path = out / f"{t.name}.parquet"
             self.con.execute(f"""
                 COPY ({self._intervals(t)} ORDER BY {", ".join(t.key)}, effective_date)
@@ -386,13 +503,17 @@ class GraphBuilder:
         n = self.con.execute(f"SELECT count(*) FROM '{path}'").fetchone()[0]
         tables[t.name] = {"rows": n, "key": [*t.key, "effective_date"], "description": t.description}
         with open(out / "quarters.csv", "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=list(self.stats[0]))
+            # the firm counts start with the first ownership quarter; earlier quarters leave them empty
+            fields = list(dict.fromkeys(k for st in self.stats for k in st))
+            w = csv.DictWriter(f, fieldnames=fields)
             w.writeheader()
             w.writerows(self.stats)
         # the group primitives read the tables just written, as a study opens them
         from .. import sources
         tables.update(primitives.build(
             out, medicaid=source_file(warehouse, sources.by_name("medicaid").database) if self.medicaid else None,
+            medicare=(source_file(warehouse, sources.by_name("medicare_utilization").database)
+                      if self.medicare_utilization else None),
             threads=self.threads, memory_limit=self.memory_limit, work_dir=self.work_dir))
         manifest = {
             "generator": f"healthcare-ledger {__version__} graph-build",
@@ -405,6 +526,11 @@ class GraphBuilder:
             "facility_types": list(FACILITY_TYPES),
             "tables": tables,
         }
+        if self.doctors_clinicians:
+            manifest["doctors_clinicians"] = {"vintages": self.dac_vintages, "window_days": DAC_WINDOW_DAYS}
+        if self.ownership:
+            manifest["ownership"] = {"source": "CMS Enrollments and All Owners files", "first_release": self.ownership_from,
+                                     "control_roles": list(firms.CONTROL_ROLES), "chain_min": firms.CHAIN_MIN}
         if compendium_years:
             manifest["compendium"] = {"source": "AHRQ Compendium of U.S. Health Systems", "years": compendium_years}
         (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -415,8 +541,10 @@ class GraphBuilder:
 
 
 def build_graph(warehouse: Path, out: Path, *, limit: int | None = None, compendium: bool = False, medicaid: bool = False,
+                ownership: bool = False, doctors_clinicians: bool = False, medicare_utilization: bool = False,
                 **kw) -> dict:
-    g = GraphBuilder(warehouse, compendium=compendium, medicaid=medicaid, **kw)
+    g = GraphBuilder(warehouse, compendium=compendium, medicaid=medicaid, ownership=ownership,
+                     doctors_clinicians=doctors_clinicians, medicare_utilization=medicare_utilization, **kw)
     try:
         g.build(limit)
         return g.write(out, warehouse)
