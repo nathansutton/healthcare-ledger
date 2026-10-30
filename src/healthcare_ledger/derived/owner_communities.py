@@ -28,8 +28,10 @@ clustering
     not, so a key shared by hundreds of unrelated clients cannot merge them.
 
 Over time, the calibration is fixed (``owner_link_calibration.csv``) so the weights do not move from quarter to
-quarter, Leiden starts each quarter from the previous quarter's communities so a community changes only when its
-evidence does, and ids carry over as firm ids do (``firms.label_firms``): a community keeps the id of the previous
+quarter, Leiden starts each quarter from the previous quarter's communities, a pair of organizations together last
+quarter holds at a lower bar (p > GAMMA - HISTORY, evolutionary clustering) so a link wavering about the bar does not
+move an organization back and forth, a firm membership or facility link that CMS's files drop for at most MAX_HOLE
+quarters and restore is run through the hole, and ids carry over as firm ids do (``firms.label_firms``): a community keeps the id of the previous
 quarter's community holding most of its members. The AHRQ year in force on a quarter is the latest one on or before
 it (the earliest before the first). Authorized officials' names and phones are join keys only; no output carries
 them.
@@ -58,7 +60,12 @@ MAX_KEY = 1000                # keys shared by more organizations are left out (
 MIN_CELL_PAIRS = 30           # a calibration cell needs this many known pairs, else its links carry no weight
 STAFFING_MIN_SYSTEMS = 3      # a family whose groups AHRQ places in this many systems is a staffing company's
 P_MAX = 0.99                  # no single key is certain
+HISTORY = 0.1                 # a pair together last quarter holds while p > GAMMA - HISTORY (evolutionary clustering)
+MAX_HOLE = 2                  # a firm membership or facility link gone for at most this many quarters is a hole
 SEED = 42
+# interval tables whose holes are closed: (partition, the column that must come back unchanged)
+HOLES = {"firm_member": ("node_type, node_id", "firm_id"), "hospital_link": ("organization_pac_id, ccn", "ccn"),
+         "post_acute_link": ("organization_pac_id, ccn", "ccn")}
 # legal-form and filler words that never count as a shared name
 STOP_WORDS = ("LLC", "INC", "PC", "PLLC", "PA", "LLP", "LTD", "LP", "CORP", "CORPORATION", "CO", "COMPANY", "MD", "DO",
               "THE", "OF", "AND", "A", "P", "C", "L", "S")
@@ -85,6 +92,21 @@ def _asof(d: str, alias: str = "") -> str:
 
 
 # ------------------------------------------------------------------------------------------- quarter inputs
+
+def filled(src: str, part: str, same: str) -> str:
+    """A SELECT over the interval rows of ``src`` with their holes closed, and ``_hole`` marking the rows run on: a row
+    that ends and comes back (the next row of ``part`` with the same ``same``) within MAX_HOLE quarters of
+    ``oc_quarter`` (d) runs on to its return. CMS's All Owners and enrollment files drop an owner or an enrollment
+    for a quarter or two and restore it; the hole is known only once the row is back, so the last quarters keep
+    theirs."""
+    return f"""WITH s AS (SELECT *, lead(effective_date) OVER w AS _next, lead({same}) OVER w AS _next_same
+                          FROM {src} WINDOW w AS (PARTITION BY {part} ORDER BY effective_date)),
+        h AS (SELECT *, _next_same = {same} AND _next > end_date
+                        AND (SELECT count(*) FROM oc_quarter q WHERE q.d >= s.end_date AND q.d < s._next) <= {MAX_HOLE} AS _hole
+              FROM s)
+        SELECT * EXCLUDE (end_date, _next, _next_same, _hole), CASE WHEN _hole THEN _next ELSE end_date END AS end_date,
+               coalesce(_hole, FALSE) AS _hole FROM h"""
+
 
 def quarter_inputs(con: duckdb.DuckDBPyConnection, d: str, ahrq_year: int | None) -> None:
     """Create the quarter's input tables from the graph views and NPPES's ``provider``:
@@ -228,20 +250,29 @@ def _leiden():
     return igraph, leidenalg
 
 
-def cluster(con: duckdb.DuckDBPyConnection, gamma: float = GAMMA) -> None:
+def cluster(con: duckdb.DuckDBPyConnection, gamma: float = GAMMA, history: float = HISTORY) -> None:
     """``comp`` (node, comp): each organization of ``oc_unit`` with the smallest PAC id of its community, by Leiden CPM
     over the hard units weighted by ``oc_pair`` x ``oc_calib``. Starts from ``prev_firm`` (node, firm_id: the previous
-    quarter's communities) when it holds any of the units' organizations."""
+    quarter's communities) when it holds any of the units' organizations, and adds ``history`` to every pair of
+    organizations it puts in one community: the history cost of evolutionary clustering (Chakrabarti, Kumar and
+    Tomkins 2006), so a pair stays together while p > gamma - history but joins only at p > gamma, and a link
+    wavering about gamma does not move an organization back and forth."""
     ig, la = _leiden()
     con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_w AS
         SELECT x, y, 1 - product(1 - least(c.p, {P_MAX})) AS w FROM oc_pair JOIN oc_calib c USING (kind, cell) GROUP BY 1, 2""")
     units_ = con.execute("SELECT unit, count(*) FROM oc_unit GROUP BY 1 ORDER BY 1").fetchall()
     index = {u: i for i, (u, _) in enumerate(units_)}
-    edges = con.execute("""SELECT least(u1.unit, u2.unit), greatest(u1.unit, u2.unit), sum(w) FROM oc_w
-                           JOIN oc_unit u1 ON u1.pac_id = x JOIN oc_unit u2 ON u2.pac_id = y WHERE u1.unit <> u2.unit
-                           GROUP BY 1, 2 ORDER BY 1, 2""").fetchall()
-    g = ig.Graph(n=len(units_), edges=[(index[a], index[b]) for a, b, _ in edges], edge_attrs={"weight": [w for *_, w in edges]})
     con.execute("CREATE TEMP TABLE IF NOT EXISTS prev_firm (node VARCHAR, firm_id VARCHAR)")
+    edges = con.execute(f"""
+        WITH prev AS (SELECT u.unit, p.firm_id, count(*) AS n FROM oc_unit u JOIN prev_firm p ON p.node = u.pac_id GROUP BY 1, 2)
+        SELECT a, b, sum(w) FROM (
+            SELECT least(u1.unit, u2.unit) AS a, greatest(u1.unit, u2.unit) AS b, w FROM oc_w
+            JOIN oc_unit u1 ON u1.pac_id = x JOIN oc_unit u2 ON u2.pac_id = y WHERE u1.unit <> u2.unit
+            UNION ALL
+            SELECT p.unit, q.unit, {history} * p.n * q.n FROM prev p JOIN prev q ON q.firm_id = p.firm_id AND p.unit < q.unit
+            WHERE {history} > 0)
+        GROUP BY 1, 2 ORDER BY 1, 2""").fetchall()
+    g = ig.Graph(n=len(units_), edges=[(index[a], index[b]) for a, b, _ in edges], edge_attrs={"weight": [w for *_, w in edges]})
     # each unit starts in the previous community of most of its organizations, ties broken by id
     start = dict(con.execute("""SELECT unit, arg_min(firm_id, (-n, firm_id)) FROM (
             SELECT u.unit, p.firm_id, count(*) AS n FROM oc_unit u JOIN prev_firm p ON p.node = u.pac_id GROUP BY 1, 2)
@@ -302,13 +333,21 @@ class OwnerCommunityBuilder:
         if work_dir:
             work_dir.mkdir(parents=True, exist_ok=True)
         configure(self.con, threads=threads, memory_limit=memory_limit, temp_dir=work_dir, preserve_insertion_order=True)
+        with open(self.graph / "quarters.csv") as f:
+            self.dates = [r["as_of_date"] for r in csv.DictReader(f)]
+        self.con.execute("CREATE TEMP TABLE oc_quarter AS SELECT unnest(?::DATE[]) AS d", [self.dates])
+        self.holes: dict[str, int] = {}
         for t in self.NEED:
-            self.con.execute(f"CREATE TEMP VIEW {t} AS SELECT * FROM '{self.graph / t}.parquet'")
+            src = f"'{self.graph / t}.parquet'"
+            if t in HOLES:
+                self.con.execute(f"CREATE TEMP TABLE {t} AS {filled(src, *HOLES[t])}")
+                self.holes[t] = self.con.execute(f"SELECT count(*) FROM {t} WHERE _hole").fetchone()[0]
+                self.con.execute(f"ALTER TABLE {t} DROP COLUMN _hole")
+            else:
+                self.con.execute(f"CREATE TEMP VIEW {t} AS SELECT * FROM {src}")
         self.ahrq_years = [r[0] for r in self.con.execute(
             "SELECT DISTINCT year FROM system_link WHERE node_type = 'organization' ORDER BY 1").fetchall()]
         self.firms_from = self.con.execute("SELECT min(effective_date)::VARCHAR FROM firm_member").fetchone()[0]
-        with open(self.graph / "quarters.csv") as f:
-            self.dates = [r["as_of_date"] for r in csv.DictReader(f)]
         self.stats: list[dict] = []
 
     def ahrq_year(self, d: str) -> int | None:
@@ -396,7 +435,8 @@ class OwnerCommunityBuilder:
         m["tables"].update(tables)
         m["owner_communities"] = {
             "generator": f"healthcare-ledger {__version__} owner-communities", "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "anchor": self.anchor_date, "quarters": len(self.stats), "gamma": GAMMA, "max_key": MAX_KEY,
+            "anchor": self.anchor_date, "quarters": len(self.stats), "gamma": GAMMA, "history": HISTORY, "max_key": MAX_KEY,
+            "max_hole": MAX_HOLE, "holes_filled": self.holes,
             "staffing_min_systems": STAFFING_MIN_SYSTEMS, "ahrq_years": self.ahrq_years, "all_owners_from": self.firms_from,
         }
         (out / "manifest.json").write_text(json.dumps(m, indent=2) + "\n")

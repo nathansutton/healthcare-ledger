@@ -143,6 +143,39 @@ def test_ids_carry_over_and_a_hard_link_moves_an_organization(family):
     assert m["B"] == m["F"] == m["G"] == "OF" and m["A"] == m["0H"] == "OA"
 
 
+def test_a_pair_together_last_quarter_holds_at_a_lower_bar():
+    # X and Y share one key at p 0.45: below GAMMA, above GAMMA - HISTORY
+    con = _con({"X": "ORG X", "Y": "ORG Y"}, [("X", "phone", "6170000001"), ("Y", "phone", "6170000001")])
+    oc.evidence(con)
+    con.execute("CREATE TEMP TABLE oc_calib AS SELECT DISTINCT kind, cell, 10 AS pairs, 0.45 AS p FROM oc_pair")
+    oc.units(con)
+    oc.cluster(con)
+    assert dict(con.execute("SELECT * FROM comp").fetchall()) == {"X": "X", "Y": "Y"}       # apart, it does not join
+    con.execute("CREATE OR REPLACE TEMP TABLE prev_firm AS SELECT * FROM (VALUES ('X', 'OX'), ('Y', 'OX')) t(node, firm_id)")
+    oc.cluster(con)
+    assert dict(con.execute("SELECT * FROM comp").fetchall()) == {"X": "X", "Y": "X"}       # together, it holds
+    oc.cluster(con, history=0)
+    assert dict(con.execute("SELECT * FROM comp").fetchall()) == {"X": "X", "Y": "Y"}
+
+
+def test_holes_of_up_to_max_hole_quarters_are_closed():
+    con = duckdb.connect()
+    q = ["2020-01-01", "2020-04-01", "2020-07-01", "2020-10-01", "2021-01-01", "2021-04-01", "2021-07-01", "2021-10-01"]
+    con.execute("CREATE TEMP TABLE oc_quarter AS SELECT unnest(?::DATE[]) AS d", [q])
+    con.execute("""CREATE TEMP TABLE t AS SELECT * FROM (VALUES
+        ('A', 'F1', DATE '2020-01-01', DATE '2020-04-01'), ('A', 'F1', DATE '2020-07-01', NULL),          -- one quarter out
+        ('B', 'F1', DATE '2020-01-01', DATE '2020-04-01'), ('B', 'F1', DATE '2021-04-01', NULL),          -- four out
+        ('C', 'F1', DATE '2020-01-01', DATE '2020-04-01'), ('C', 'F2', DATE '2020-07-01', NULL),          -- came back elsewhere
+        ('D', 'F1', DATE '2020-01-01', DATE '2020-04-01'), ('D', 'F1', DATE '2020-10-01', DATE '2021-01-01'))  -- two out, then gone
+        v(node_id, firm_id, effective_date, end_date)""")
+    rows = con.execute(f"SELECT node_id, effective_date::VARCHAR, end_date::VARCHAR, _hole FROM ({oc.filled('t', 'node_id', 'firm_id')}) "
+                       "ORDER BY 1, 2").fetchall()
+    assert rows == [("A", "2020-01-01", "2020-07-01", True), ("A", "2020-07-01", None, False),
+                    ("B", "2020-01-01", "2020-04-01", False), ("B", "2021-04-01", None, False),
+                    ("C", "2020-01-01", "2020-04-01", False), ("C", "2020-07-01", None, False),
+                    ("D", "2020-01-01", "2020-10-01", True), ("D", "2020-10-01", "2021-01-01", False)]
+
+
 def test_missing_leiden_is_a_user_error(monkeypatch):
     import builtins
     from healthcare_ledger.core.errors import UserError
