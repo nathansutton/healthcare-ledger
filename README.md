@@ -29,7 +29,7 @@ uv sync
 uv run healthcare-ledger smoke        # or `make smoke`
 ```
 
-`smoke` downloads the newest zip in `releases/sources.csv` (about 1.2 GB, sha256-checked) into `data/smoke/raw`. It then loads it, validates and verifies the warehouse against the zip, exports it and reads the export back. Everything stays under `data/smoke/`, and the run needs about 15 GB of free disk. A re-run keeps the zip and rebuilds the rest. `--snapshot YYYYMMDD` picks another month.
+`smoke` downloads the newest zip in `releases/sources.csv` (about 1.2 GB, sha256-checked) into `data/smoke/raw`. It then loads it, validates and verifies the warehouse against the zip, exports it and reads the export back. Everything stays under `data/smoke/`, and the run needs about 15 GB of free disk. A re-run keeps the zip and rebuilds the rest. `--snapshot YYYYMMDD` picks another month. DuckDB uses up to 80% of RAM by default; on a smaller machine pass `--memory 8GB --threads 4` (`make smoke MEMORY=8GB THREADS=4`), which finishes in about ten minutes.
 
 The full build:
 
