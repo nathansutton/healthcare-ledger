@@ -8,6 +8,7 @@ Build and check:  validate, status (every loaded source); discover, verify, roll
 Derived:          graph-build (practitioner, organization and hospital graph by PPEF quarter, docs/METHODOLOGY.md section 8)
 Publish:          export, package, monthly (download, load, validate, verify,
                   continuity check and export in one command; see docs/MAINTAINING.md)
+Try it:           smoke (one NPPES month end to end: download, load, validate, verify, export, read back)
 
 Every error the operator can fix is one line on stderr naming the problem, its cause and the
 next step. Input checks run before any file is created, so a bad argument leaves nothing
@@ -221,6 +222,12 @@ def cmd_monthly(a: argparse.Namespace) -> int:
         publish_root=a.publish_root, changelog=Path(a.changelog), max_absent_share=a.max_absent_share))
 
 
+def cmd_smoke(a: argparse.Namespace) -> int:
+    from .sources.nppes.smoke import SmokeOptions, run_smoke
+    return run_smoke(SmokeOptions(dir=Path(a.dir), releases=Path(a.releases), snapshot=a.snapshot, csv=a.csv,
+                                  threads=a.threads, memory=a.memory, changelog=Path(a.changelog)))
+
+
 # ------------------------------------------------------------------------- main
 def _resources(p: argparse.ArgumentParser) -> None:
     p.add_argument("--threads", type=int, help="DuckDB threads (default: all cores)")
@@ -380,6 +387,17 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--max-absent-share", type=float, default=0.05, help=argparse.SUPPRESS)
     _resources(m)
     m.set_defaults(fn=cmd_monthly)
+
+    sm = sub.add_parser("smoke", help="test the whole NPPES path on one month: download the newest recorded zip, then "
+                                      "load, validate, verify, export and read back, all under --dir")
+    sm.add_argument("--dir", default="data/smoke", help="directory for the zip, warehouse and export (default data/smoke)")
+    sm.add_argument("--releases", default=DEFAULT_RELEASES, help=f"directory holding sources.csv, only read "
+                                                                 f"(default {DEFAULT_RELEASES})")
+    sm.add_argument("--snapshot", type=int, help="snapshot id YYYYMMDD from sources.csv (default: the newest)")
+    sm.add_argument("--csv", action="store_true", help="also write the gzipped CSV copies")
+    sm.add_argument("--changelog", default=DEFAULT_CHANGELOG, help=argparse.SUPPRESS)
+    _resources(sm)
+    sm.set_defaults(fn=cmd_smoke)
     return p
 
 

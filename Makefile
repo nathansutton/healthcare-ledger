@@ -23,13 +23,18 @@ VERIFY_ALL ?=
 MONTHLY_FILES ?=
 MONTHLY_FLAG = $(if $(MONTHLY_FILES),--monthly-files)
 
-.PHONY: install test discover probe download check-sources load validate verify export package status monthly sources graph
+.PHONY: install test smoke discover probe download check-sources load validate verify export package status monthly sources graph
 
 install:
 	uv sync
 
 test:
 	uv run pytest -q
+
+# One NPPES month end to end (the newest in releases/sources.csv): download, load, validate, verify, export and read back,
+# all under data/smoke. About 1.2 GB to download and 15 GB of disk while it runs.
+smoke:
+	uv run healthcare-ledger smoke $(RES)
 
 discover:
 	uv run healthcare-ledger discover $(SRC)
