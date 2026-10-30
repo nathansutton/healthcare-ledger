@@ -95,6 +95,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+import duckdb
+
 from .. import __version__
 from ..core.connect import configure, open_catalog, source_file
 from . import crosswalk, firms, primitives
@@ -277,6 +279,36 @@ def _hash_expr(cols: tuple[str, ...]) -> str:
     return "md5(CAST(struct_pack(" + ", ".join(f"{c} := {c}" for c in cols) + ") AS VARCHAR))"
 
 
+def advance(con: duckdb.DuckDBPyConnection, t: Table, d: str) -> None:
+    """Close the open rows of interval table ``t`` that quarter ``d``'s temp table ``t.name`` does not repeat and open
+    the rows that are new (tables ``<name>_open`` and ``<name>_closed``)."""
+    cols = ", ".join(t.key + t.attrs)
+    con.execute(f"CREATE OR REPLACE TEMP TABLE cur AS SELECT {cols}, {_hash_expr(t.attrs)} AS _h FROM {t.name}")
+    if not con.execute(f"SELECT count(*) FROM duckdb_tables() WHERE table_name = '{t.name}_open'").fetchone()[0]:
+        con.execute(f"CREATE TABLE {t.name}_open AS SELECT *, DATE '{d}' AS effective_date FROM cur")
+        con.execute(f"CREATE TABLE {t.name}_closed AS SELECT * EXCLUDE (_h), NULL::DATE AS end_date "
+                    f"FROM {t.name}_open LIMIT 0")
+        return
+    same = " AND ".join([f"o.{k} = c.{k}" for k in t.key] + ["o._h = c._h"])
+    con.execute(f"""
+        INSERT INTO {t.name}_closed
+        SELECT o.* EXCLUDE (_h), DATE '{d}' AS end_date FROM {t.name}_open o
+        WHERE NOT EXISTS (SELECT 1 FROM cur c WHERE {same})""")
+    con.execute(f"""
+        CREATE OR REPLACE TABLE {t.name}_open AS
+        SELECT o.* FROM {t.name}_open o WHERE EXISTS (SELECT 1 FROM cur c WHERE {same})
+        UNION ALL BY NAME
+        SELECT c.*, DATE '{d}' AS effective_date FROM cur c
+        WHERE NOT EXISTS (SELECT 1 FROM {t.name}_open o WHERE {same})""")
+
+
+def intervals_sql(t: Table) -> str:
+    """The rows of interval table ``t`` built by ``advance``, closed and open, with effective and end dates."""
+    return f"""SELECT {", ".join(t.key + t.attrs)}, effective_date, end_date FROM (
+                   SELECT * FROM {t.name}_closed
+                   UNION ALL BY NAME SELECT * EXCLUDE (_h), NULL::DATE AS end_date FROM {t.name}_open)"""
+
+
 class GraphBuilder:
     """Builds the interval tables one PPEF quarter at a time, in an in-memory DuckDB with the warehouse's source
     files attached read-only (``core.connect.open_catalog``)."""
@@ -441,31 +473,10 @@ class GraphBuilder:
         self.stats.append(stat)
 
     def _advance(self, t: Table, d: str) -> None:
-        """Close the open rows that this quarter does not repeat and open the rows that are new."""
-        con = self.con
-        cols = ", ".join(t.key + t.attrs)
-        con.execute(f"CREATE OR REPLACE TEMP TABLE cur AS SELECT {cols}, {_hash_expr(t.attrs)} AS _h FROM {t.name}")
-        if not con.execute(f"SELECT count(*) FROM duckdb_tables() WHERE table_name = '{t.name}_open'").fetchone()[0]:
-            con.execute(f"CREATE TABLE {t.name}_open AS SELECT *, DATE '{d}' AS effective_date FROM cur")
-            con.execute(f"CREATE TABLE {t.name}_closed AS SELECT * EXCLUDE (_h), NULL::DATE AS end_date "
-                        f"FROM {t.name}_open LIMIT 0")
-            return
-        same = " AND ".join([f"o.{k} = c.{k}" for k in t.key] + ["o._h = c._h"])
-        con.execute(f"""
-            INSERT INTO {t.name}_closed
-            SELECT o.* EXCLUDE (_h), DATE '{d}' AS end_date FROM {t.name}_open o
-            WHERE NOT EXISTS (SELECT 1 FROM cur c WHERE {same})""")
-        con.execute(f"""
-            CREATE OR REPLACE TABLE {t.name}_open AS
-            SELECT o.* FROM {t.name}_open o WHERE EXISTS (SELECT 1 FROM cur c WHERE {same})
-            UNION ALL BY NAME
-            SELECT c.*, DATE '{d}' AS effective_date FROM cur c
-            WHERE NOT EXISTS (SELECT 1 FROM {t.name}_open o WHERE {same})""")
+        advance(self.con, t, d)
 
     def _intervals(self, t: Table) -> str:
-        return f"""SELECT {", ".join(t.key + t.attrs)}, effective_date, end_date FROM (
-                       SELECT * FROM {t.name}_closed
-                       UNION ALL BY NAME SELECT * EXCLUDE (_h), NULL::DATE AS end_date FROM {t.name}_open)"""
+        return intervals_sql(t)
 
     def write(self, out: Path, warehouse: Path) -> dict:
         out.mkdir(parents=True, exist_ok=True)

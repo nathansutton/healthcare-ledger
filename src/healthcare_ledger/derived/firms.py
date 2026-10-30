@@ -99,9 +99,10 @@ def components(con: duckdb.DuckDBPyConnection, nodes: str, edges: str, out: str)
     return rounds
 
 
-def label_firms(con: duckdb.DuckDBPyConnection, d: str) -> None:
+def label_firms(con: duckdb.DuckDBPyConnection, d: str, prefix: str = "F") -> None:
     """Turn ``comp`` (node, comp) into ``firm_label`` (node, firm_id), carrying firm ids over from ``prev_firm``
-    (node, firm_id: the previous quarter's labels) and recording every id ever used in ``firm_ids``."""
+    (node, firm_id: the previous quarter's labels) and recording every id ever used in ``firm_ids``. A new id is
+    ``prefix`` + the component's label."""
     con.execute("CREATE TEMP TABLE IF NOT EXISTS prev_firm (node VARCHAR, firm_id VARCHAR)")
     con.execute("CREATE TEMP TABLE IF NOT EXISTS firm_ids (firm_id VARCHAR)")
     con.execute("""
@@ -118,8 +119,8 @@ def label_firms(con: duckdb.DuckDBPyConnection, d: str) -> None:
         WITH c AS (SELECT DISTINCT comp FROM comp),
         named AS (
             SELECT c.comp, coalesce(k.firm_id,
-                   CASE WHEN 'F' || c.comp IN (SELECT firm_id FROM firm_ids) THEN 'F' || c.comp || '@{d}'
-                        ELSE 'F' || c.comp END) AS firm_id
+                   CASE WHEN '{prefix}' || c.comp IN (SELECT firm_id FROM firm_ids) THEN '{prefix}' || c.comp || '@{d}'
+                        ELSE '{prefix}' || c.comp END) AS firm_id
             FROM c LEFT JOIN _keep k USING (comp))
         SELECT comp.node, named.firm_id FROM comp JOIN named USING (comp)""")
     con.execute("INSERT INTO firm_ids SELECT DISTINCT firm_id FROM firm_label WHERE firm_id NOT IN (SELECT firm_id FROM firm_ids)")

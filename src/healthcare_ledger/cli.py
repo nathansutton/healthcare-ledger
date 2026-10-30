@@ -5,7 +5,8 @@ Any source:       download, load, sources, reset with --source-name nppes (defau
                   Compendium of U.S. Health Systems) or medicaid (HHS's Medicaid provider spending extract), the
                   last two reference sources loaded wholesale; docs/MAINTAINING.md
 Build and check:  validate, status (every loaded source); discover, verify, rollback (NPPES)
-Derived:          graph-build (practitioner, organization and hospital graph by PPEF quarter, docs/METHODOLOGY.md section 8)
+Derived:          graph-build (practitioner, organization and hospital graph by PPEF quarter, docs/METHODOLOGY.md section 8),
+                  owner-communities (owner, subsidiaries and groups by quarter, section 8f)
 Publish:          export, package, monthly (download, load, validate, verify,
                   continuity check and export in one command; see docs/MAINTAINING.md)
 
@@ -145,6 +146,16 @@ def cmd_graph_build(a: argparse.Namespace) -> int:
                     medicare_utilization=a.medicare_utilization)
     print(f"{a.out}: {m['quarters']} quarters {m['first_as_of_date']} to {m['last_as_of_date']}; "
           + ", ".join(f"{k} {v['rows']:,} rows" for k, v in m["tables"].items()))
+    return 0
+
+
+def cmd_owner_communities(a: argparse.Namespace) -> int:
+    from .derived.owner_communities import build_owner_communities
+    m = build_owner_communities(Path(a.graph), Path(a.warehouse), anchor=a.anchor, limit=a.limit, threads=a.threads,
+                                memory_limit=a.memory, work_dir=_work(a))
+    oc = m["owner_communities"]
+    print(f"{a.graph}: owner communities on {oc['quarters']} quarters, calibrated on {oc['anchor']}; "
+          + ", ".join(f"{t} {m['tables'][t]['rows']:,} rows" for t in ("owner_community_member", "owner_community")))
     return 0
 
 
@@ -318,6 +329,18 @@ def build_parser() -> argparse.ArgumentParser:
                          "from the Medicaid source, which must be loaded (`load --source-name medicaid`)")
     _resources(gb)
     gb.set_defaults(fn=cmd_graph_build)
+
+    oc = sub.add_parser("owner-communities", help="add owner communities (each organization with everything under the same "
+                                                  "owner: All Owners firms, AHRQ systems and NPPES keys, by Leiden) to a "
+                                                  "graph built with --ownership --compendium")
+    _warehouse_arg(oc)
+    oc.add_argument("--graph", default=DEFAULT_GRAPH, help=f"the graph directory, written in place (default {DEFAULT_GRAPH})")
+    oc.add_argument("--work", help="scratch directory for DuckDB temp files (default: work/ next to the warehouse directory)")
+    oc.add_argument("--anchor", help="the quarter (as_of_date) to calibrate the NPPES links on (default: the last quarter "
+                                     "with All Owners firms in a year with its own AHRQ group practice file)")
+    oc.add_argument("--limit", type=int, help="build only the first N quarters (for a quick look)")
+    _resources(oc)
+    oc.set_defaults(fn=cmd_owner_communities)
 
     pk = sub.add_parser("package", help="turn a finished export into a Zenodo deposit: one zip per table, metadata, checksums")
     pk.add_argument("--out", default=DEFAULT_OUT, help="the export directory")

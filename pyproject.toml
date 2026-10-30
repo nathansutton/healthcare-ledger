@@ -19,16 +19,26 @@ healthcare-ledger = "healthcare_ledger.cli:main"
 [project.urls]
 Repository = "https://github.com/nathansutton/healthcare-ledger"
 
+[project.optional-dependencies]
+communities = [
+    "igraph>=1.0.0",
+    "leidenalg>=0.12.0",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
     "pandas>=2.2",
     "pytest-xdist>=3.8.0",
+    "igraph>=1.0.0",
+    "leidenalg>=0.12.0",
 ]
 research = [
     "differences>=0.3.0",
+    "igraph>=1.0.0",
     "ipykernel>=7.4.0",
     "jupyterlab>=4.6.4",
+    "leidenalg>=0.12.0",
     "matplotlib>=3.11.2",
     "nbconvert>=7.17.2",
     "nbformat>=5.11.1",
