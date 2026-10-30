@@ -22,6 +22,17 @@ This project does not host the files and does not give you the data. It is a rec
 
 You need Linux or macOS, Python 3.12 or newer, [uv](https://docs.astral.sh/uv/) and `unzip`.
 
+To try the whole pipeline on one month before you download the archive:
+
+```bash
+uv sync
+uv run healthcare-ledger smoke        # or `make smoke`
+```
+
+`smoke` downloads the newest zip in `releases/sources.csv` (about 1.2 GB, sha256-checked) into `data/smoke/raw`. It then loads it, validates and verifies the warehouse against the zip, exports it and reads the export back. Everything stays under `data/smoke/`, and the run needs about 15 GB of free disk. A re-run keeps the zip and rebuilds the rest. `--snapshot YYYYMMDD` picks another month.
+
+The full build:
+
 ```bash
 uv sync
 uv run healthcare-ledger download     # get the recorded zips into data/raw, sha256-checked
