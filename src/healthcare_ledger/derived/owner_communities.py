@@ -247,7 +247,9 @@ def cluster(con: duckdb.DuckDBPyConnection, gamma: float = GAMMA) -> None:
             SELECT u.unit, p.firm_id, count(*) AS n FROM oc_unit u JOIN prev_firm p ON p.node = u.pac_id GROUP BY 1, 2)
         GROUP BY 1""").fetchall())
     labels = {c: i for i, c in enumerate(sorted(set(start.values())))}
-    initial = [labels[start[u]] if u in start else len(labels) + i for i, (u, _) in enumerate(units_)]
+    # new units each start alone, numbered on from the carried labels (leidenalg wants labels below the node count)
+    fresh = iter(range(len(labels), len(units_)))
+    initial = [labels[start[u]] if u in start else next(fresh) for u, _ in units_]
     part = la.CPMVertexPartition(g, initial_membership=initial, weights="weight", node_sizes=[n for _, n in units_],
                                  resolution_parameter=gamma)
     opt = la.Optimiser()

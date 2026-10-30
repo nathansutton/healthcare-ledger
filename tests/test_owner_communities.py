@@ -123,6 +123,8 @@ def test_ids_carry_over_and_a_hard_link_moves_an_organization(family):
     con.execute("INSERT INTO oc_org VALUES ('0H', 'ORG 0H', 'MA')")
     con.execute("INSERT INTO oc_key VALUES ('0H', 'ao', 'FAMILY OFFICIAL|6170000000')")
     con.execute("INSERT INTO oc_size VALUES ('0H', 1.0, 0, 0)")
+    con.execute("INSERT INTO oc_org VALUES ('Z9', 'ORG Z9', 'MA')")      # new and alone, sorting after every unit
+    con.execute("INSERT INTO oc_size VALUES ('Z9', 1.0, 0, 0)")
     oc.evidence(con)
     con.execute("CREATE OR REPLACE TEMP TABLE oc_calib AS SELECT DISTINCT kind, cell, 10 AS pairs, CASE kind WHEN 'ao' THEN 0.9 ELSE 0.1 END AS p FROM oc_pair")
     oc.units(con)
@@ -130,6 +132,7 @@ def test_ids_carry_over_and_a_hard_link_moves_an_organization(family):
     oc.label(con, "2020-04-01")
     m = _members(con)
     assert m["0H"] == m["A"] == first["A"] == "OA"                  # the family keeps its id though 0H < A
+    assert m["Z9"] == "OZ9"
     con.execute("INSERT INTO oc_firm VALUES ('B', 'FIRM1')")
     oc.units(con)
     oc.cluster(con)
