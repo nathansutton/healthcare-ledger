@@ -98,7 +98,9 @@ NAME_BINS = ("CASE WHEN mindf IS NULL THEN 'no shared name' WHEN mindf <= 50 THE
              "WHEN mindf <= 2000 THEN 'name' ELSE 'common word' END")
 # calibration levels, finest first: the columns of oc_pair a cell is keyed on
 LEVELS = (("kinds", "size", "coh", "name"), ("kinds", "size"), ("kind1", "size"))
-HCRIS_STALE_MONTHS = 18       # a cost report whose fiscal year ended this long before the quarter still names the chain
+HCRIS_STALE_MONTHS = 30       # a cost report whose fiscal year ended this long before the quarter still names the chain (CMS
+                              # publishes a fiscal year's reports over the year or two after it ends)
+IRS_COMPLETE_SHARE = 0.5      # a tax year counts once it holds this share of the previous year's returns (the latest is partial)
 NHC_STALE_MONTHS = 6          # a Nursing Home Compare month this far before the quarter still names the owners
 IRS_FILER_TYPES = ("501c3", "501c2", "501c4", "501c25")
 IRS_RELATED_SUBSECTIONS = ("3", "2", "4", "25", "")
@@ -238,8 +240,9 @@ def extra_evidence(con: duckdb.DuckDBPyConnection, d: str, evidence_from: tuple[
         each owner of 5% or more (``role`` beginning with 5%) in the latest Nursing Home Compare month on or before
         the quarter, within NHC_STALE_MONTHS, as ``type|name``, for the nursing home's legal entity.
     ``irs`` (``oc_pair_extra``)
-        every Schedule R listing of the latest tax year before the quarter's year (a return for tax year T is filed
-        during T+1) by a charity-type filer (IRS_FILER_TYPES) of a controlled charity-type or taxable entity
+        every Schedule R listing of the latest complete tax year before the quarter's year (a return for tax year T
+        is filed during T+1, and the latest year's tables fill over the following year: a year counts once it holds
+        IRS_COMPLETE_SHARE of the previous year's returns) by a charity-type filer (IRS_FILER_TYPES) of a controlled charity-type or taxable entity
         (``irs_related.controlled``, IRS_RELATED_SUBSECTIONS), both EINs carried to organizations by ``oc_ein_pac``
         (``tic_roster``), one pair per organization pair: rank 1 and size ``mutual`` when the related entity's
         Schedule R lists the filer back, rank 2 and ``listed`` otherwise.
@@ -263,7 +266,9 @@ def extra_evidence(con: duckdb.DuckDBPyConnection, d: str, evidence_from: tuple[
         types = ", ".join(f"'{t}'" for t in IRS_FILER_TYPES)
         subs = ", ".join(f"'{t}'" for t in IRS_RELATED_SUBSECTIONS)
         con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_irs_edge AS
-            WITH t AS (SELECT max(tax_year) AS y FROM irs_return WHERE tax_year <= {year}),
+            WITH n AS (SELECT tax_year, count(*) AS c FROM irs_return GROUP BY 1),
+            t AS (SELECT max(n.tax_year) AS y FROM n LEFT JOIN n p ON p.tax_year = n.tax_year - 1
+                  WHERE n.tax_year <= {year} AND n.c >= {IRS_COMPLETE_SHARE} * coalesce(p.c, 0)),
             e AS (SELECT DISTINCT r.ein AS a, r.related_ein AS b FROM irs_related r, t
                   WHERE r.tax_year = t.y AND r.controlled AND r.ein IS NOT NULL AND r.related_ein IS NOT NULL
                     AND (r.kind <> 'exempt' OR {IRS_SUBSECTION.format(c='r.exempt_code')} IN ({subs}))

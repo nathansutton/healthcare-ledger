@@ -89,8 +89,9 @@ def test_extra_evidence_adds_chain_and_nhc_keys_and_irs_pairs():
         ('015002', DATE '2019-06-01', '5% OR GREATER INDIRECT OWNERSHIP INTEREST', 'Organization', 'CHAIN LLC'),
         ('015002', DATE '2019-06-01', 'OPERATIONAL/MANAGERIAL CONTROL', 'Organization', 'MANAGER LLC'),
         ('015001', DATE '2018-12-01', '5% OR GREATER DIRECT OWNERSHIP INTEREST', 'Organization', 'OLD OWNER')) t(ccn, as_of_date, role, owner_type, owner_name)""")
-    # Schedule R for tax year 2018 (the latest before 2019): S lists H (mutual) and E's entity (one-sided); 2019 returns exist but are not used
-    con.execute("CREATE TEMP TABLE irs_return AS SELECT * FROM (VALUES (2018, '111', '501c3'), (2018, '222', '501c3'), (2019, '111', '501c3')) t(tax_year, ein, exempt_type)")
+    # Schedule R for tax year 2018: S lists H (mutual) and E's entity (one-sided). 2019 holds one return against three
+    # for 2018, so it is not yet complete: a 2020 quarter reads 2018 too
+    con.execute("CREATE TEMP TABLE irs_return AS SELECT * FROM (VALUES (2018, '111', '501c3'), (2018, '222', '501c3'), (2018, '333', '501c3'), (2019, '111', '501c3')) t(tax_year, ein, exempt_type)")
     con.execute("""CREATE TEMP TABLE irs_related AS SELECT * FROM (VALUES
         (2018, '111', '222', 'exempt', '501(C)(3)', TRUE), (2018, '222', '111', 'exempt', '501(C)(3)', TRUE), (2018, '111', '555', 'corporation', NULL, TRUE),
         (2018, '111', '999', 'exempt', '501(C)(9)', TRUE), (2019, '111', '333', 'exempt', '501(C)(3)', TRUE)) t(tax_year, ein, related_ein, kind, exempt_code, controlled)""")
@@ -107,3 +108,10 @@ def test_extra_evidence_adds_chain_and_nhc_keys_and_irs_pairs():
     oc.evidence(con)
     assert con.execute("SELECT kinds, kind1, size FROM oc_pair WHERE x = 'A' AND y = 'B'").fetchone() == ("chain+irs", "irs", "mutual")
     assert con.execute("SELECT kinds, size FROM oc_pair WHERE x = 'C' AND y = 'D'").fetchone() == ("nhc", "2")
+    # a 2020 quarter reads 2018 while 2019 is partial, and 2019 once it is complete
+    con.execute("DELETE FROM oc_key")
+    oc.extra_evidence(con, "2020-07-02", ("irs",))
+    assert sorted(con.execute("SELECT x, y, size FROM oc_pair_extra").fetchall()) == [("A", "B", "mutual"), ("A", "E", "listed")]
+    con.execute("INSERT INTO irs_return VALUES (2019, '222', '501c3'), (2019, '333', '501c3')")      # now complete: C's listing counts
+    oc.extra_evidence(con, "2020-07-02", ("irs",))
+    assert sorted(con.execute("SELECT x, y, size FROM oc_pair_extra").fetchall()) == [("A", "C", "listed")]

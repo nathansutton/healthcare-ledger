@@ -1,9 +1,11 @@
 """Command line interface.
 
 Any source:       download, load, sources, reset with --source-name nppes (default), ppef (Medicare PPEF
-                  quarterly enrollment extracts), pos (quarterly Provider of Services files), ahrq (the AHRQ
-                  Compendium of U.S. Health Systems) or medicaid (HHS's Medicaid provider spending extract), the
-                  last two reference sources loaded wholesale; docs/MAINTAINING.md
+                  quarterly enrollment extracts), pos (quarterly Provider of Services files), ownership (CMS
+                  Enrollments and All Owners), doctors_clinicians, or the reference sources loaded wholesale: ahrq
+                  (the AHRQ Compendium), medicaid (HHS's Medicaid provider spending extract), medicare_utilization,
+                  irs (Form 990 Schedules R and H, BMF), hcris (cost-report home offices), chow (changes of
+                  ownership) and nhc (Nursing Home Compare owners); docs/MAINTAINING.md
 Build and check:  validate, status (every loaded source); discover, verify, rollback (NPPES)
 Derived:          graph-build (practitioner, organization and hospital graph by PPEF quarter, docs/METHODOLOGY.md section 8),
                   owner-communities (owner, subsidiaries and groups by quarter, section 8f)
