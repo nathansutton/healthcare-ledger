@@ -27,6 +27,17 @@ The graph above is one hop: a practitioner reassigns to an organization, an orga
 | Hospital-related tax ids with the network and name steps; service location | Luo et al. 2024; Neprash et al. 2015 | **Still a floor.** The two steps add 4.1 points by 2026 (22.4%), against Luo et al.'s 43.5% in 2019: the All Owners files cover facilities, not the practices a system owns. 12% of physicians bill their office visits in hospital settings; the two measures agree on a third of each other's integrated physicians, as Luo et al. found (38%). |
 | Physicians by group size on Physician Compare | Muhlestein and Smith 2016 | **Within a point.** 34.4% in groups of 100 or more and 36.0% in groups of nine or fewer in the November 2015 file, against 35.1 and 35.3%. Claims-filtered weights cut the per-tax-id error against MD-PPAS by 10 to 25%. |
 
+## Owner communities: `owner_communities.ipynb`
+
+Firms are exact but cover only facilities, and only from 2022; the Compendium names systems' groups but by year. `healthcare-ledger owner-communities` puts every organization, every quarter, in one community with its owner, its facilities' legal entities and its physician groups (METHODOLOGY section 8f). All Owners firms and Compendium systems are hard links. NPPES keys that a family of organizations shares (authorized official, mailing address, phone, subpart parent) are soft links, each priced by a probability of common ownership calibrated on the owners known in December 2022, as in record linkage (Fellegi and Sunter 1969). Leiden then keeps a community where its pairs are more likely than not to share an owner. Each quarter starts from the last, with a history bonus for last quarter's pairs (Chakrabarti, Kumar and Tomkins 2006), and one- or two-quarter gaps in CMS's files are closed. [`owner_communities.ipynb`](owner_communities.ipynb) checks the result:
+
+| Check | Result |
+|---|---|
+| NPPES evidence alone, held-out half of known owners | All Owners firms: pair precision 0.69, recall 0.52. Compendium system groups: precision 0.82, recall 0.04, which is why the Compendium is a hard link. |
+| Hand audit of 123 labelled pairs sharing a key ([`data/owner_audit_pairs.csv`](data/owner_audit_pairs.csv)) | 85 of 98 same-owner pairs together, 7 of 25 different-owner pairs merged. |
+| Stability, 43 quarters | 0.2 to 0.8% of organizations change community in a quarter with no input change; 1 to 1.7% at a new Compendium year or the start of All Owners. 4,920 of 104,701 moves return to the community they left. |
+| Coverage | Physicians in groups in a community of two or more: 57% in 2016, 69% in 2026. Kaiser Permanente, the largest, keeps one id from 17,300 to 24,700 physicians. |
+
 ## Why the graph is built this way
 
 A survey of the literature before building set three rules.
@@ -80,8 +91,10 @@ uv run healthcare-ledger download --source-name medicare_utilization  # the Medi
 uv run healthcare-ledger load --source-name medicare_utilization
 uv run healthcare-ledger export                                       # firms_over_time.ipynb reads the ownership and Physician Compare tables from the export
 uv run healthcare-ledger graph-build --out graph --compendium --medicaid --ownership --doctors-clinicians --medicare-utilization   # about ten minutes; drop an option without its source
+uv sync --extra communities                                                # igraph and leidenalg, for owner_communities.ipynb
+uv run healthcare-ledger owner-communities --graph graph --warehouse data/warehouse   # about two hours over 43 quarters
 export LEDGER_GRAPH=$PWD/graph                                             # default: the repository's graph/
-uv run jupyter lab research/provider-networks/   # provider_networks.ipynb, then firms_over_time.ipynb
+uv run jupyter lab research/provider-networks/   # provider_networks.ipynb, firms_over_time.ipynb, then owner_communities.ipynb
 ```
 
 Without `--medicaid`, section 4b runs on empty tables and shows nothing; without `--compendium`, so does section 6. The group primitives (`physician_q`, `physician_edge`, `group_size`, and with `--medicaid` `medicaid_volume` and `main_group`) come from `graph-build`, which runs the SQL files in `src/healthcare_ledger/derived/sql/` (METHODOLOGY section 8c); the notebook shows each file above the cell that first reads it. Each other table (`link_check`, `facility_check`, `size_shares`, `physician_specialty`, `market_hhi`, `compendium_q`, `ahrq_edge`, `system_org`, `firm_share`, `msa_hhi`, `hrr_hhi`) is built in DuckDB SQL in the cell that first needs it, with the reasoning just above it.
