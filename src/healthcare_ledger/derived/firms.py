@@ -48,7 +48,8 @@ CHAIN_MIN = 3                     # ASPE stops at the first chain of two
 CHAIN_TYPES = {"hospital": ("hospital",), "nursing_home": ("snf",)}
 
 
-def _asof(d: str, alias: str = "") -> str:
+def asof(d: str, alias: str = "") -> str:
+    """The interval rows in force on ``d``: effective on or before it and not yet ended."""
     a = f"{alias}." if alias else ""
     return f"{a}effective_date <= DATE '{d}' AND ({a}end_date IS NULL OR {a}end_date > DATE '{d}')"
 
@@ -59,11 +60,11 @@ def quarter_sql(d: str) -> dict[str, str]:
     return {
         "fenr": f"""
             SELECT enrollment_id, facility_type, pac_id, ccn, npi, coalesce(dba_name, org_name) AS name, provider_type_code
-            FROM medicare_facility_enrollment WHERE {_asof(d)} AND pac_id IS NOT NULL""",
+            FROM medicare_facility_enrollment WHERE {asof(d)} AND pac_id IS NOT NULL""",
         "fown": f"""
             SELECT o.enrollment_id, o.facility_type, o.pac_id, o.owner_pac_id, o.owner_type, o.owner_role_code,
                    o.ownership_pct, coalesce(o.owner_org_name, o.owner_dba_name) AS owner_name
-            FROM medicare_facility_owner o WHERE {_asof(d, 'o')} AND o.owner_pac_id IS NOT NULL""",
+            FROM medicare_facility_owner o WHERE {asof(d, 'o')} AND o.owner_pac_id IS NOT NULL""",
         "control": f"""
             SELECT DISTINCT owner_pac_id, pac_id, any_value(owner_name) OVER (PARTITION BY owner_pac_id) AS owner_name
             FROM fown
