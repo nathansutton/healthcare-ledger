@@ -10,16 +10,20 @@ from __future__ import annotations
 
 from ..core.errors import UserError
 from .ahrq import SOURCE as AHRQ
+from .chow import SOURCE as CHOW
+from .hcris import SOURCE as HCRIS
 from .base import Source
 from .doctors_clinicians import SOURCE as DAC
+from .irs import SOURCE as IRS
 from .medicaid import SOURCE as MEDICAID
 from .medicare_utilization import SOURCE as MEDICARE_UTILIZATION
+from .nhc import SOURCE as NHC
 from .nppes import SOURCE as NPPES
 from .ownership import SOURCE as OWNERSHIP
 from .pos import SOURCE as POS
 from .ppef import SOURCE as PPEF
 
-SOURCES: tuple[Source, ...] = (NPPES, PPEF, POS, OWNERSHIP, DAC, AHRQ, MEDICAID, MEDICARE_UTILIZATION)
+SOURCES: tuple[Source, ...] = (NPPES, PPEF, POS, OWNERSHIP, DAC, AHRQ, MEDICAID, MEDICARE_UTILIZATION, IRS, HCRIS, CHOW, NHC)
 
 
 def by_name(name: str) -> Source:
