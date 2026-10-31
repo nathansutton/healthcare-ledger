@@ -15,10 +15,18 @@ hard links, never cut
     holding company that is an owner in All Owners but enrolls nothing is not.
 soft links, weighed
     keys that NPPES records for each organization NPI: the authorized official (name and phone), the mailing address,
-    the practice phone, and a subpart's parent organization name (matched to an organization in the same state).
+    the practice phone, and a subpart's parent organization name (matched to an organization in the same state);
+    and, from the warehouse's other sources when they are loaded, the chain home office a facility's cost report
+    names (``hcris``, hospitals from 2010, nursing homes from 2011, home health agencies from 2020), the owner of 5%
+    or more Nursing Home Compare listed for a nursing home (``nhc``, 2014 to 2022) and, with ``--tic``, the
+    organizations a Form 990's Schedule R relates (``irs``, tax years 2013 on): a filer's EIN and its related
+    entities' EINs are carried to the graph's organizations by the EIN-to-NPI rosters of insurers' Transparency in
+    Coverage files, and a listing is ``mutual`` when the related entity's own Schedule R lists the filer back,
+    ``listed`` otherwise. Related organizations are not merged transitively (two systems sharing a joint venture
+    each list it, and it lists both back): each listing is one pair's evidence, and Leiden decides.
     Two organizations sharing keys get one probability of common ownership, calibrated once on an anchor quarter:
-    among pairs of organizations whose owner is known (the same All Owners firm or not; the same AHRQ system or not),
-    the share with the same owner in each cell of (the set of key kinds shared) x (the size of the strongest key
+    among pairs of organizations whose owner is known (two members of AHRQ systems, the same one or not; two members
+    of All Owners firms outside any system, the same one or not), the share with the same owner in each cell of (the set of key kinds shared) x (the size of the strongest key
     shared, the one with the fewest organizations) x (that key's cohesion) x (shared name). Pricing the set of kinds
     together, rather than each kind on its own and multiplying as if independent, matters because in a family the
     official, the mailing address and the phone are usually one person filling in one form: three correlated
@@ -77,6 +85,7 @@ STAFFING_MIN_SYSTEMS = 3      # a family whose groups AHRQ places in this many s
 HISTORY = 0.1                 # a pair together last quarter holds while p > GAMMA - HISTORY (evolutionary clustering)
 MAX_HOLE = 2                  # a firm membership or facility link gone for at most this many quarters is a hole
 SEED = 42
+LEIDEN_ITERATIONS = 2         # Leiden passes per quarter; the warm start carries the optimisation from quarter to quarter
 # interval tables whose holes are closed: (the table's key, the column that must come back unchanged)
 HOLES = {"firm_member": ("node_type, node_id", "firm_id"), "hospital_link": ("enrollment_id", "ccn"),
          "post_acute_link": ("enrollment_id", "ccn")}
@@ -89,6 +98,13 @@ NAME_BINS = ("CASE WHEN mindf IS NULL THEN 'no shared name' WHEN mindf <= 50 THE
              "WHEN mindf <= 2000 THEN 'name' ELSE 'common word' END")
 # calibration levels, finest first: the columns of oc_pair a cell is keyed on
 LEVELS = (("kinds", "size", "coh", "name"), ("kinds", "size"), ("kind1", "size"))
+HCRIS_STALE_MONTHS = 18       # a cost report whose fiscal year ended this long before the quarter still names the chain
+NHC_STALE_MONTHS = 6          # a Nursing Home Compare month this far before the quarter still names the owners
+IRS_FILER_TYPES = ("501c3", "501c2", "501c4", "501c25")
+IRS_RELATED_SUBSECTIONS = ("3", "2", "4", "25", "")
+IRS_SUBSECTION = "regexp_extract(upper(coalesce({c}, '')), 'C\\)?\\s*\\(?\\s*([0-9]+)', 1)"
+# evidence a source adds: the warehouse table it needs
+SOURCE_TABLES = {"hcris": "hcris_home_office", "nhc": "nhc_ownership", "irs": "irs_related"}
 
 TABLES = (
     Table("owner_community_member", ("pac_id",), ("community_id", "basis"),
@@ -148,12 +164,14 @@ def provider_keys(con: duckdb.DuckDBPyConnection) -> None:
         FROM provider p WHERE p.npi IN (SELECT unnest(npis) FROM organization)""")
 
 
-def quarter_inputs(con: duckdb.DuckDBPyConnection, d: str, ahrq_year: int | None) -> None:
+def quarter_inputs(con: duckdb.DuckDBPyConnection, d: str, ahrq_year: int | None, evidence_from: tuple[str, ...] = ()) -> None:
     """Create the quarter's input tables from the graph views and ``oc_provider`` (``provider_keys``):
     ``oc_org`` (pac_id, org_name, state), ``oc_key`` (pac_id, kind, key), ``oc_firm`` (pac_id, firm_id: All Owners firms
     holding a facility, over the graph's organizations), the Compendium's ``oc_sys_group`` (pac_id, sys: group
     practices), ``oc_firm_sys`` (firm_id, sys) and ``oc_fac_sys`` (pac_id, sys: facility legal entities by the graph's
-    links), and ``oc_size`` (pac_id, physicians, n_hospitals, n_post_acute)."""
+    links), and ``oc_size`` (pac_id, physicians, n_hospitals, n_post_acute). With ``evidence_from`` (names of
+    ``SOURCE_TABLES``), ``oc_key`` also holds the ``chain`` and ``nhc`` keys and ``oc_pair_extra`` (x, y, kind, rank,
+    size, coh) the ``irs`` pairs (``extra_evidence``)."""
     con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_org AS
         SELECT pac_id, org_name, practice_state AS state, npis FROM organization WHERE {asof(d)}""")
     con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_nppes AS
@@ -186,6 +204,7 @@ def quarter_inputs(con: duckdb.DuckDBPyConnection, d: str, ahrq_year: int | None
         SELECT organization_pac_id AS pac_id, ccn FROM hospital_link WHERE {asof(d)}
         UNION SELECT organization_pac_id, ccn FROM post_acute_link WHERE {asof(d)}""")
     con.execute("CREATE OR REPLACE TEMP TABLE oc_fac_sys AS " + majority_sys("oc_fac_ccn", "pac_id"))
+    extra_evidence(con, d, evidence_from)
     con.execute(f"CREATE OR REPLACE TEMP TABLE oc_sys_name AS SELECT health_sys_id AS sys, any_value(health_sys_name) AS name "
                 f"FROM system WHERE year = {y} GROUP BY 1")
     con.execute(f"CREATE OR REPLACE TEMP TABLE oc_firm_name AS SELECT firm_id, name FROM firm WHERE {asof(d)}")
@@ -209,13 +228,78 @@ def majority_sys(src: str, id_col: str) -> str:
         SELECT {id_col}, sys FROM n WHERE sys IS NOT NULL AND 2 * n > total"""
 
 
+def extra_evidence(con: duckdb.DuckDBPyConnection, d: str, evidence_from: tuple[str, ...]) -> None:
+    """Add the quarter's keys from the other sources to ``oc_key`` and create ``oc_pair_extra``:
+
+    ``chain``
+        the home office id of the cost report in force for each facility's legal entity (``oc_fac_ccn``): the report
+        whose fiscal period covers the quarter, else the latest one ended within HCRIS_STALE_MONTHS before it.
+    ``nhc``
+        each owner of 5% or more (``role`` beginning with 5%) in the latest Nursing Home Compare month on or before
+        the quarter, within NHC_STALE_MONTHS, as ``type|name``, for the nursing home's legal entity.
+    ``irs`` (``oc_pair_extra``)
+        every Schedule R listing of the latest tax year before the quarter's year (a return for tax year T is filed
+        during T+1) by a charity-type filer (IRS_FILER_TYPES) of a controlled charity-type or taxable entity
+        (``irs_related.controlled``, IRS_RELATED_SUBSECTIONS), both EINs carried to organizations by ``oc_ein_pac``
+        (``tic_roster``), one pair per organization pair: rank 1 and size ``mutual`` when the related entity's
+        Schedule R lists the filer back, rank 2 and ``listed`` otherwise.
+    """
+    con.execute("CREATE OR REPLACE TEMP TABLE oc_pair_extra (x VARCHAR, y VARCHAR, kind VARCHAR, rank INTEGER, size VARCHAR, coh VARCHAR)")
+    if "hcris" in evidence_from:
+        con.execute(f"""INSERT INTO oc_key
+            SELECT DISTINCT f.pac_id, 'chain', h.home_office_id FROM (
+                SELECT ccn, home_office_id, row_number() OVER (PARTITION BY ccn ORDER BY (fy_end >= DATE '{d}') DESC, fy_end DESC, rpt_rec_num) AS r
+                FROM hcris_home_office
+                WHERE chain AND home_office_id IS NOT NULL AND fy_begin <= DATE '{d}'
+                  AND fy_end >= DATE '{d}' - INTERVAL {HCRIS_STALE_MONTHS} MONTH) h
+            JOIN oc_fac_ccn f USING (ccn) WHERE h.r = 1""")
+    if "nhc" in evidence_from:
+        con.execute(f"""INSERT INTO oc_key
+            SELECT DISTINCT f.pac_id, 'nhc', coalesce(n.owner_type, '?') || '|' || n.owner_name FROM nhc_ownership n JOIN oc_fac_ccn f USING (ccn)
+            WHERE n.as_of_date = (SELECT max(as_of_date) FROM nhc_ownership WHERE as_of_date <= DATE '{d}')
+              AND n.as_of_date >= DATE '{d}' - INTERVAL {NHC_STALE_MONTHS} MONTH AND n.role LIKE '5%%' AND n.owner_name IS NOT NULL""")
+    if "irs" in evidence_from:
+        year = int(d[:4]) - 1
+        types = ", ".join(f"'{t}'" for t in IRS_FILER_TYPES)
+        subs = ", ".join(f"'{t}'" for t in IRS_RELATED_SUBSECTIONS)
+        con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_irs_edge AS
+            WITH t AS (SELECT max(tax_year) AS y FROM irs_return WHERE tax_year <= {year}),
+            e AS (SELECT DISTINCT r.ein AS a, r.related_ein AS b FROM irs_related r, t
+                  WHERE r.tax_year = t.y AND r.controlled AND r.ein IS NOT NULL AND r.related_ein IS NOT NULL
+                    AND (r.kind <> 'exempt' OR {IRS_SUBSECTION.format(c='r.exempt_code')} IN ({subs}))
+                    AND EXISTS (SELECT 1 FROM irs_return f WHERE f.tax_year = t.y AND f.ein = r.ein AND f.exempt_type IN ({types})))
+            SELECT e.a, e.b, EXISTS (SELECT 1 FROM e r WHERE r.a = e.b AND r.b = e.a) AS mutual FROM e""")
+        con.execute("""INSERT INTO oc_pair_extra
+            SELECT least(pa.pac_id, pb.pac_id), greatest(pa.pac_id, pb.pac_id), 'irs',
+                   CASE WHEN bool_or(e.mutual) THEN 1 ELSE 2 END, CASE WHEN bool_or(e.mutual) THEN 'mutual' ELSE 'listed' END, '-'
+            FROM oc_irs_edge e JOIN oc_ein_pac pa ON pa.ein = e.a JOIN oc_ein_pac pb ON pb.ein = e.b
+            WHERE pa.pac_id <> pb.pac_id AND pa.pac_id IN (SELECT pac_id FROM oc_org) AND pb.pac_id IN (SELECT pac_id FROM oc_org)
+            GROUP BY 1, 2""")
+
+
+def tic_roster(con: duckdb.DuckDBPyConnection, heads: Path) -> int:
+    """``oc_ein_pac`` (ein, pac_id): every EIN an insurer's Transparency in Coverage file lists an organization NPI
+    under (``research/tic-spike/tic_heads.py`` writes the heads), by the graph's organizations' NPIs over all
+    quarters. Returns the number of EINs."""
+    files = sorted(Path(heads).glob("*/*.parquet"))
+    if not files:
+        raise UserError(f"{heads} holds no Transparency in Coverage heads (<payer>/<file>.parquet)", exit_code=2)
+    con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_ein_pac AS
+        SELECT DISTINCT t.tin AS ein, o.pac_id
+        FROM read_parquet({[str(f) for f in files]}) t
+        JOIN (SELECT pac_id, unnest(npis) AS npi FROM organization) o ON o.npi = t.npi::VARCHAR
+        WHERE t.tin_type = 'ein' AND regexp_matches(t.tin, '^[0-9]{{9}}$') AND t.tin NOT IN ('000000000', '999999999')""")
+    return con.execute("SELECT count(DISTINCT ein) FROM oc_ein_pac").fetchone()[0]
+
+
 # ------------------------------------------------------------------------------------------- evidence
 
 def evidence(con: duckdb.DuckDBPyConnection) -> None:
     """``oc_pair`` (x, y, kinds, kind1, size, coh, name, cell): every pair of organizations sharing a key of ``oc_key``
-    with at most MAX_KEY organizations, once, with the set of key kinds it shares (``kinds``, '+'-joined in kind
-    order), the strongest key's kind (``kind1``: the key shared by the fewest organizations, ties to the kind then
-    the key), that key's size bin and cohesion, the shared-name bin and ``cell`` = size/coh/name."""
+    with at most MAX_KEY organizations, or in ``oc_pair_extra`` (when it exists), once, with the set of kinds it
+    shares (``kinds``, '+'-joined in kind order), the strongest kind (``kind1``: the key shared by the fewest
+    organizations, an extra pair's rank counting as that few; ties to the kind then the key), that key's size bin
+    and cohesion, the shared-name bin and ``cell`` = size/coh/name."""
     con.execute(f"CREATE OR REPLACE TEMP TABLE oc_key_n AS SELECT kind, key, count(*) AS n, {KEY_SIZES} AS size FROM oc_key GROUP BY 1, 2")
     # cohesion: how many officials (for an address or phone) or addresses (for an official) the key's organizations
     # name; an organization naming none counts as its own
@@ -235,6 +319,8 @@ def evidence(con: duckdb.DuckDBPyConnection) -> None:
                    row_number() OVER (PARTITION BY a.pac_id, b.pac_id, kind ORDER BY n.n, key) AS r
             FROM oc_key a JOIN oc_key b USING (kind, key) JOIN oc_key_n n USING (kind, key) LEFT JOIN oc_key_coh c USING (kind, key)
             WHERE a.pac_id < b.pac_id AND n.n <= {MAX_KEY}) WHERE r = 1""")
+    con.execute("CREATE TEMP TABLE IF NOT EXISTS oc_pair_extra (x VARCHAR, y VARCHAR, kind VARCHAR, rank INTEGER, size VARCHAR, coh VARCHAR)")
+    con.execute("INSERT INTO oc_pair0 SELECT x, y, kind, rank, size, coh FROM oc_pair_extra WHERE x < y")
     stop = ", ".join(f"'{w}'" for w in STOP_WORDS)
     con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_tok AS
         SELECT * FROM (SELECT DISTINCT pac_id, unnest(string_split({_NORM.format(c='org_name')}, ' ')) AS tok FROM oc_org)
@@ -253,15 +339,18 @@ def evidence(con: duckdb.DuckDBPyConnection) -> None:
 
 
 def calibrate(con: duckdb.DuckDBPyConnection, half: int | None = None, min_pairs: int = MIN_CELL_PAIRS) -> None:
-    """``oc_calib`` (level, kinds, size, coh, name, pairs, p): among the quarter's pairs of organizations with a known
-    owner (two members of All Owners facility firms, or two Compendium system groups outside them), the share under the
-    same owner by cell at each of ``LEVELS`` (0: kinds x size x cohesion x name; 1: kinds x size; 2: the strongest
-    kind x size), keeping cells of ``min_pairs`` pairs or more. With ``half`` (0 or 1), only owners whose id hashes
+    """``oc_calib`` (level, kinds, size, coh, name, pairs, p): among the quarter's pairs of organizations whose owner
+    is known, the share under the same owner by cell at each of ``LEVELS`` (0: kinds x size x cohesion x name; 1:
+    kinds x size; 2: the strongest kind x size), keeping cells of ``min_pairs`` pairs or more. The known owner is the
+    hard unit (``oc_unit``: the Compendium system, else the All Owners firm), and a pair is known when both sides
+    have one of the same source (two system members, or two firm members): a system member and a firm member are
+    not compared, because a firm outside every system is as often a system's entity the Compendium does not list
+    (a home health agency, a nursing home) as an independent one. With ``half`` (0 or 1), only owners whose id hashes
     to it, so the other half can be held out."""
     keep = "" if half is None else f"AND hash(lab) % 2 = {half}"
-    con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_truth AS SELECT * FROM (
-        SELECT 'firm' AS src, pac_id, firm_id AS lab FROM oc_firm
-        UNION ALL SELECT 'system', pac_id, sys FROM oc_sys_group WHERE pac_id NOT IN (SELECT pac_id FROM oc_firm)) WHERE TRUE {keep}""")
+    con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_truth AS
+        SELECT CASE WHEN unit LIKE 'S%' THEN 'system' ELSE 'firm' END AS src, pac_id, unit AS lab FROM oc_unit
+        WHERE unit NOT LIKE 'P%' {keep}""")
     con.execute("""CREATE OR REPLACE TEMP TABLE oc_known AS
         SELECT p.*, (t1.lab = t2.lab)::INT AS same FROM oc_pair p
         JOIN oc_truth t1 ON t1.pac_id = x JOIN oc_truth t2 ON t2.pac_id = y AND t2.src = t1.src""")
@@ -331,7 +420,9 @@ def cluster(con: duckdb.DuckDBPyConnection, gamma: float = GAMMA, history: float
     quarter's communities) when it holds any of the units' organizations, and adds ``history`` to every pair of
     organizations it puts in one community: the history cost of evolutionary clustering (Chakrabarti, Kumar and
     Tomkins 2006), so a pair stays together while p > gamma - history but joins only at p > gamma, and a link
-    wavering about gamma does not move an organization back and forth."""
+    wavering about gamma does not move an organization back and forth. Leiden runs LEIDEN_ITERATIONS passes: on a
+    quarter of 300,000 organizations two passes place 99.8% of them as a run to convergence does, in a tenth of the
+    time, and the next quarter starts from the result."""
     ig, la = _leiden()
     con.execute(f"CREATE OR REPLACE TEMP TABLE oc_w AS {weights_sql()}")
     units_ = con.execute("SELECT unit, count(*) FROM oc_unit GROUP BY 1 ORDER BY 1").fetchall()
@@ -359,9 +450,9 @@ def cluster(con: duckdb.DuckDBPyConnection, gamma: float = GAMMA, history: float
                                  resolution_parameter=gamma)
     opt = la.Optimiser()
     opt.set_rng_seed(SEED)
-    opt.optimise_partition(part, n_iterations=-1)
-    con.execute("CREATE OR REPLACE TEMP TABLE oc_unit_comm (unit VARCHAR, community INTEGER)")
-    con.executemany("INSERT INTO oc_unit_comm VALUES (?, ?)", [(u, part.membership[i]) for i, (u, _) in enumerate(units_)])
+    opt.optimise_partition(part, n_iterations=LEIDEN_ITERATIONS)
+    con.execute("CREATE OR REPLACE TEMP TABLE oc_unit_comm AS SELECT unnest(?::VARCHAR[]) AS unit, unnest(?::INTEGER[]) AS community",
+                [[u for u, _ in units_], list(part.membership)])
     con.execute("""CREATE OR REPLACE TEMP TABLE comp AS
         SELECT u.pac_id AS node, min(u.pac_id) OVER (PARTITION BY c.community) AS comp FROM oc_unit u JOIN oc_unit_comm c USING (unit)""")
 
@@ -431,8 +522,8 @@ class OwnerCommunityBuilder:
 
     NEED = ("organization", "firm_member", "firm", "system", "system_link", "group_size", "hospital_link", "post_acute_link")
 
-    def __init__(self, graph: Path, warehouse: Path, *, threads: int | None = None, memory_limit: str | None = None,
-                 work_dir: Path | None = None):
+    def __init__(self, graph: Path, warehouse: Path, *, tic: Path | None = None, threads: int | None = None,
+                 memory_limit: str | None = None, work_dir: Path | None = None):
         self.graph, self.warehouse = Path(graph), Path(warehouse)
         manifest = self.graph / "manifest.json"
         if not manifest.is_file():
@@ -463,6 +554,15 @@ class OwnerCommunityBuilder:
         provider_keys(self.con)
         log.info("owner communities: %d NPPES organization versions keyed (%.0fs)",
                  self.con.execute("SELECT count(*) FROM oc_provider").fetchone()[0], time.time() - started)
+        # evidence from the other sources the warehouse holds; the IRS needs the EIN roster
+        have = {r[0] for r in self.con.execute("SELECT table_name FROM information_schema.tables").fetchall()}
+        self.evidence_from = tuple(s for s, t in SOURCE_TABLES.items() if t in have and (s != "irs" or tic))
+        self.tic = Path(tic) if tic else None
+        if "irs" in self.evidence_from:
+            log.info("owner communities: %d EINs on the Transparency in Coverage roster", tic_roster(self.con, self.tic))
+        elif tic and "irs_related" not in have:
+            log.warning("owner communities: --tic given but the irs source is not loaded; no IRS evidence")
+        log.info("owner communities: evidence from NPPES%s", "".join(f", {s}" for s in self.evidence_from))
         self.ahrq_years = [r[0] for r in self.con.execute(
             "SELECT DISTINCT year FROM system_link WHERE node_type = 'organization' ORDER BY 1").fetchall()]
         self.firms_from = self.con.execute("SELECT min(effective_date)::VARCHAR FROM firm_member").fetchone()[0]
@@ -478,7 +578,7 @@ class OwnerCommunityBuilder:
     def inputs(self, d: str) -> None:
         """The quarter's inputs and evidence, built once per quarter."""
         if self.inputs_for != d:
-            quarter_inputs(self.con, d, self.ahrq_year(d))
+            quarter_inputs(self.con, d, self.ahrq_year(d), self.evidence_from)
             evidence(self.con)
             self.inputs_for = d
 
@@ -500,6 +600,7 @@ class OwnerCommunityBuilder:
             raise UserError(f"--anchor {anchor} is not a graph quarter (quarters.csv)", exit_code=2)
         started = time.time()
         self.inputs(anchor)
+        units(self.con)
         calibrate(self.con, min_pairs=min_pairs)
         self.con.execute("CREATE OR REPLACE TEMP TABLE oc_calib_fixed AS SELECT * FROM oc_calib")
         log.info("owner communities: calibrated %d cells on %s (%.0fs)",
@@ -532,6 +633,8 @@ class OwnerCommunityBuilder:
                                         coalesce(sum(physicians) FILTER (n_organizations > 1), 0), coalesce(sum(physicians), 0)
                                  FROM owner_community""").fetchone()
             basis = dict(con.execute("SELECT basis, count(*) FROM owner_community_member GROUP BY 1").fetchall())
+            keys = dict(con.execute("SELECT kind, count(DISTINCT pac_id) FROM oc_key GROUP BY 1").fetchall())
+            keys["irs"] = con.execute("SELECT count(DISTINCT x) + count(DISTINCT y) FROM oc_pair_extra").fetchone()[0]
             events = dict(con.execute("SELECT event, sum(n_organizations) FROM owner_community_event GROUP BY 1").fetchall())
             self.stats.append({
                 "as_of_date": d, "ahrq_year": year, "all_owners": bool(self.firms_from and d >= self.firms_from),
@@ -542,6 +645,7 @@ class OwnerCommunityBuilder:
                 # the share of organizations present in both quarters whose community id changed
                 "churn": round(sum(cur[p] != prev[p] for p in both) / len(both), 4) if both else None,
                 **{f"n_{e}": int(events.get(e, 0)) for e in ("absorbed", "split", "move", "entry", "exit")},
+                **{f"keyed_{k}": keys.get(k, 0) for k in ("ao", "mail", "phone", "parent", "chain", "nhc", "irs")},
             })
             prev = cur
             log.info("owner communities %s: %s (%.0fs)", d, self.stats[-1], time.time() - started)
@@ -576,6 +680,7 @@ class OwnerCommunityBuilder:
             "anchor": self.anchor_date, "quarters": len(self.stats), "gamma": GAMMA, "history": HISTORY, "max_key": MAX_KEY,
             "min_cell_pairs": MIN_CELL_PAIRS, "levels": [list(c) for c in LEVELS],
             "max_hole": MAX_HOLE, "holes_filled": self.holes,
+            "evidence_from": ["nppes", *self.evidence_from], "tic": str(self.tic) if self.tic else None,
             "staffing_min_systems": STAFFING_MIN_SYSTEMS, "ahrq_years": self.ahrq_years, "all_owners_from": self.firms_from,
         }
         (out / "manifest.json").write_text(json.dumps(m, indent=2) + "\n")
@@ -586,8 +691,8 @@ class OwnerCommunityBuilder:
 
 
 def build_owner_communities(graph: Path, warehouse: Path, *, anchor: str | None = None, limit: int | None = None,
-                            min_pairs: int = MIN_CELL_PAIRS, **kw) -> dict:
-    b = OwnerCommunityBuilder(graph, warehouse, **kw)
+                            min_pairs: int = MIN_CELL_PAIRS, tic: Path | None = None, **kw) -> dict:
+    b = OwnerCommunityBuilder(graph, warehouse, tic=tic, **kw)
     try:
         b.calibrate(anchor, min_pairs=min_pairs)
         b.build(limit)

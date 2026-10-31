@@ -151,10 +151,11 @@ def cmd_graph_build(a: argparse.Namespace) -> int:
 
 def cmd_owner_communities(a: argparse.Namespace) -> int:
     from .derived.owner_communities import build_owner_communities
-    m = build_owner_communities(Path(a.graph), Path(a.warehouse), anchor=a.anchor, limit=a.limit, threads=a.threads,
-                                memory_limit=a.memory, work_dir=_work(a))
+    m = build_owner_communities(Path(a.graph), Path(a.warehouse), anchor=a.anchor, limit=a.limit, tic=Path(a.tic) if a.tic else None,
+                                threads=a.threads, memory_limit=a.memory, work_dir=_work(a))
     oc = m["owner_communities"]
-    print(f"{a.graph}: owner communities on {oc['quarters']} quarters, calibrated on {oc['anchor']}; "
+    print(f"{a.graph}: owner communities on {oc['quarters']} quarters, calibrated on {oc['anchor']}, evidence from "
+          f"{', '.join(oc['evidence_from'])}; "
           + ", ".join(f"{t} {m['tables'][t]['rows']:,} rows" for t in ("owner_community_member", "owner_community")))
     return 0
 
@@ -339,6 +340,9 @@ def build_parser() -> argparse.ArgumentParser:
     oc.add_argument("--anchor", help="the quarter (as_of_date) to calibrate the NPPES links on (default: the last quarter "
                                      "with All Owners firms in a year with its own AHRQ group practice file)")
     oc.add_argument("--limit", type=int, help="build only the first N quarters (for a quick look)")
+    oc.add_argument("--tic", help="directory of Transparency in Coverage heads (research/tic-spike/tic_heads.py): the EIN-to-NPI "
+                                  "roster that carries IRS Form 990 Schedule R listings to organizations; without it, or without the "
+                                  "irs source loaded, no IRS evidence. The hcris and nhc sources are used whenever they are loaded")
     _resources(oc)
     oc.set_defaults(fn=cmd_owner_communities)
 

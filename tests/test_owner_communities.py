@@ -63,9 +63,10 @@ def test_calibration_counts_known_pairs_by_cell():
     con.execute("INSERT INTO oc_firm VALUES ('A', 'F1'), ('B', 'F1'), ('C', 'F2')")
     con.execute("INSERT INTO oc_sys_group VALUES ('D', 'S1')")
     oc.evidence(con)
+    oc.units(con)
     oc.calibrate(con, min_pairs=1)
-    # firm pairs only: A-B same, A-C and B-C different; D is a system group with no other known pair; one cell at
-    # each of the three levels
+    # firm pairs only: A-B same, A-C and B-C different; D is a system member, never compared with a firm member; one
+    # cell at each of the three levels
     rows = con.execute("SELECT level, kinds, size, coh, name, pairs, round(p, 3) FROM oc_calib ORDER BY level").fetchall()
     assert rows == [(0, "phone", "3-5", "scattered", "rare name", 3, 0.333), (1, "phone", "3-5", None, None, 3, 0.333),
                     (2, "phone", "3-5", None, None, 3, 0.333)]
