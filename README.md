@@ -49,9 +49,9 @@ Each month, CMS publishes a full copy of the NPI registry, and keeps only the la
 
 The `ppef` and `pos` sources are the same history for CMS's quarterly Medicare enrollment and Provider of Services files (see *Output* below, and [METHODOLOGY.md](docs/METHODOLOGY.md) sections 6 and 7).
 
-### AHRQ Compendium and Medicaid spending
+### AHRQ Compendium, Medicaid spending, Medicare utilization, IRS, cost reports, changes of ownership, Nursing Home Compare
 
-The `ahrq` and `medicaid` sources are reference sources: dated files loaded whole, with no versions. `releases/ahrq_sources.csv` and `releases/medicaid_sources.csv` pin each file by url, size and sha256. The export does not include them; `graph-build --compendium` and `--medicaid` read them ([METHODOLOGY.md](docs/METHODOLOGY.md) sections 8a and 8c).
+The `ahrq`, `medicaid`, `medicare_utilization`, `irs`, `hcris`, `chow` and `nhc` sources are reference sources: dated files loaded whole, with no versions. `releases/<name>_sources.csv` pins each file by url, size and sha256. The export does not include them; `graph-build --compendium`, `--medicaid` and `--medicare-utilization` read the first three ([METHODOLOGY.md](docs/METHODOLOGY.md) sections 8a and 8c), and `owner-communities` reads the last four (sections 7d and 8f).
 
 ## Output
 

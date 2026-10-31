@@ -29,14 +29,15 @@ The graph above is one hop: a practitioner reassigns to an organization, an orga
 
 ## Owner communities: `owner_communities.ipynb`
 
-Firms are exact but cover only facilities, and only from 2022; the Compendium names systems' groups but by year. `healthcare-ledger owner-communities` puts every organization, every quarter, in one community with its owner, its facilities' legal entities and its physician groups (METHODOLOGY section 8f). All Owners firms and Compendium systems are hard links. NPPES keys that a family of organizations shares (authorized official, mailing address, phone, subpart parent) are soft links, each priced by a probability of common ownership calibrated on the owners known in December 2022, as in record linkage (Fellegi and Sunter 1969). Leiden then keeps a community where its pairs are more likely than not to share an owner. Each quarter starts from the last, with a history bonus for last quarter's pairs (Chakrabarti, Kumar and Tomkins 2006), and one- or two-quarter gaps in CMS's files are closed. [`owner_communities.ipynb`](owner_communities.ipynb) checks the result:
+Firms are exact but cover only facilities, and only from 2022; the Compendium names systems' groups but by year. `healthcare-ledger owner-communities` puts every organization, every quarter, in one community with its owner, its facilities' legal entities and its physician groups (METHODOLOGY section 8f). All Owners firms and Compendium systems are hard links. Soft evidence is priced: NPPES keys a family of organizations shares (authorized official, mailing address, phone, subpart parent), the chain home office on a facility's Medicare cost report, the owners Nursing Home Compare listed for a nursing home, and the organizations a Form 990's Schedule R relates (carried to the graph by insurers' Transparency in Coverage EIN rosters). A pair's set of shared kinds, the size and cohesion of its strongest key and a shared name word make its cell, whose probability of common ownership is the share of known pairs (members of the same Compendium system, or of the same All Owners firm) under one owner in December 2022, as in record linkage (Fellegi and Sunter 1969). Leiden then keeps a community where its pairs are more likely than not to share an owner, so a joint venture attaches to one parent instead of joining two. Each quarter starts from the last, with a history bonus for last quarter's pairs (Chakrabarti, Kumar and Tomkins 2006), one- or two-quarter gaps in CMS's files are closed, and every flow between communities is published as an event. [`owner_communities.ipynb`](owner_communities.ipynb) checks the result:
 
 | Check | Result |
 |---|---|
-| NPPES evidence alone, held-out half of known owners | All Owners firms: pair precision 0.69, recall 0.52. Compendium system groups: precision 0.82, recall 0.04, which is why the Compendium is a hard link. |
-| Hand audit of 123 labelled pairs sharing a key ([`data/owner_audit_pairs.csv`](data/owner_audit_pairs.csv)) | 85 of 98 same-owner pairs together, 7 of 25 different-owner pairs merged. |
-| Stability, 43 quarters | 0.2 to 0.8% of organizations change community in a quarter with no input change; 1 to 1.7% at a new Compendium year or the start of All Owners. 4,920 of 104,701 moves return to the community they left. |
-| Coverage | Physicians in groups in a community of two or more: 57% in 2016, 69% in 2026. Kaiser Permanente, the largest, keeps one id from 17,300 to 24,700 physicians. |
+| Held out on the anchor quarter, soft evidence only | Compendium systems: pair precision 0.91, recall 0.15 (NPPES keys alone 0.99, 0.04). All Owners firms: 0.74, 0.77 (NPPES alone 0.74, 0.42). Four years back or forward with the same calibration: within a few points. |
+| Hand audits ([`data/owner_audit_pairs.csv`](data/owner_audit_pairs.csv), [`data/owner_audit_pairs_2.csv`](data/owner_audit_pairs_2.csv)) | 82 of 98 same-owner pairs together and 13 of 25 different-owner pairs merged; stratified by kind, type and era, 79 of 133 and 2 of 13. The misses are chains run through separately owned vehicles, which All Owners' control rule splits. |
+| CMS changes of ownership | Buyer and seller apart before the transfer in 49% of hospital and 95% of nursing-home transfers; the facility with the buyer two quarters after in 82% and 71%. |
+| Stability, 43 quarters | 0.4 to 1.3% of organizations change community in a quarter with no input change; 1.3 to 2.3% at a new Compendium year or the start of All Owners. 7,775 of 143,811 moves return to the community they left. |
+| Coverage and the Compendium's headline | Physicians in groups in a community of two or more: 68% in 2016, 74% in 2026 (52% under hard links alone). On the Compendium's groups, physicians in a community holding a Compendium system 55.8% (2016) to 64.3% (2022) against the Compendium's 54.3% to 62.7%. Kaiser Permanente keeps one id from 17,300 to 24,700 physicians. |
 
 ## Why the graph is built this way
 
@@ -91,9 +92,14 @@ uv run healthcare-ledger download --source-name medicare_utilization  # the Medi
 uv run healthcare-ledger load --source-name medicare_utilization
 uv run healthcare-ledger export                                       # firms_over_time.ipynb reads the ownership and Physician Compare tables from the export
 uv run healthcare-ledger graph-build --out graph --compendium --medicaid --ownership --doctors-clinicians --medicare-utilization   # about ten minutes; drop an option without its source
+uv run healthcare-ledger download --source-name irs && uv run healthcare-ledger load --source-name irs        # for owner_communities.ipynb: Form 990 Schedules R and H (1.2 GB)
+uv run healthcare-ledger download --source-name hcris && uv run healthcare-ledger load --source-name hcris    # cost-report home offices (3 GB)
+uv run healthcare-ledger download --source-name chow && uv run healthcare-ledger load --source-name chow      # changes of ownership
+uv run healthcare-ledger download --source-name nhc && uv run healthcare-ledger load --source-name nhc        # Nursing Home Compare owners (1 GB, paced)
+uv run --group research python -I research/tic-spike/tic_heads.py fetch data/tic cigna 15   # and aetna, uhc: the EIN-to-NPI rosters (5.7 GB)
 uv sync --extra communities                                                # igraph and leidenalg, for owner_communities.ipynb
-uv run healthcare-ledger owner-communities --graph graph --warehouse data/warehouse   # about two hours over 43 quarters
-export LEDGER_GRAPH=$PWD/graph                                             # default: the repository's graph/
+uv run healthcare-ledger owner-communities --graph graph --warehouse data/warehouse --tic data/tic/heads   # about half an hour over 43 quarters
+export LEDGER_GRAPH=$PWD/graph LEDGER_WAREHOUSE=$PWD/data/warehouse LEDGER_TIC=$PWD/data/tic/heads
 uv run jupyter lab research/provider-networks/   # provider_networks.ipynb, firms_over_time.ipynb, then owner_communities.ipynb
 ```
 

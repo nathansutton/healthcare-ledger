@@ -23,7 +23,7 @@ VERIFY_ALL ?=
 MONTHLY_FILES ?=
 MONTHLY_FLAG = $(if $(MONTHLY_FILES),--monthly-files)
 
-.PHONY: install test discover probe download check-sources load validate verify export package status monthly sources graph
+.PHONY: install test discover probe download check-sources load validate verify export package status monthly sources graph communities
 
 install:
 	uv sync
@@ -73,6 +73,12 @@ MEDICARE ?=
 graph:
 	uv run healthcare-ledger graph-build --warehouse $(WAREHOUSE) --out $(GRAPH) --work $(WORK) $(RES) $(if $(COMPENDIUM),--compendium) $(if $(MEDICAID),--medicaid) \
 	  $(if $(OWNERSHIP),--ownership) $(if $(DAC),--doctors-clinicians) $(if $(MEDICARE),--medicare-utilization)
+
+# Add owner communities (section 8f) to a graph built with OWNERSHIP=1 COMPENDIUM=1; TIC=data/tic/heads adds the IRS evidence
+# (research/tic-spike/tic_heads.py); the hcris, nhc and irs sources are used whenever they are loaded.
+TIC ?=
+communities:
+	uv run healthcare-ledger owner-communities --warehouse $(WAREHOUSE) --graph $(GRAPH) --work $(WORK) $(RES) $(if $(TIC),--tic $(TIC))
 
 verify:
 	uv run healthcare-ledger verify --warehouse $(WAREHOUSE) $(SRC) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)
