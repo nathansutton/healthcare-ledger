@@ -5,8 +5,9 @@ health agencies, hospices and clinics, from 2022. Physician groups, dialysis cha
 everything before 2022 are outside it. An owner community adds them from three kinds of evidence:
 
 hard links, never cut
-    the All Owners firm of a facility's legal entity, and the AHRQ Compendium's health systems: a firm joins the one
-    system that holds most of its hospitals, and a physician group in the Compendium's group practice file joins its
+    the All Owners firm of a facility's legal entity, and the AHRQ Compendium's health systems: a firm (or a
+    facility's legal entity outside any firm) joins the system that holds the majority of its facilities the
+    Compendium lists, hospitals if it has any, and a physician group in the Compendium's group practice file joins its
     system. AHRQ assigns each group to the system it mostly bills with, which for a staffing company (emergency,
     hospitalist, anesthesia) is the hospital it staffs rather than its owner, so a group whose NPPES family spans
     ``STAFFING_MIN_SYSTEMS`` or more systems keeps its family instead. Two systems are never joined by a hard link,
@@ -141,20 +142,19 @@ def quarter_inputs(con: duckdb.DuckDBPyConnection, d: str, ahrq_year: int | None
     con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_sys_group AS
         SELECT node_id AS pac_id, min(health_sys_id) AS sys FROM system_link
         WHERE year = {y} AND node_type = 'organization' AND health_sys_id IS NOT NULL GROUP BY 1""")
-    # a firm's system, and a facility's legal entity's: the system holding most of its facilities (by CCN; hospitals,
-    # nursing homes and home health agencies in the Compendium's facility files), ties broken by system id
-    con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_ccn_sys AS SELECT node_id AS ccn, min(health_sys_id) AS sys FROM system_link
-        WHERE year = {y} AND node_type IN ('hospital', 'nursing_home', 'home_health') AND health_sys_id IS NOT NULL GROUP BY 1""")
-    con.execute("""CREATE OR REPLACE TEMP TABLE oc_firm_sys AS
-        SELECT firm_id, arg_min(sys, (-n, sys)) AS sys FROM (
-            SELECT f.firm_id, s.sys, count(*) AS n FROM oc_ccn_sys s JOIN oc_firm_ccn f USING (ccn) GROUP BY 1, 2)
-        GROUP BY 1""")
-    con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_fac_sys AS
-        SELECT pac_id, arg_min(sys, (-n, sys)) AS sys FROM (
-            SELECT l.pac_id, s.sys, count(*) AS n FROM oc_ccn_sys s JOIN (
-                SELECT organization_pac_id AS pac_id, ccn FROM hospital_link WHERE {_asof(d)}
-                UNION SELECT organization_pac_id, ccn FROM post_acute_link WHERE {_asof(d)}) l USING (ccn) GROUP BY 1, 2)
-        GROUP BY 1""")
+    # every facility the Compendium's facility files list, with its system or none (most nursing homes and home
+    # health agencies are listed outside any system)
+    con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_ccn_listed AS
+        SELECT node_id AS ccn, min(health_sys_id) AS sys, bool_or(node_type = 'hospital') AS hospital FROM system_link
+        WHERE year = {y} AND node_type IN ('hospital', 'nursing_home', 'home_health') GROUP BY 1""")
+    con.execute("CREATE OR REPLACE TEMP TABLE oc_firm_sys AS " + majority_sys("oc_firm_ccn", "firm_id"))
+    con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_fac_ccn AS
+        SELECT organization_pac_id AS pac_id, ccn FROM hospital_link WHERE {_asof(d)}
+        UNION SELECT organization_pac_id, ccn FROM post_acute_link WHERE {_asof(d)}""")
+    con.execute("CREATE OR REPLACE TEMP TABLE oc_fac_sys AS " + majority_sys("oc_fac_ccn", "pac_id"))
+    con.execute(f"CREATE OR REPLACE TEMP TABLE oc_sys_name AS SELECT health_sys_id AS sys, any_value(health_sys_name) AS name "
+                f"FROM system WHERE year = {y} GROUP BY 1")
+    con.execute(f"CREATE OR REPLACE TEMP TABLE oc_firm_name AS SELECT firm_id, name FROM firm WHERE {_asof(d)}")
     con.execute(f"""CREATE OR REPLACE TEMP TABLE oc_size AS
         WITH g AS (SELECT organization_pac_id AS pac_id, physicians FROM group_size
                    WHERE as_of_date = (SELECT max(as_of_date) FROM group_size WHERE as_of_date <= DATE '{d}')),
@@ -162,6 +162,17 @@ def quarter_inputs(con: duckdb.DuckDBPyConnection, d: str, ahrq_year: int | None
              pa AS (SELECT organization_pac_id AS pac_id, count(DISTINCT ccn) AS n FROM post_acute_link WHERE {_asof(d)} GROUP BY 1)
         SELECT o.pac_id, coalesce(g.physicians, 0) AS physicians, coalesce(h.n, 0) AS n_hospitals, coalesce(pa.n, 0) AS n_post_acute
         FROM oc_org o LEFT JOIN g USING (pac_id) LEFT JOIN h USING (pac_id) LEFT JOIN pa USING (pac_id)""")
+
+
+def majority_sys(src: str, id_col: str) -> str:
+    """A SELECT of (``id_col``, sys) for the ids of ``src`` (``id_col``, ccn) whose facilities a Compendium system
+    holds the majority of, among their facilities ``oc_ccn_listed`` lists: their hospitals when they have any, else
+    their nursing homes and home health agencies. A plurality of the few facilities a system holds would put a chain
+    of nursing homes, two of whose 33 the Compendium places in a hospital system, in that system."""
+    return f"""WITH f AS (SELECT s.{id_col}, l.sys, l.hospital FROM {src} s JOIN oc_ccn_listed l USING (ccn)),
+        k AS (SELECT f.* FROM f JOIN (SELECT {id_col}, bool_or(hospital) AS h FROM f GROUP BY 1) b USING ({id_col}) WHERE f.hospital = b.h),
+        n AS (SELECT {id_col}, sys, count(*) AS n, sum(count(*)) OVER (PARTITION BY {id_col}) AS total FROM k GROUP BY 1, 2)
+        SELECT {id_col}, sys FROM n WHERE sys IS NOT NULL AND 2 * n > total"""
 
 
 # ------------------------------------------------------------------------------------------- evidence
@@ -294,19 +305,34 @@ def cluster(con: duckdb.DuckDBPyConnection, gamma: float = GAMMA, history: float
 
 def label(con: duckdb.DuckDBPyConnection, d: str) -> None:
     """The quarter's ``owner_community_member`` and ``owner_community`` temp tables from ``comp``, with ids carried
-    over from the previous quarter (``firms.label_firms``, prefix O)."""
+    over from the previous quarter (``firms.label_firms``, prefix O). A community is named for its owner: the
+    Compendium system (``oc_sys_name``) holding most of its organizations, else the All Owners firm
+    (``oc_firm_name``) holding most, else its organization with the most facilities, then physicians; ties go to
+    the smallest id."""
     firms.label_firms(con, d, prefix="O")
+    con.execute("CREATE TEMP TABLE IF NOT EXISTS oc_sys_name (sys VARCHAR, name VARCHAR)")
+    con.execute("CREATE TEMP TABLE IF NOT EXISTS oc_firm_name (firm_id VARCHAR, name VARCHAR)")
     con.execute("""CREATE OR REPLACE TEMP TABLE owner_community_member AS
         WITH m AS (SELECT l.node AS pac_id, l.firm_id AS community_id, u.basis, count(*) OVER (PARTITION BY l.firm_id) AS n
                    FROM firm_label l JOIN oc_unit u ON u.pac_id = l.node)
         SELECT pac_id, community_id, coalesce(basis, CASE WHEN n > 1 THEN 'nppes' ELSE 'alone' END) AS basis FROM m""")
     con.execute("""CREATE OR REPLACE TEMP TABLE owner_community AS
-        SELECT m.community_id,
-               arg_max(o.org_name, (s.n_hospitals + s.n_post_acute) * 1e6 + s.physicians) AS name,
-               count(*) AS n_organizations, sum(s.n_hospitals)::BIGINT AS n_hospitals,
-               sum(s.n_post_acute)::BIGINT AS n_post_acute, round(sum(s.physicians), 1) AS physicians
-        FROM owner_community_member m LEFT JOIN oc_org o USING (pac_id) LEFT JOIN oc_size s USING (pac_id)
-        GROUP BY 1""")
+        WITH mu AS (SELECT m.community_id, u.unit, f.firm_id FROM owner_community_member m JOIN oc_unit u USING (pac_id)
+                    LEFT JOIN oc_firm f USING (pac_id)),
+        sn AS (SELECT c.community_id, arg_min(n.name, (-c.k, c.sys)) AS name FROM (
+                   SELECT community_id, substr(unit, 2) AS sys, count(*) AS k FROM mu WHERE unit LIKE 'S%' GROUP BY 1, 2) c
+               JOIN oc_sys_name n USING (sys) GROUP BY 1),
+        fn AS (SELECT c.community_id, arg_min(n.name, (-c.k, c.firm_id)) AS name FROM (
+                   SELECT community_id, firm_id, count(*) AS k FROM mu WHERE firm_id IS NOT NULL GROUP BY 1, 2) c
+               JOIN oc_firm_name n USING (firm_id) GROUP BY 1),
+        c AS (SELECT m.community_id,
+                     arg_min(o.org_name, (-(s.n_hospitals + s.n_post_acute), -s.physicians, m.pac_id)) AS org_name,
+                     count(*) AS n_organizations, sum(s.n_hospitals)::BIGINT AS n_hospitals,
+                     sum(s.n_post_acute)::BIGINT AS n_post_acute, round(sum(s.physicians), 1) AS physicians
+              FROM owner_community_member m LEFT JOIN oc_org o USING (pac_id) LEFT JOIN oc_size s USING (pac_id) GROUP BY 1)
+        SELECT c.community_id, coalesce(sn.name, fn.name, c.org_name) AS name,
+               c.n_organizations, c.n_hospitals, c.n_post_acute, c.physicians
+        FROM c LEFT JOIN sn USING (community_id) LEFT JOIN fn USING (community_id)""")
 
 
 # ------------------------------------------------------------------------------------------- the build
@@ -315,7 +341,7 @@ class OwnerCommunityBuilder:
     """Reads a built graph directory (with firms and Compendium systems) and the warehouse's NPPES ``provider``; adds
     the owner community tables to the graph directory."""
 
-    NEED = ("organization", "firm_member", "system_link", "group_size", "hospital_link", "post_acute_link")
+    NEED = ("organization", "firm_member", "firm", "system", "system_link", "group_size", "hospital_link", "post_acute_link")
 
     def __init__(self, graph: Path, warehouse: Path, *, threads: int | None = None, memory_limit: str | None = None,
                  work_dir: Path | None = None):

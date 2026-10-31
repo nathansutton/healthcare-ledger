@@ -176,6 +176,33 @@ def test_holes_of_up_to_max_hole_quarters_are_closed():
                     ("D", "2020-01-01", "2020-10-01", True), ("D", "2020-10-01", "2021-01-01", False)]
 
 
+def test_a_firm_joins_a_system_only_with_most_of_its_listed_facilities():
+    con = duckdb.connect()
+    # the Compendium lists every facility, most nursing homes outside any system
+    con.execute("""CREATE TEMP TABLE oc_ccn_listed AS SELECT * FROM (VALUES
+        ('H1', 'S1', TRUE), ('H2', 'S1', TRUE), ('H3', 'S2', TRUE), ('N1', 'S1', FALSE), ('N2', NULL, FALSE),
+        ('N3', NULL, FALSE), ('N4', 'S2', FALSE), ('N5', 'S2', FALSE)) v(ccn, sys, hospital)""")
+    con.execute("""CREATE TEMP TABLE src AS SELECT * FROM (VALUES
+        ('SYS', 'H1'), ('SYS', 'H2'), ('SYS', 'H3'), ('SYS', 'N2'), ('SYS', 'N3'),     -- 2 of 3 hospitals: S1
+        ('TIE', 'H1'), ('TIE', 'H3'),                                                   -- 1 of 2: no majority
+        ('CHAIN', 'N1'), ('CHAIN', 'N2'), ('CHAIN', 'N3'),                              -- 1 of 3 homes: none
+        ('PAC', 'N4'), ('PAC', 'N5'), ('PAC', 'N2')) v(firm_id, ccn)""")             # 2 of 3 homes: S2
+    assert dict(con.execute(oc.majority_sys("src", "firm_id")).fetchall()) == {"SYS": "S1", "PAC": "S2"}
+
+
+def test_a_community_is_named_for_its_system_then_its_firm_then_its_largest_organization(family):
+    con = family
+    con.execute("UPDATE oc_size SET n_post_acute = 1 WHERE pac_id IN ('B', 'C')")      # B and C tie; B has the smaller id
+    con.execute("CREATE TEMP TABLE oc_firm_name AS SELECT 'FIRM1' AS firm_id, 'FIRM ONE HOLDINGS' AS name")
+    oc.units(con); oc.cluster(con); oc.label(con, "2020-01-01")
+    names = dict(con.execute("SELECT community_id, name FROM owner_community").fetchall())
+    assert (names["OA"], names["OF"], names["OE"]) == ("ORG B", "FIRM ONE HOLDINGS", "ORG E")
+    con.execute("INSERT INTO oc_firm_sys VALUES ('FIRM1', 'S9')")
+    con.execute("INSERT INTO oc_sys_name VALUES ('S9', 'Nine Health')")
+    oc.units(con); oc.cluster(con); oc.label(con, "2020-04-01")
+    assert dict(con.execute("SELECT community_id, name FROM owner_community").fetchall())["OF"] == "Nine Health"
+
+
 def test_missing_leiden_is_a_user_error(monkeypatch):
     import builtins
     from healthcare_ledger.core.errors import UserError
