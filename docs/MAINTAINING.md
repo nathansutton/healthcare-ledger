@@ -112,6 +112,32 @@ make graph GRAPH=graph COMPENDIUM=1 MEDICAID=1
 
 The load extracts the 12 GB CSV into the work directory, reads it with explicit types and deletes it; a header other than HHS's seven columns stops it. HHS's dataset page is https://opendata.hhs.gov/datasets/medicaid-provider-spending; each release has its own dated directory under the pinned url (the pinned one is `2026-02-09`). A new release means a new row in `releases/medicaid_sources.csv` in place of the old one (url, bytes, sha256), then `make download load SOURCE_NAME=medicaid`. If HHS stops serving the pinned bytes, set its origin to `archive` and empty its url, as `releases/sources.csv` does.
 
+## IRS Form 990, cost reports, changes of ownership, Nursing Home Compare owners
+
+Four reference sources feed the owner communities (`healthcare-ledger owner-communities`, METHODOLOGY sections 7d and 8f). Each is loaded wholesale from the files its `releases/<name>_sources.csv` pins (name, origin, url, bytes, sha256), has its own file in the warehouse, and is used by `owner-communities` whenever it is loaded (the IRS also needs `--tic`, below).
+
+```bash
+make download SOURCE_NAME=irs      # 82 NCCS parquet tables (tax years 2013-2025) and the four BMF regions, 1.2 GB
+make load SOURCE_NAME=irs          # data/warehouse/irs.duckdb (under a minute)
+make download SOURCE_NAME=hcris    # 40 HCRIS zips from downloads.cms.gov, 3 GB
+make load SOURCE_NAME=hcris        # data/warehouse/hcris.duckdb (about two minutes)
+make download SOURCE_NAME=chow     # four CSVs from data.cms.gov
+make load SOURCE_NAME=chow
+make download SOURCE_NAME=nhc      # 33 monthly owner files from the Internet Archive (one per quarter 2014-2022, about 1 GB; paced)
+make load SOURCE_NAME=nhc
+uv run healthcare-ledger owner-communities --graph graph --warehouse data/warehouse --tic data/tic/heads
+```
+
+**IRS** (`irs`). The NCCS tables are at `https://nccs-efile.s3.us-east-1.amazonaws.com/public/efile_v3_1/<TABLE>-<tax year>.parquet` (catalog: https://nccs.urban.org/nccs/catalogs/catalog-efile-v3_1.html); `NCCS` in `sources/irs/load.py` names the six tables read. A new tax year is a row per table in `releases/irs_sources.csv` and the year in `YEARS`. NCCS republishes the tables when it fixes its concordance, so a re-fetch can report mismatches; pin the new bytes when that happens. The BMF (https://www.irs.gov/charities-non-profits/exempt-organizations-business-master-file-extract-eo-bmf, `eo1.csv` to `eo4.csv`) is a current snapshot the IRS replaces monthly; the pinned bytes are the ones the load used. The IRS's own yearly XML zips (https://www.irs.gov/charities-non-profits/form-990-series-downloads) are the raw source behind NCCS and are not needed.
+
+**HCRIS** (`hcris`). The zips are at `https://downloads.cms.gov/FILES/HCRIS/<NAME>.ZIP` (`HOSP10FY<year>`, `SNF10FY<year>`, `HHA20FY<year>`, `HOSPC14-ALL-YEARS`; the cost-reports page is https://www.cms.gov/data-research/statistics-trends-and-reports/cost-reports/cost-reports-fiscal-year). CMS re-issues the open fiscal years as reports are settled, so the most recent years' bytes change; pin the new bytes with the year's row. A new fiscal year is one more row. The worksheet lines read are in `FORMS` in `sources/hcris/load.py`; a form change (CMS replaced the SNF 2540-10 with the 2540-24 for fiscal 2025) needs its own entry there.
+
+**CHOW** (`chow`). The files are quarterly and cumulative; `https://data.cms.gov/data-api/v1/dataset-resources/<uuid>` gives the current CSV's url (the uuids are in the sources file's urls' parent datasets: Hospital CHOW `c04031db-54ce-461c-85d1-d2613d71f167`, SNF CHOW `f557a6ed-95b3-4a22-8433-4175db2dec1c`, and their Owner Information companions). To update, replace the four rows with the new quarter's urls, sizes and hashes.
+
+**Nursing Home Compare** (`nhc`). data.cms.gov/provider-data refuses scripts (Akamai), so the sources file pins Internet Archive captures (`https://web.archive.org/web/<timestamp>id_/<archive zip url>#Ownership_Download.csv`); `download` fetches each capture's zip and keeps the member after `#`. The archive asks for a pause between requests (five seconds in `sources/nhc/fetch.py`). Nothing after April 2022 was captured; the months from then on are in CMS's All Owners files (the `ownership` source).
+
+**Transparency in Coverage heads** (`--tic`). The IRS evidence needs an EIN-to-NPI roster, which insurers' Transparency in Coverage files give: `research/tic-spike/tic_heads.py` reads the `provider_references` head of the current month's UHC, Cigna and Aetna in-network files into `data/tic/heads/<payer>/*.parquet` (`tin`, `tin_type`, `npi`, `business_name`, `payer`). Only the current month is served, so the roster is the one fetched (October 2026 here; `manifest.json` records the directory). An organization that left every network before the fetch has no EIN and no IRS evidence.
+
 ## Facility ownership, Doctors and Clinicians, Medicare utilization
 
 Three more sources feed the graph's firms and weights (`research/provider-networks/firms_over_time.ipynb`).

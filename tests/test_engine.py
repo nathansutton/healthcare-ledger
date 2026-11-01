@@ -356,13 +356,14 @@ def test_each_source_loads_into_its_own_file(source, tmp_path, request):
     each holding only its source's tables, and the catalog sees all of them."""
     import duckdb
 
-    from conftest import catalog, write_ahrq, write_medicaid, write_mup
+    from conftest import catalog, write_ahrq, write_chow, write_hcris, write_irs, write_medicaid, write_mup, write_nhc
     from healthcare_ledger import sources
     write_zip(source, "20200101", "20200112", [main_row("1000000001", entity_type="1", last_name="A")])
     dirs = {"nppes": source, "ppef": request.getfixturevalue("ppef_source"), "pos": request.getfixturevalue("pos_source"),
             "ownership": request.getfixturevalue("ownership_source"), "doctors_clinicians": request.getfixturevalue("dac_source"),
             "ahrq": write_ahrq(tmp_path / "ahrq"), "medicaid": write_medicaid(tmp_path / "medicaid"),
-            "medicare_utilization": write_mup(tmp_path / "mup")}
+            "medicare_utilization": write_mup(tmp_path / "mup"), "irs": write_irs(tmp_path / "irs"),
+            "hcris": write_hcris(tmp_path / "hcris"), "chow": write_chow(tmp_path / "chow"), "nhc": write_nhc(tmp_path / "nhc")}
     warehouse = tmp_path / "warehouse"
     for src in sources.SOURCES:
         if src.versioned:

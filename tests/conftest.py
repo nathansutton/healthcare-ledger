@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import csv
+import importlib
 import io
 import json
 import re
 import zipfile
 from pathlib import Path
+
+import duckdb
 
 import pytest
 
@@ -374,3 +377,133 @@ def write_mup(directory: Path, rows: dict[int, list[str]] | None = None) -> Path
     for year, lines in rows.items():
         (raw / f"MUP_PHY_R25_P04_V20_D{year % 100:02d}_Prov_Svc.csv").write_text("\n".join([MUP_HEADER, *lines]) + "\n")
     return directory
+
+
+# ------------------------------------------------------------------------------------------- ownership sources
+
+def _parquet(path: Path, rows: list[dict]) -> None:
+    """Write ``rows`` (every value text) as a parquet file, every column VARCHAR, as NCCS does."""
+    con = duckdb.connect()
+    cols = list(dict.fromkeys(k for r in rows for k in r))
+    con.execute(f"CREATE TABLE t ({', '.join(f'{c} VARCHAR' for c in cols)})")
+    con.executemany(f"INSERT INTO t VALUES ({', '.join('?' for _ in cols)})", [[r.get(c) for c in cols] for r in rows])
+    con.execute(f"COPY t TO '{path}' (FORMAT parquet)")
+
+
+def write_irs(directory: Path) -> Path:
+    irs = importlib.import_module("healthcare_ledger.sources.irs.load")
+    """Tax year 2022: hospital system S (501c3) files and lists its hospital H and foundation F as related exempt
+    organizations, a taxable corporation C at 100% and a joint venture J at 40%; H and F file and list S back; the
+    retirement fund R (501c3) lists S and the unrelated university U as related, and neither lists R; D is a
+    disregarded entity of U with no EIN. U files a Schedule R (lists D), so R's listing of U is unreciprocated."""
+    raw = Path(directory) / "raw"
+    raw.mkdir(parents=True, exist_ok=True)
+    y = 2022
+    header = [{"OBJECTID": o, "ORG_EIN": e, "RETURN_TYPE": "990", "TAX_PERIOD_BEGIN_DATE": "2022-01-01", "TAX_PERIOD_END_DATE": "2022-12-31",
+               "F9_00_ORG_NAME_L1": n, "F9_00_ORG_NAME_DBA_L1": None, "F9_00_ORG_ADDR_L1": "1 WAY", "F9_00_ORG_ADDR_CITY": "BOSTON",
+               "F9_00_ORG_ADDR_STATE": "MA", "F9_00_ORG_ADDR_ZIP": "021011234", "F9_00_GROUP_EXEMPT_NUM": None, "F9_00_ORG_WEBSITE": None,
+               "F9_00_ORG_PHONE": None, "F9_00_YEAR_FORMATION": "1950", "F9_00_LEGAL_DMCL_STATE": "MA", "F9_00_ORG_EXEMPT_TYPE": t,
+               "F9_00_RETURN_GROUP_X": None, "F9_00_RETURN_FINAL_X": None}
+              for o, e, n, t in [("o1", "111111111", "SYSTEM S", "501c3"), ("o2", "222222222", "HOSPITAL H", "501c3"),
+                                 ("o3", "333333333", "FOUNDATION F", "501c3"), ("o4", "444444444", "RETIREMENT FUND R", "501c3"),
+                                 ("o5", "555555555", "UNIVERSITY U", "501c3")]]
+    _parquet(raw / f"{irs.NCCS['header']}-{y}.parquet", header)
+    def rel(p, o, e, rein, name, **kw):
+        return {"OBJECTID": o, "ORG_EIN": e, f"{p}_EIN": rein, f"{p}_NAME_L1": name, f"{p}_ADDR_L1": None, f"{p}_ADDR_CITY": "BOSTON",
+                f"{p}_ADDR_STATE": "MA", f"{p}_ADDR_ZIP": "02101", f"{p}_DMCL_STATE": "MA", f"{p}_PRIMARY_ACT": "HEALTH",
+                f"{p}_CTRL_NAME_L1": None, **{f"{p}_{k}": v for k, v in kw.items()}}
+    p = "SR_02_RLTD_ORG"
+    _parquet(raw / f"{irs.NCCS['exempt']}-{y}.parquet", [
+        rel(p, "o1", "111111111", "222222222", "HOSPITAL H", EXEMPT_CODE="501(C)(3)", CTRL_512_X="0"),
+        rel(p, "o1", "111111111", "333333333", "FOUNDATION F", EXEMPT_CODE="501c3", CTRL_512_X="false"),
+        rel(p, "o2", "222222222", "111111111", "SYSTEM S", EXEMPT_CODE="501(C)(3)", CTRL_512_X="0"),
+        rel(p, "o3", "333333333", "111111111", "SYSTEM S", EXEMPT_CODE="501(C)(3)", CTRL_512_X="0"),
+        rel(p, "o4", "444444444", "111111111", "SYSTEM S", EXEMPT_CODE="501(C)(3)", CTRL_512_X="0"),
+        rel(p, "o4", "444444444", "555555555", "UNIVERSITY U", EXEMPT_CODE="501(C)(3)", CTRL_512_X="0"),
+        rel(p, "o5", "555555555", "999999999", "ALUMNI VEBA", EXEMPT_CODE="501(C)(9)", CTRL_512_X="0")])
+    p = "SR_01_DISREG_ENTITY"
+    _parquet(raw / f"{irs.NCCS['disregarded']}-{y}.parquet", [rel(p, "o5", "555555555", None, "U PROPERTIES LLC")])
+    p = "SR_03_RLTD_ORG_PTR"
+    _parquet(raw / f"{irs.NCCS['partnership']}-{y}.parquet", [rel(p, "o1", "111111111", "666666666", "JOINT VENTURE J", PCT_OWN="0.40000")])
+    p = "SR_04_RLTD_ORG_CORP"
+    _parquet(raw / f"{irs.NCCS['corporation']}-{y}.parquet", [rel(p, "o1", "111111111", "777777777", "CORPORATION C", PCT_OWN="1.00000", CTRL_512_X="1", TYPE="C CORP")])
+    _parquet(raw / f"{irs.NCCS['hospital']}-{y}.parquet", [{
+        "OBJECTID": "o2", "ORG_EIN": "222222222", "SH_05_HOSPITAL_FACILITY_NUM": "1", "SH_05_HOSPITAL_NAME_L1": "HOSPITAL H",
+        "SH_05_HOSPITAL_ADDR_L1": "2 WAY", "SH_05_HOSPITAL_ADDR_CITY": "BOSTON", "SH_05_HOSPITAL_ADDR_STATE": "MA", "SH_05_HOSPITAL_ADDR_ZIP": "02101",
+        "SH_05_HOSPITAL_STATE_LIC_NUM": "L1", "SH_05_HOSPITAL_WEBSITE": None, "SH_05_HOSPITAL_LIC_X": "X", "SH_05_HOSPITAL_MEDICAL_X": "1",
+        "SH_05_HOSPITAL_CHILDREN_X": None, "SH_05_HOSPITAL_TEACHING_X": "0", "SH_05_HOSPITAL_CRITICAL_ACCESS_X": None, "SH_05_HOSPITAL_ER_24HOURS_X": "true"}])
+    for f in irs.BMF_FILES:
+        with open(raw / f, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(irs.BMF_COLUMNS)
+            if f == "eo1.csv":
+                w.writerow(["111111111", "SYSTEM S", "", "1 WAY", "BOSTON", "MA", "02101", "0000", "03", "3", "1000", "195001", "1", "15", "", "1", "01", "202212", "9", "9", "01", "0", "12", "1", "1", "1", "E21", ""])
+    return Path(directory)
+
+
+def _hcris_zip(path: Path, prefix: str, year: int, rpt: list[list], alpha: list[list]) -> None:
+    with zipfile.ZipFile(path, "w") as z:
+        for kind, rows in (("rpt", rpt), ("alpha", alpha)):
+            buf = io.StringIO()
+            csv.writer(buf, lineterminator="\r\n").writerows(rows)
+            z.writestr(f"{prefix}_{year}_{kind}.csv", buf.getvalue())
+
+
+def write_hcris(directory: Path) -> Path:
+    """Three hospital cost reports (one a chain member of HO1234, one not, one naming a chain without a number) and
+    one nursing home report, fiscal 2022."""
+    raw = Path(directory) / "raw"
+    raw.mkdir(parents=True, exist_ok=True)
+    rpt = lambda n, ccn, b, e: [n, "2", ccn, "", "1", b, e, "06/01/2023", "N", "N", "A", "11001", "4", "05/21/2023", "F", "", "", "01/03/2023"]
+    _hcris_zip(raw / "HOSP10FY2022.zip", "HOSP10", 2022,
+               [rpt("1", "010001", "01/01/2022", "12/31/2022"), rpt("2", "010002", "07/01/2021", "06/30/2022"), rpt("3", "010003", "01/01/2022", "12/31/2022")],
+               [["1", "S200001", "14000", "00100", "Y"], ["1", "S200001", "14000", "00200", "HO1234"], ["1", "S200001", "14100", "00100", "BIG CHAIN INC"],
+                ["1", "S200001", "14200", "00100", "1 HQ WAY"], ["1", "S200001", "14300", "00100", "NASHVILLE"], ["1", "S200001", "14300", "00200", "tn"],
+                ["1", "S200001", "14300", "00300", "372031234"],
+                ["2", "S200001", "14000", "00100", "N"],
+                ["3", "S200001", "14000", "00100", "Y"], ["3", "S200001", "14100", "00100", "NAME: SMALL CHAIN, LLC"],
+                ["1", "A000000", "00100", "00100", "ignored"]])
+    _hcris_zip(raw / "SNF10FY2022.zip", "SNF10", 2022, [rpt("9", "015001", "01/01/2022", "12/31/2022")],
+               [["9", "S200001", "04300", "00100", "Y"], ["9", "S200001", "04400", "00100", "44H070"], ["9", "S200001", "04500", "00100", "NH CHAIN"]])
+    return Path(directory)
+
+
+def write_chow(directory: Path) -> Path:
+    """One hospital and one SNF change of ownership, with two owners of the buyer, in Latin-1."""
+    raw = Path(directory) / "raw"
+    raw.mkdir(parents=True, exist_ok=True)
+    party = ["ENROLLMENT ID", "ENROLLMENT STATE", "PROVIDER TYPE CODE", "PROVIDER TYPE TEXT", "NPI", "MULTIPLE NPI FLAG", "CCN", "ASSOCIATE ID",
+             "ORGANIZATION NAME", "DOING BUSINESS AS NAME"]
+    head = [f"{c} - BUYER" for c in party] + ["CHOW TYPE CODE", "CHOW TYPE TEXT", "EFFECTIVE DATE"] + [f"{c} - SELLER" for c in party]
+    buyer = ["O1", "TN", "00-09", "HOSPITAL", "1", "N", "440001", "B1", "BUYER INC", ""]
+    seller = ["O0", "TN", "00-09", "HOSPITAL", "2", "N", "440001", "S1", "SELLER INC", ""]
+    for t in ("hospital", "snf"):
+        with open(raw / f"{t}_chow.csv", "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(head)
+            w.writerow(buyer + ["CH", "CHANGE OF OWNERSHIP", "03/15/2019"] + seller)
+        owner_head = ["ENROLLMENT ID", "ASSOCIATE ID", "ORGANIZATION NAME", "ASSOCIATE ID - OWNER", "TYPE - OWNER", "ROLE CODE - OWNER",
+                      "ROLE TEXT - OWNER", "ASSOCIATION DATE - OWNER", "LAST NAME - OWNER", "ORGANIZATION NAME - OWNER", "PERCENTAGE OWNERSHIP",
+                      "FOR PROFIT - OWNER"]
+        (raw / f"{t}_chow_owner.csv").write_bytes(
+            (",".join(owner_head) + "\r\nO1,B1,BUYER INC,P9,O,34,5% OR GREATER DIRECT OWNERSHIP INTEREST,01/01/2017,,PARENT CO,60.5,Y\r\n"
+             "O1,B1,BUYER INC,P8,I,43,OPERATIONAL/MANAGERIAL CONTROL,01/01/2017,MU\xd1OZ,,,\r\n").encode("latin-1"))
+    return Path(directory)
+
+
+def write_nhc(directory: Path) -> Path:
+    """Three months of Nursing Home Compare owners, one in each layout."""
+    raw = Path(directory) / "raw"
+    raw.mkdir(parents=True, exist_ok=True)
+    (raw / "ownership_2014_03.csv").write_text(
+        '"PROVNUM","PROVNAME","ADDRESS","CITY","STATE","ZIP","ORG_NAME","FIRST_NAME","LAST_NAME","ROLE_DESC","filedate"\n'
+        '"015009","BURNS NURSING HOME, INC.","701 MONROE","RUSSELLVILLE","AL","35653","","LARRY","DEARMAN","5% OR MORE OWNERSHIP INTEREST","2014-03-01"\n'
+        '"015009","BURNS NURSING HOME, INC.","701 MONROE","RUSSELLVILLE","AL","35653","Burns Holdings LLC","","","5% OR MORE OWNERSHIP INTEREST","2014-03-01"\n')
+    (raw / "ownership_2017_09.csv").write_bytes(
+        ('"PROVNUM","PROVNAME","ADDRESS","CITY","STATE","ZIP","ROLE_DESC","OWNER_TYPE","OWNER_NAME","OWNER_PERCENTAGE","ASSOCIATION_DATE","filedate"\n'
+         '"015009","BURNS NURSING HOME, INC.","701 MONROE","RUSSELLVILLE","AL","35653","5% OR GREATER DIRECT OWNERSHIP INTEREST","Individual","DEARMAN, LARRY","10%","since 09/01/1969","2017-09-01"\n'
+         '"015009","BURNS NURSING HOME, INC.","701 MONROE","RUSSELLVILLE","AL","35653","OPERATIONAL/MANAGERIAL CONTROL","Organization","MU\xd1OZ CARE LLC","NO PERCENTAGE PROVIDED","since 01/02/2015","2017-09-01"\n').encode("cp1252"))
+    (raw / "ownership_2021_12.csv").write_text(
+        '"Federal Provider Number","Provider Name","Provider Address","Provider City","Provider State","Provider Zip Code","Role played by Owner or Manager in Facility","Owner Type","Owner Name","Ownership Percentage","Association Date","Location","Processing Date"\n'
+        '"015009","BURNS NURSING HOME, INC.","701 MONROE","RUSSELLVILLE","AL","35653","5% OR GREATER INDIRECT OWNERSHIP INTEREST","Organization","BURNS HOLDINGS LLC","100%","since 03/01/2020","701 MONROE","2021-12-01"\n')
+    return Path(directory)

@@ -5,6 +5,7 @@ The graph reads only a few columns of five warehouse tables, so the fixture fill
 instead of loading CMS files; the tables themselves have the loaders' schemas, which the published views
 (``core.published``) the graph reads are declared over.
 """
+import csv
 from datetime import date
 from pathlib import Path
 
@@ -552,3 +553,33 @@ def test_doctors_clinicians_lists_claims_filtered_pairs_within_a_window(warehous
     # P2 reassigns to G and H; Doctors and Clinicians lists H only, so H carries P2 while a vintage covers the quarter
     assert w == [(d(Q[0]), "G", 2, False, 0.0), (d(Q[0]), "H", 2, True, 1.0), (d(Q[1]), "H", 1, True, 1.0),
                  (d(Q[2]), "G", 2, None, 0.5), (d(Q[2]), "H", 2, None, 0.5)]
+
+
+def test_owner_communities_on_the_fixture_graph(warehouse, ownership, compendium, tmp_path, capsys):
+    from healthcare_ledger.derived.owner_communities import build_owner_communities
+    out = tmp_path / "g"
+    with pytest.raises(UserError, match="no graph"):
+        build_owner_communities(out, warehouse)
+    build_graph(warehouse, out)
+    with pytest.raises(UserError, match="--ownership --compendium"):
+        build_owner_communities(out, warehouse)
+    build_graph(warehouse, out, ownership=True, compendium=True)
+    m = build_owner_communities(out, warehouse, min_pairs=1)
+    assert m["owner_communities"]["anchor"] == Q[2] and m["owner_communities"]["quarters"] == 3
+    asof = lambda t, q: duckdb.sql(f"SELECT * EXCLUDE (effective_date, end_date) FROM '{out}/{t}.parquet' "   # noqa: E731
+                                   f"WHERE effective_date <= DATE '{q}' AND (end_date IS NULL OR end_date > DATE '{q}')").fetchall()
+    for q in Q:     # every organization of the quarter has exactly one community
+        members = asof("owner_community_member", q)
+        orgs = {r[0] for r in duckdb.sql(f"SELECT pac_id FROM '{out}/organization.parquet' WHERE effective_date <= DATE '{q}' "
+                                         f"AND (end_date IS NULL OR end_date > DATE '{q}')").fetchall()}
+        assert orgs <= {p for p, _, _ in members} and len(members) == len({p for p, _, _ in members})
+    # Q2: SYS's firm holds H, S and T (bought in Q2); one community, tied in by All Owners, its id carried from Q1
+    m1, m2 = ({p: (c, b) for p, c, b in asof("owner_community_member", q)} for q in Q[1:])
+    assert m2["H"] == m2["S"] == m2["T"] and m2["H"][1] == "all_owners" and m2["H"][0] == m1["H"][0]
+    assert m1["T"][0] != m1["H"][0]
+    assert (out / "owner_link_calibration.csv").is_file()
+    stats = list(csv.DictReader(open(out / "owner_communities.csv")))
+    assert [r["as_of_date"] for r in stats] == Q and stats[0]["churn"] == ""
+    assert main(["owner-communities", "--graph", str(out), "--warehouse", str(warehouse), "--anchor", Q[1]]) == 0
+    assert f"calibrated on {Q[1]}" in capsys.readouterr().out
+    assert main(["owner-communities", "--graph", str(out), "--warehouse", str(warehouse), "--anchor", "2019-01-01"]) == 2

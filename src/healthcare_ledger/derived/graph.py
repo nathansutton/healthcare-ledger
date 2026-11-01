@@ -95,6 +95,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+import duckdb
+
 from .. import __version__
 from ..core.connect import configure, open_catalog, source_file
 from . import crosswalk, firms, primitives
@@ -277,6 +279,36 @@ def _hash_expr(cols: tuple[str, ...]) -> str:
     return "md5(CAST(struct_pack(" + ", ".join(f"{c} := {c}" for c in cols) + ") AS VARCHAR))"
 
 
+def advance(con: duckdb.DuckDBPyConnection, t: Table, d: str) -> None:
+    """Close the open rows of interval table ``t`` that quarter ``d``'s temp table ``t.name`` does not repeat and open
+    the rows that are new (tables ``<name>_open`` and ``<name>_closed``)."""
+    cols = ", ".join(t.key + t.attrs)
+    con.execute(f"CREATE OR REPLACE TEMP TABLE cur AS SELECT {cols}, {_hash_expr(t.attrs)} AS _h FROM {t.name}")
+    if not con.execute(f"SELECT count(*) FROM duckdb_tables() WHERE table_name = '{t.name}_open'").fetchone()[0]:
+        con.execute(f"CREATE TABLE {t.name}_open AS SELECT *, DATE '{d}' AS effective_date FROM cur")
+        con.execute(f"CREATE TABLE {t.name}_closed AS SELECT * EXCLUDE (_h), NULL::DATE AS end_date "
+                    f"FROM {t.name}_open LIMIT 0")
+        return
+    same = " AND ".join([f"o.{k} = c.{k}" for k in t.key] + ["o._h = c._h"])
+    con.execute(f"""
+        INSERT INTO {t.name}_closed
+        SELECT o.* EXCLUDE (_h), DATE '{d}' AS end_date FROM {t.name}_open o
+        WHERE NOT EXISTS (SELECT 1 FROM cur c WHERE {same})""")
+    con.execute(f"""
+        CREATE OR REPLACE TABLE {t.name}_open AS
+        SELECT o.* FROM {t.name}_open o WHERE EXISTS (SELECT 1 FROM cur c WHERE {same})
+        UNION ALL BY NAME
+        SELECT c.*, DATE '{d}' AS effective_date FROM cur c
+        WHERE NOT EXISTS (SELECT 1 FROM {t.name}_open o WHERE {same})""")
+
+
+def intervals_sql(t: Table) -> str:
+    """The rows of interval table ``t`` built by ``advance``, closed and open, with effective and end dates."""
+    return f"""SELECT {", ".join(t.key + t.attrs)}, effective_date, end_date FROM (
+                   SELECT * FROM {t.name}_closed
+                   UNION ALL BY NAME SELECT * EXCLUDE (_h), NULL::DATE AS end_date FROM {t.name}_open)"""
+
+
 class GraphBuilder:
     """Builds the interval tables one PPEF quarter at a time, in an in-memory DuckDB with the warehouse's source
     files attached read-only (``core.connect.open_catalog``)."""
@@ -394,13 +426,13 @@ class GraphBuilder:
         stat: dict = {"snapshot_id": snapshot_id, "as_of_date": d}
         for t in TABLES:
             con.execute(f"CREATE OR REPLACE TEMP TABLE {t.name} AS {sql[t.name]}")
-            self._advance(t, d)
+            advance(self.con, t, d)
             stat[f"n_{t.name}"] = con.execute(f"SELECT count(*) FROM {t.name}").fetchone()[0]
         with_firms = self.ownership and d >= self.ownership_from
         if with_firms:
             stat.update(firms.build_quarter(con, d))
             for t in FIRM_TABLES:
-                self._advance(t, d)
+                advance(self.con, t, d)
                 stat[f"n_{t.name}"] = con.execute(f"SELECT count(*) FROM {t.name}").fetchone()[0]
         vintage = self._dac_vintage(d) if self.doctors_clinicians else None
         if vintage:
@@ -417,7 +449,7 @@ class GraphBuilder:
                 WHERE ind_pac_id IS NOT NULL AND ccn IS NOT NULL""")
             stat["dac_vintage"] = vintage
             for t in DAC_TABLES:
-                self._advance(t, d)
+                advance(self.con, t, d)
                 stat[f"n_{t.name}"] = con.execute(f"SELECT count(*) FROM {t.name}").fetchone()[0]
         elif self.doctors_clinicians:
             # outside the window the pairs are not known: close what is open, open nothing
@@ -425,9 +457,9 @@ class GraphBuilder:
                 if con.execute(f"SELECT count(*) FROM duckdb_tables() WHERE table_name = '{t.name}_open'").fetchone()[0]:
                     con.execute(f"CREATE OR REPLACE TEMP TABLE {t.name} AS SELECT {', '.join(t.key + t.attrs)} "
                                 f"FROM {t.name}_open LIMIT 0")
-                    self._advance(t, d)
+                    advance(self.con, t, d)
         con.execute(f"CREATE OR REPLACE TEMP TABLE {CROSSWALK.name} AS {crosswalk.quarter_sql(d, firms=with_firms)}")
-        self._advance(CROSSWALK, d)
+        advance(self.con, CROSSWALK, d)
         stat.update(zip(
             ("n_reassignment_rows", "n_reassignment_dropped", "n_hospital_enrollments"),
             con.execute(f"""
@@ -440,33 +472,6 @@ class GraphBuilder:
             """).fetchone()))
         self.stats.append(stat)
 
-    def _advance(self, t: Table, d: str) -> None:
-        """Close the open rows that this quarter does not repeat and open the rows that are new."""
-        con = self.con
-        cols = ", ".join(t.key + t.attrs)
-        con.execute(f"CREATE OR REPLACE TEMP TABLE cur AS SELECT {cols}, {_hash_expr(t.attrs)} AS _h FROM {t.name}")
-        if not con.execute(f"SELECT count(*) FROM duckdb_tables() WHERE table_name = '{t.name}_open'").fetchone()[0]:
-            con.execute(f"CREATE TABLE {t.name}_open AS SELECT *, DATE '{d}' AS effective_date FROM cur")
-            con.execute(f"CREATE TABLE {t.name}_closed AS SELECT * EXCLUDE (_h), NULL::DATE AS end_date "
-                        f"FROM {t.name}_open LIMIT 0")
-            return
-        same = " AND ".join([f"o.{k} = c.{k}" for k in t.key] + ["o._h = c._h"])
-        con.execute(f"""
-            INSERT INTO {t.name}_closed
-            SELECT o.* EXCLUDE (_h), DATE '{d}' AS end_date FROM {t.name}_open o
-            WHERE NOT EXISTS (SELECT 1 FROM cur c WHERE {same})""")
-        con.execute(f"""
-            CREATE OR REPLACE TABLE {t.name}_open AS
-            SELECT o.* FROM {t.name}_open o WHERE EXISTS (SELECT 1 FROM cur c WHERE {same})
-            UNION ALL BY NAME
-            SELECT c.*, DATE '{d}' AS effective_date FROM cur c
-            WHERE NOT EXISTS (SELECT 1 FROM {t.name}_open o WHERE {same})""")
-
-    def _intervals(self, t: Table) -> str:
-        return f"""SELECT {", ".join(t.key + t.attrs)}, effective_date, end_date FROM (
-                       SELECT * FROM {t.name}_closed
-                       UNION ALL BY NAME SELECT * EXCLUDE (_h), NULL::DATE AS end_date FROM {t.name}_open)"""
-
     def write(self, out: Path, warehouse: Path) -> dict:
         out.mkdir(parents=True, exist_ok=True)
         # a rebuild into the same directory must not leave an earlier build's tables behind: the primitives read
@@ -478,7 +483,7 @@ class GraphBuilder:
         for t in (*TABLES, *(t for t in (*FIRM_TABLES, *DAC_TABLES) if f"{t.name}_open" in built)):
             path = out / f"{t.name}.parquet"
             self.con.execute(f"""
-                COPY ({self._intervals(t)} ORDER BY {", ".join(t.key)}, effective_date)
+                COPY ({intervals_sql(t)} ORDER BY {", ".join(t.key)}, effective_date)
                 TO '{path}' (FORMAT parquet, COMPRESSION zstd)""")
             n = self.con.execute(f"SELECT count(*) FROM '{path}'").fetchone()[0]
             tables[t.name] = {"rows": n, "key": list(t.key), "description": t.description}
@@ -495,7 +500,7 @@ class GraphBuilder:
                 n = self.con.execute(f"SELECT count(*) FROM '{path}'").fetchone()[0]
                 tables[name] = {"rows": n, "key": key, "description": description, "annual": True}
         t = CROSSWALK
-        edges = self._intervals(t) + (f" UNION ALL BY NAME {crosswalk.system_edges_sql()}" if self.compendium else "")
+        edges = intervals_sql(t) + (f" UNION ALL BY NAME {crosswalk.system_edges_sql()}" if self.compendium else "")
         path = out / f"{t.name}.parquet"
         self.con.execute(f"""
             COPY (SELECT {", ".join(crosswalk.COLUMNS)} FROM ({edges}) ORDER BY {", ".join(t.key)}, effective_date)
