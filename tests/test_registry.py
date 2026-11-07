@@ -195,3 +195,39 @@ def test_a_reference_source_is_loaded_validated_and_shown_but_not_released(sourc
     assert not (out / "parquet" / "ref_thing").exists() and not (out / "parquet" / "ref_thing.parquet").exists()
     assert not [p.name for p in (releases / rid).iterdir() if "ref" in p.name]
     assert export_all(db, out, releases=releases)     # continuity holds with it loaded
+
+
+# ------------------------------------------------------------------ plugin sources (entry points)
+class _EP:
+    def __init__(self, name: str, obj: object):
+        self.name, self.value, self._obj = name, f"plugin_pkg:{name}", obj
+
+    def load(self) -> object:
+        return self._obj
+
+
+def _with_entry_points(monkeypatch, eps: list) -> None:
+    monkeypatch.setattr(sources, "entry_points", lambda group: eps if group == sources.ENTRY_POINT_GROUP else [])
+
+
+def test_a_plugin_source_is_added_after_the_built_ins_in_name_order(monkeypatch):
+    b, a = dataclasses.replace(fake_reference([]), name="b_ref"), dataclasses.replace(fake_reference([]), name="a_ref")
+    _with_entry_points(monkeypatch, [_EP("b_ref", b), _EP("a_ref", a)])
+    assert sources._plugins(sources.BUILTIN) == (a, b)
+
+
+def test_a_plugin_source_may_not_take_a_built_in_name(monkeypatch):
+    _with_entry_points(monkeypatch, [_EP("nppes", dataclasses.replace(fake_reference([]), name="nppes"))])
+    with pytest.raises(ValueError, match="'nppes' from plugin_pkg:nppes clashes with the one from healthcare_ledger"):
+        sources._plugins(sources.BUILTIN)
+
+
+def test_a_plugin_entry_point_must_be_a_source(monkeypatch):
+    _with_entry_points(monkeypatch, [_EP("junk", object())])
+    with pytest.raises(TypeError, match="is not a healthcare_ledger Source"):
+        sources._plugins(sources.BUILTIN)
+
+
+def test_without_plugins_the_registry_is_the_versioned_built_ins():
+    assert all(s.versioned for s in sources.BUILTIN)
+    assert [s.name for s in sources.BUILTIN] == ["nppes", "ppef", "pos", "ownership", "doctors_clinicians"]

@@ -1,10 +1,15 @@
 # Maintaining
 
-Run all commands from the checkout. You need approximately 32 GB RAM and 150 GB of free disk space. To limit DuckDB, set `THREADS=` and `MEMORY=`.
+Run all commands from the checkout. The computer must have approximately 32 GB of RAM and 150 GB of free disk space. To limit DuckDB, set `THREADS=` and `MEMORY=`.
 
 ## First run
 
-The warehouse is the directory `data/warehouse/`, one DuckDB file per source: `nppes.duckdb`, and `ppef.duckdb` and `pos.duckdb` once those are loaded. Each `load` writes only its source's file; every other command attaches the files that are present and reads them as one catalog (NPPES is required, the others are optional). Copy the files of an existing warehouse into `data/warehouse/`, then run `make validate`. Or build a new warehouse from the zips:
+The warehouse is the directory `data/warehouse/`. It has one DuckDB file for each source: `nppes.duckdb`, and also `ppef.duckdb`, `pos.duckdb`, `ownership.duckdb` and `doctors_clinicians.duckdb` after you load those sources. Each `load` writes only the file of its source. All other commands attach the files that are present and read them as one catalog. NPPES is required. The other sources are optional.
+
+You can get a warehouse in two ways:
+
+- To use an existing warehouse, copy its files into `data/warehouse/`. Then run `make validate`.
+- To build a new warehouse from the zips, run these commands:
 
 ```bash
 make install
@@ -15,39 +20,59 @@ make validate
 make export          # must show "continuity with release ...: ok"
 ```
 
-`releases/sources.csv` gives the sha256 and URL for each zip. CMS serves the zips from January 2021; in October 2026 it removed the older ones. Of the 127 older zips, 105 come from the [NBER NPI/NPPES cumulative collection](https://data.nber.org/npi/) (the per-year directories, `backfiles/` and `nppes/zip-orig/`) and 16 from Wayback Machine captures of CMS's hosts. Six zips (October and November 2019, April, August, September and November 2020) have no public source; `make download` reports them as missing, and `MIRROR=<url>` fetches them from a private copy. Before each release, check that the recorded URLs still answer, because CMS may remove more.
+`releases/sources.csv` gives the sha256 and the URL of each zip. These are the origins of the zips:
 
-If CMS sends "Access Denied", wait one hour and run `make download` again.
+- CMS serves the zips from January 2021 and later. In October 2026, CMS removed the older zips.
+- Of the 127 older zips, 105 come from the [NBER NPI/NPPES cumulative collection](https://data.nber.org/npi/). They are in the per-year directories, `backfiles/` and `nppes/zip-orig/`.
+- 16 older zips come from Wayback Machine captures of the CMS hosts.
+- Six zips have no public source: October and November 2019, and April, August, September and November 2020. `make download` reports them as missing. `MIRROR=<url>` gets them from a private copy.
+
+CAUTION: CMS can remove more zips. Before each release, make sure that the recorded URLs still answer.
+
+If CMS sends "Access Denied", wait one hour. Then run `make download` again.
 
 ## Monthly run
 
-CMS publishes a new file in the second week of each month.
+CMS publishes a new file in the second week of each month. Run these commands:
 
 ```bash
 git pull
 make monthly
 ```
 
-This downloads, loads, validates, verifies and exports. If a check fails, the warehouse goes back to the last release and nothing is exported. Read `data/work/monthly.log`, repair the cause, and run it again.
+`make monthly` downloads, loads, validates, verifies and exports. If a check fails, the warehouse goes back to the last release, and `make monthly` exports nothing. In that case, do these steps:
 
-After a successful run:
+1. Read `data/work/monthly.log`.
+2. Repair the cause.
+3. Run `make monthly` again.
 
-1. Copy `export/` to the host, into a directory with the release id as its name.
-2. Commit `releases/<id>/` and `releases/sources.csv`. Merge them before the next monthly run.
+After a successful run, do these steps:
+
+1. Copy `export/` to the host. Put it in a directory that has the release id as its name.
+2. Commit `releases/<id>/` and `releases/sources.csv`.
+3. Merge them before the next monthly run.
 
 ## Medicare PPEF quarters
 
-The `medicare_*` tables come from CMS's quarterly Medicare Fee-For-Service Public Provider Enrollment extracts. They are optional: a release has them only if the warehouse does. Keep the files in one directory per quarter, named as CMS labels the quarter, with that quarter's `PPEF_*.csv` files inside (`data/ppef/2026-Q1/PPEF_Enrollment_Extract_2026.04.01.csv`, and the practice location, reassignment, secondary specialty and additional NPI sub-files beside it). The loader dates the quarter by the extract date in the file names, not by the directory name.
+The `medicare_*` tables come from the CMS quarterly Medicare Fee-For-Service Public Provider Enrollment extracts. These tables are optional. A release has them only if the warehouse has them.
 
-To rebuild the directories of an existing release from a fresh clone, run `uv run healthcare-ledger download --source-name ppef` (or `make download SOURCE_NAME=ppef`). It fetches every file `releases/ppef_sources.csv` records into `data/ppef/<quarter>/`, extracts the members of CMS's historical zips, and checks each sha256; `--check` only verifies what is there. In October 2026 every recorded URL still served the recorded bytes.
+Keep the files in one quarter directory for each quarter. Give each quarter directory the name that CMS uses for the quarter. Put the `PPEF_*.csv` files of that quarter in it, for example `data/ppef/2026-Q1/PPEF_Enrollment_Extract_2026.04.01.csv`. The sub-files for practice location, reassignment, secondary specialty and additional NPI go next to it. The loader gets the date of the quarter from the extract date in the file names, not from the directory name.
+
+To rebuild the quarter directories of an existing release from a new clone, run `uv run healthcare-ledger download --source-name ppef`. You can also run `make download SOURCE_NAME=ppef`. The command does these things:
+
+- It downloads each file that `releases/ppef_sources.csv` records into `data/ppef/<quarter>/`.
+- It extracts the members of the CMS historical zips.
+- It checks the sha256 of each file.
+
+With `--check`, the command only verifies the files that are present. In October 2026, all recorded URLs still served the recorded bytes.
 
 Where the files are:
 
-- **Current and recent quarters**: data.cms.gov. The catalog `https://data.cms.gov/data.json` lists the current enrollment extract; every quarter's dataset id (also past ones) answers at `https://data.cms.gov/data-api/v1/dataset-resources/<id>` with the download URL of the enrollment file, the four sub-files and the data dictionary. Past ids are in Wayback captures of `data.json`.
-- **2016 to 2022**: CMS's historical zips, listed by the same API under "Historical Medicare FFS Public Provider Enrollment Data" (`PECOS_Public_Provider_Main_Historical_Files_CY2016-CY2018_2025.08.08.zip` and the two later ones). Unzip each year's files into the quarter directories.
-- **NBER** keeps copies at `https://data.nber.org/ppef/` (2016 to April 2019 by month, and `2023_2024Q2.zip`).
+- **Current and recent quarters**: data.cms.gov. The catalog `https://data.cms.gov/data.json` lists the current enrollment extract. Each quarter has a dataset id, and past quarters also have one. For each dataset id, `https://data.cms.gov/data-api/v1/dataset-resources/<id>` answers with the download URLs. These are the URLs of the enrollment file, the four sub-files and the data dictionary. Wayback captures of `data.json` contain the past ids.
+- **2016 to 2022**: the CMS historical zips. The same API lists them under "Historical Medicare FFS Public Provider Enrollment Data" (`PECOS_Public_Provider_Main_Historical_Files_CY2016-CY2018_2025.08.08.zip` and the two later zips). Unzip the files of each year into the quarter directories.
+- **NBER** keeps copies at `https://data.nber.org/ppef/`: 2016 to April 2019 by month, and `2023_2024Q2.zip`.
 
-Then:
+Then run these commands:
 
 ```bash
 make load SOURCE_NAME=ppef            # loads every quarter not yet in the warehouse, in extract-date order
@@ -55,24 +80,51 @@ make validate
 make sources SOURCE_NAME=ppef         # writes releases/ppef_sources.csv (size and sha256 of every loaded file)
 ```
 
-Fill in the `origin` and `url` columns of `releases/ppef_sources.csv` for the new rows (`cms` and the data.cms.gov URL, or the historical zip URL with the member path in `member`; `nber` for NBER copies), commit it, and run `make export`. `export` refuses a quarter whose files are not recorded.
+Then do these steps:
 
-A quarter loads once. There is no rollback for PPEF quarters: to replace a quarter's files (for example when CMS republishes an extract), run `uv run healthcare-ledger reset --source-name ppef --yes`, which drops the Medicare tables in `data/warehouse/ppef.duckdb` and touches no other file, then `make load SOURCE_NAME=ppef` again (about five minutes for forty quarters).
+1. Fill in the `origin` and `url` columns of `releases/ppef_sources.csv` for the new rows:
+   - For a CMS file, write `cms` and the data.cms.gov URL.
+   - For a file from a historical zip, write the URL of the zip. Write the member path in `member`.
+   - For an NBER copy, write `nber`.
+2. Commit `releases/ppef_sources.csv`.
+3. Run `make export`. `export` refuses a quarter whose files are not recorded.
 
-Prefer the files CMS served at the time over its August 2025 "historical" zips, whose 2016 to 2022 files are truncated (METHODOLOGY section 6). NBER has the originals for August 2016 to April 2019 under `https://data.nber.org/ppef/<year>/<month>/` as `Base_Provider_Enrollment_File.csv`, `Address_Sub-_File.csv`, `Reassignment_Sub-_File.csv` and `Secondary_Specialty.csv`; rename them to the `PPEF_*_Extract_<date>.csv` pattern of their quarter and put them in the quarter directory in place of the zip's copies. The directory month is NBER's download month, not the extract date: match a download to its quarter by the enrollment row count. NBER's `2017/10` repeats the July 2017 file, so the October 2017 and May 2018 quarters have no original and stay on the zip's copies. `releases/ppef_sources.csv` records which copy each loaded quarter came from.
+A quarter loads one time only. PPEF quarters have no rollback. For example, CMS can republish an extract. To replace the files of a quarter, do these steps:
+
+1. Run `uv run healthcare-ledger reset --source-name ppef --yes`. This command drops the Medicare tables in `data/warehouse/ppef.duckdb`. It does not change other files.
+2. Run `make load SOURCE_NAME=ppef` again. This takes about five minutes for forty quarters.
+
+Use the files that CMS served at the time, not the CMS "historical" zips of August 2025. The 2016 to 2022 files in those zips are truncated (METHODOLOGY section 6). NBER has the original files for August 2016 to April 2019 under `https://data.nber.org/ppef/<year>/<month>/`. Their names are `Base_Provider_Enrollment_File.csv`, `Address_Sub-_File.csv`, `Reassignment_Sub-_File.csv` and `Secondary_Specialty.csv`.
+
+The month of an NBER directory is the month of the NBER download, not the extract date. To use the NBER original files, do these steps:
+
+1. Find the quarter of each download. Compare the enrollment row count.
+2. Rename the files to the `PPEF_*_Extract_<date>.csv` pattern of their quarter.
+3. Put them in the quarter directory in place of the copies from the zip.
+
+NBER's `2017/10` repeats the July 2017 file. Thus the October 2017 and May 2018 quarters have no original file, and they keep the copies from the zip. `releases/ppef_sources.csv` records the copy that each loaded quarter comes from.
 
 ## Provider of Services quarters
 
-The `pos_*` tables come from CMS's quarterly Provider of Services files (METHODOLOGY section 7). They are optional: a release has them only if the warehouse does. Keep the files in one directory per quarter, named `YYYY-QN`, with that quarter's file or files inside under the names CMS serves them (`data/pos/2019-Q1/POS_OTHER_MAR19.csv`; from `2023-Q4` also the iQIES file beside it, `data/pos/2023-Q4/Provider_of_Services_File_HHA_ASC_Hospices_iQiES_2023_Q4.csv`). The loader tells the two files apart by their header, not by their names, and dates the quarter by the directory name.
+The `pos_*` tables come from the CMS quarterly Provider of Services files (METHODOLOGY section 7). These tables are optional. A release has them only if the warehouse has them.
 
-To rebuild the directories of an existing release from a fresh clone, run `uv run healthcare-ledger download --source-name pos` (or `make download SOURCE_NAME=pos`). It fetches every file `releases/pos_sources.csv` records into `data/pos/<quarter>/` and checks each sha256; `--check` only verifies what is there. In October 2026 data.cms.gov served every recorded file.
+Keep the files in one quarter directory for each quarter. Give each quarter directory the name `YYYY-QN`. Put the file or files of that quarter in it, with the names that CMS uses (`data/pos/2019-Q1/POS_OTHER_MAR19.csv`). From `2023-Q4`, the iQIES file is also in the quarter directory (`data/pos/2023-Q4/Provider_of_Services_File_HHA_ASC_Hospices_iQiES_2023_Q4.csv`). The loader identifies the two files by their header, not by their names. The loader gets the date of the quarter from the directory name.
+
+To rebuild the quarter directories of an existing release from a new clone, run `uv run healthcare-ledger download --source-name pos`. You can also run `make download SOURCE_NAME=pos`. The command downloads each file that `releases/pos_sources.csv` records into `data/pos/<quarter>/`. It checks the sha256 of each file. With `--check`, the command only verifies the files that are present. In October 2026, data.cms.gov served all recorded files.
 
 Where the files are:
 
-- **data.cms.gov** lists every quarter of both files, past ones included: the datasets titled `Provider of Services File - Quality Improvement and Evaluation System : <date>` (the QIES file; titled `Hospital & Non-Hospital Facilities` before 2025) and `Provider of Services File - Internet Quality Improvement and Evaluation System : <date>` (the iQIES file) in `https://data.cms.gov/data.json`. The date in the title drifts (`2024-04-01` is the second quarter of 2024); the dataset's `temporal` field gives the quarter. Each dataset's id answers at `https://data.cms.gov/data-api/v1/dataset-resources/<id>` with the CSV's download URL, the data dictionary and the methodology note.
-- **NBER** keeps copies of the QIES file under `https://data.nber.org/pos/`: the originals of 2010-Q4 to 2022-Q3 in `2022/orig/` (`pos_other_Q<n><year>.csv`) and `web_update/orig/cms_csv/`, the year-end files in the per-year directories, and processed Stata and SAS versions back to 1984 in other layouts.
+- **data.cms.gov** lists all quarters of the two files, past quarters included. In `https://data.cms.gov/data.json`, the datasets have these titles:
+  - The QIES file: `Provider of Services File - Quality Improvement and Evaluation System : <date>`. Before 2025, the title was `Hospital & Non-Hospital Facilities`.
+  - The iQIES file: `Provider of Services File - Internet Quality Improvement and Evaluation System : <date>`.
 
-Then:
+  The date in the title is not a dependable quarter label (`2024-04-01` is the second quarter of 2024). The `temporal` field of the dataset gives the quarter. For each dataset id, `https://data.cms.gov/data-api/v1/dataset-resources/<id>` answers with the download URL of the CSV, the data dictionary and the methodology note.
+- **NBER** keeps copies of the QIES file under `https://data.nber.org/pos/`:
+  - The original files of 2010-Q4 to 2022-Q3 are in `2022/orig/` (`pos_other_Q<n><year>.csv`) and `web_update/orig/cms_csv/`.
+  - The year-end files are in the per-year directories.
+  - Processed Stata and SAS versions back to 1984 are in other layouts.
+
+Then run these commands:
 
 ```bash
 make load SOURCE_NAME=pos             # loads every quarter not yet in the warehouse, in quarter order
@@ -80,108 +132,136 @@ make validate
 make sources SOURCE_NAME=pos          # writes releases/pos_sources.csv (size and sha256 of every loaded file)
 ```
 
-Fill in the `origin` (`cms`) and `url` columns of `releases/pos_sources.csv` for the new rows, commit it, and run `make export`. `export` refuses a quarter whose files are not recorded.
+Then do these steps:
 
-A quarter loads once. There is no rollback for POS quarters: to replace a quarter's files, run `uv run healthcare-ledger reset --source-name pos --yes`, which drops the `pos_*` tables in `data/warehouse/pos.duckdb` and touches no other file, then `make load SOURCE_NAME=pos` again (about a quarter of an hour for fifteen years). A new CMS column stops the load with `unmapped columns`; add it to `src/healthcare_ledger/sources/pos/pos_columns.csv` with `hash_optional` set to `yes` (it is not in every file) and load again. A quarter in which a whole provider type leaves one file is normal (METHODOLOGY section 7); a quarter that would mark more than 5% of a type's CCNs absent while the type is still in the file is refused, like a truncated NPPES file. The 2020-Q1 file is such a file (9,566 facilities missing, back the next quarter); keep it out of the source directory (a directory name that is not `YYYY-QN`, such as `2020-Q1.incomplete`, is ignored).
+1. Fill in the `origin` (`cms`) and `url` columns of `releases/pos_sources.csv` for the new rows.
+2. Commit `releases/pos_sources.csv`.
+3. Run `make export`. `export` refuses a quarter whose files are not recorded.
 
-## Provider graph
+A quarter loads one time only. POS quarters have no rollback. To replace the files of a quarter, do these steps:
 
-```bash
-make graph GRAPH=graph    # or: uv run healthcare-ledger graph-build --warehouse data/warehouse --out graph
-```
+1. Run `uv run healthcare-ledger reset --source-name pos --yes`. This command drops the `pos_*` tables in `data/warehouse/pos.duckdb`. It does not change other files.
+2. Run `make load SOURCE_NAME=pos` again. This takes about 15 minutes for fifteen years.
 
-The graph is derived from the NPPES, PPEF and POS tables (METHODOLOGY section 8) and is rebuilt from scratch each time, in about two minutes; run it after loading new PPEF or POS quarters. It needs all three sources in the warehouse and stops with a message naming the missing table otherwise; without the iQIES POS table (`pos_facility_iqies`) it still builds, but home health agencies drop out of `facility` after December 2023 and nursing homes after September 2025, when CMS moved them there. The research notebook in `research/provider-networks/` reads it from `$LEDGER_GRAPH`. It is not part of the export.
+If CMS adds a new column, the load stops with `unmapped columns`. Then do these steps:
 
-The notebook's section 6 also needs the AHRQ Compendium of U.S. Health Systems (METHODOLOGY section 8a), a reference source: its editions are loaded wholesale into `data/warehouse/ahrq.duckdb`, one `ahrq_*` table per file type, with no versions, fingerprints or export tables. `releases/ahrq_sources.csv` pins each file the load reads (name, origin `ahrq` or `wayback`, url, bytes, sha256; the 2016 and 2018 files as the zips AHRQ ships them in).
+1. Add the column to `src/healthcare_ledger/sources/pos/pos_columns.csv`.
+2. Set `hash_optional` to `yes`, because the column is not in all files.
+3. Load again.
 
-```bash
-make download SOURCE_NAME=ahrq     # the pinned files into data/ahrq/raw (about 150 MB), sha256-checked
-make load SOURCE_NAME=ahrq         # rebuild data/warehouse/ahrq.duckdb (under a minute)
-make graph GRAPH=graph COMPENDIUM=1
-```
+In some quarters, a whole provider type leaves one of the two files. This is normal (METHODOLOGY section 7). But some quarters mark more than 5% of the CCNs of a type as absent while the type is still in the file. The load refuses these quarters. It refuses a truncated NPPES file in the same way. The 2020-Q1 file is such a file: 9,566 facilities are missing, and they come back in the next quarter.
 
-ahrq.gov answers scripts with an empty 202 at times; `download` then tries the Internet Archive's latest capture of the same url, and a file still missing can be fetched by running it again later (the 2023 nursing home and home health files have no capture). AHRQ publishes a new edition about once a year, usually two years after the year it describes (https://www.ahrq.gov/chsp/data-resources/compendium.html). Adding one means a row per new file in `releases/ahrq_sources.csv` and its year in `FILES` in `src/healthcare_ledger/sources/ahrq/load.py`, which takes the latest revision of each year; then `make download load SOURCE_NAME=ahrq`.
+Keep the 2020-Q1 file out of the source directory. The loader ignores a directory whose name is not `YYYY-QN`, for example `2020-Q1.incomplete`.
 
-The notebook's section 4b needs HHS's Medicaid Provider Spending extract, a second reference source, from which `graph-build --medicaid` writes `medicaid_volume` and `main_group` (METHODOLOGY section 8c): the one zip `releases/medicaid_sources.csv` pins (name, origin `hhs`, url, bytes, sha256) is loaded wholesale into `data/warehouse/medicaid.duckdb`, one table `medicaid_spending` (billing NPI, servicing NPI, HCPCS code, month, patients, claim lines, Medicaid paid; 238 million rows).
+## Facility ownership, Doctors and Clinicians
 
-```bash
-make download SOURCE_NAME=medicaid   # the pinned zip into data/medicaid/raw (3.8 GB), sha256-checked
-make load SOURCE_NAME=medicaid       # rebuild data/warehouse/medicaid.duckdb (about a minute, 12 GB free in data/work)
-make graph GRAPH=graph COMPENDIUM=1 MEDICAID=1
-```
+**Ownership** (`ownership`, versioned; METHODOLOGY section 7a). These are the CMS Enrollments and All Owners files for hospitals, SNFs, home health agencies, hospices, FQHCs and RHCs. Keep them in one directory for each CMS release date, `data/ownership/YYYY-MM-DD/`, with the CMS file names. `releases/ownership_sources.csv` records each loaded file with its data.cms.gov URL. Thus `make download SOURCE_NAME=ownership` can rebuild the directories.
 
-The load extracts the 12 GB CSV into the work directory, reads it with explicit types and deletes it; a header other than HHS's seven columns stops it. HHS's dataset page is https://opendata.hhs.gov/datasets/medicaid-provider-spending; each release has its own dated directory under the pinned url (the pinned one is `2026-02-09`). A new release means a new row in `releases/medicaid_sources.csv` in place of the old one (url, bytes, sha256), then `make download load SOURCE_NAME=medicaid`. If HHS stops serving the pinned bytes, set its origin to `archive` and empty its url, as `releases/sources.csv` does.
+New CMS releases are in `https://data.cms.gov/data.json`. Their dataset titles are `Hospital All Owners : <date>`, `Skilled Nursing Facility Enrollments : <date>` and similar titles. To add a CMS release, do these steps:
 
-## IRS Form 990, cost reports, changes of ownership, Nursing Home Compare owners
+1. Put its files in a directory with the extract date of the file names as its name. If the names have no date, use the date of the dataset.
+2. Run `make load SOURCE_NAME=ownership`.
+3. Run `make sources SOURCE_NAME=ownership`.
+4. Fill in the URLs.
 
-Four reference sources feed the owner communities (`healthcare-ledger owner-communities`, METHODOLOGY sections 7d and 8f). Each is loaded wholesale from the files its `releases/<name>_sources.csv` pins (name, origin, url, bytes, sha256), has its own file in the warehouse, and is used by `owner-communities` whenever it is loaded (the IRS also needs `--tic`, below).
+If CMS republishes a CMS release (`..._update.csv`), keep only the update.
 
-```bash
-make download SOURCE_NAME=irs      # 82 NCCS parquet tables (tax years 2013-2025) and the four BMF regions, 1.2 GB
-make load SOURCE_NAME=irs          # data/warehouse/irs.duckdb (under a minute)
-make download SOURCE_NAME=hcris    # 40 HCRIS zips from downloads.cms.gov, 3 GB
-make load SOURCE_NAME=hcris        # data/warehouse/hcris.duckdb (about two minutes)
-make download SOURCE_NAME=chow     # four CSVs from data.cms.gov
-make load SOURCE_NAME=chow
-make download SOURCE_NAME=nhc      # 33 monthly owner files from the Internet Archive (one per quarter 2014-2022, about 1 GB; paced)
-make load SOURCE_NAME=nhc
-uv run healthcare-ledger owner-communities --graph graph --warehouse data/warehouse --tic data/tic/heads
-```
+The load refuses a CMS release that drops more than 5% of the enrollments of a type. The July 2026 hospice file is such a CMS release. A check found that its drops were real (METHODOLOGY 7a). Thus `COVERAGE_BREAKS` in `sources/ownership/ownership.py` gives it its own limit. A new CMS release of this type needs the same check.
 
-**IRS** (`irs`). The NCCS tables are at `https://nccs-efile.s3.us-east-1.amazonaws.com/public/efile_v3_1/<TABLE>-<tax year>.parquet` (catalog: https://nccs.urban.org/nccs/catalogs/catalog-efile-v3_1.html); `NCCS` in `sources/irs/load.py` names the six tables read. A new tax year is a row per table in `releases/irs_sources.csv` and the year in `YEARS`. NCCS republishes the tables when it fixes its concordance, so a re-fetch can report mismatches; pin the new bytes when that happens. The BMF (https://www.irs.gov/charities-non-profits/exempt-organizations-business-master-file-extract-eo-bmf, `eo1.csv` to `eo4.csv`) is a current snapshot the IRS replaces monthly; the pinned bytes are the ones the load used. The IRS's own yearly XML zips (https://www.irs.gov/charities-non-profits/form-990-series-downloads) are the raw source behind NCCS and are not needed.
+`reset --source-name ownership --yes` drops only the tables of `ownership.duckdb`. A full reload takes about two minutes.
 
-**HCRIS** (`hcris`). The zips are at `https://downloads.cms.gov/FILES/HCRIS/<NAME>.ZIP` (`HOSP10FY<year>`, `SNF10FY<year>`, `HHA20FY<year>`, `HOSPC14-ALL-YEARS`; the cost-reports page is https://www.cms.gov/data-research/statistics-trends-and-reports/cost-reports/cost-reports-fiscal-year). CMS re-issues the open fiscal years as reports are settled, so the most recent years' bytes change; pin the new bytes with the year's row. A new fiscal year is one more row. The worksheet lines read are in `FORMS` in `sources/hcris/load.py`; a form change (CMS replaced the SNF 2540-10 with the 2540-24 for fiscal 2025) needs its own entry there.
+**Doctors and Clinicians** (`doctors_clinicians`, versioned; section 7b). These are the archived quarterly files from 2014 to 2022, from the Internet Archive. The provider-data site of data.cms.gov refuses scripts.
 
-**CHOW** (`chow`). The files are quarterly and cumulative; `https://data.cms.gov/data-api/v1/dataset-resources/<uuid>` gives the current CSV's url (the uuids are in the sources file's urls' parent datasets: Hospital CHOW `c04031db-54ce-461c-85d1-d2613d71f167`, SNF CHOW `f557a6ed-95b3-4a22-8433-4175db2dec1c`, and their Owner Information companions). To update, replace the four rows with the new quarter's urls, sizes and hashes.
+CAUTION: Do not try to go around the refusal of the data.cms.gov provider-data site.
 
-**Nursing Home Compare** (`nhc`). data.cms.gov/provider-data refuses scripts (Akamai), so the sources file pins Internet Archive captures (`https://web.archive.org/web/<timestamp>id_/<archive zip url>#Ownership_Download.csv`); `download` fetches each capture's zip and keeps the member after `#`. The archive asks for a pause between requests (five seconds in `sources/nhc/fetch.py`). Nothing after April 2022 was captured; the months from then on are in CMS's All Owners files (the `ownership` source).
+- `make download SOURCE_NAME=doctors_clinicians` downloads the zips that `releases/doctors_clinicians_sources.csv` records into `data/dac/raw/<year>/`. It checks the CSV in each zip.
+- `make load SOURCE_NAME=doctors_clinicians` loads the zips in date order. This takes about one minute for each vintage. The loader reads the zips directly.
 
-**Transparency in Coverage heads** (`--tic`). The IRS evidence needs an EIN-to-NPI roster, which insurers' Transparency in Coverage files give: `research/tic-spike/tic_heads.py` reads the `provider_references` head of the current month's UHC, Cigna and Aetna in-network files into `data/tic/heads/<payer>/*.parquet` (`tin`, `tin_type`, `npi`, `business_name`, `payer`). Only the current month is served, so the roster is the one fetched (October 2026 here; `manifest.json` records the directory). An organization that left every network before the fetch has no EIN and no IRS evidence.
+Some vintages drop more than the 5% limit, but a check found that the drops were real. `COVERAGE_BREAKS` in `sources/doctors_clinicians/dac.py` lists these vintages with their own limit:
 
-## Facility ownership, Doctors and Clinicians, Medicare utilization
+- April 2018, April 2019, August 2020 and September 2022.
+- Each of them comes after a gap of four months or more between archived files.
+- Each of them has more clinicians in total than the file before it.
 
-Three more sources feed the graph's firms and weights (`research/provider-networks/firms_over_time.ipynb`).
-
-**Ownership** (`ownership`, versioned; METHODOLOGY section 7a). CMS's Enrollments and All Owners files for hospitals, SNFs, home health agencies, hospices, FQHCs and RHCs, one directory per release date under `data/ownership/YYYY-MM-DD/` with CMS's file names inside. `releases/ownership_sources.csv` pins every loaded file with its data.cms.gov url, so `make download SOURCE_NAME=ownership` rebuilds the directories. New releases are in `https://data.cms.gov/data.json` as datasets titled `Hospital All Owners : <date>`, `Skilled Nursing Facility Enrollments : <date>` and so on; put each release's files in a directory named by the extract date in their names (or the dataset's date when the name has none), then `make load SOURCE_NAME=ownership` and `make sources SOURCE_NAME=ownership`, and fill in the urls. When CMS republishes a release (`..._update.csv`), keep only the update. A release that drops more than 5% of a type's enrollments is refused; the July 2026 hospice file is one, listed in `COVERAGE_BREAKS` in `sources/ownership/ownership.py` with its own limit after checking that the drops were real (METHODOLOGY 7a); a new one needs the same check. `reset --source-name ownership --yes` drops only `ownership.duckdb`'s tables; a full reload takes about two minutes.
-
-**Doctors and Clinicians** (`doctors_clinicians`, versioned; section 7b). The archived quarterly files, 2014 to 2022, from the Internet Archive (data.cms.gov's provider-data site refuses scripts; do not work around it). `make download SOURCE_NAME=doctors_clinicians` fetches the zips `releases/doctors_clinicians_sources.csv` pins into `data/dac/raw/<year>/` and checks the CSV inside each; `make load SOURCE_NAME=doctors_clinicians` loads them in date order (about a minute a vintage). The loader reads the zips themselves. Vintages whose drop exceeds the 5% guard but was checked and found real are listed with their own limit in `COVERAGE_BREAKS` in `sources/doctors_clinicians/dac.py` (April 2018, April 2019, August 2020, September 2022: each after a gap of four months or more between archived files, each with more clinicians in all than the file before); a new archive file that trips the guard needs the same check before it is added there.
-
-**Medicare utilization** (`medicare_utilization`, reference; section 7c). One CSV per year of the Medicare Physician & Other Practitioners by Provider and Service files, pinned in `releases/medicare_utilization_sources.csv`; `make download load SOURCE_NAME=medicare_utilization` puts them in `data/mup/raw` (about 30 GB) and rebuilds `medicare_utilization.duckdb` (a few minutes, 98 million rows). CMS publishes a new year each spring and re-releases earlier years with new file names; a new year is a new row.
-
-```bash
-make graph GRAPH=graph COMPENDIUM=1 MEDICAID=1 OWNERSHIP=1 DAC=1 MEDICARE=1    # about ten minutes
-```
+If a new archive file goes above the 5% limit, do the same check before you add it to `COVERAGE_BREAKS`.
 
 ## Out-of-order month
 
-The loader does not append a month that is older than the newest loaded snapshot. This is a breaking correction. To insert the month, run `healthcare-ledger rollback --to <month before>` and then `make load`. If you do not want the month, remove the zip from `data/raw/`.
+The loader does not append a month that is older than the newest loaded snapshot. To insert such a month is a breaking correction.
+
+- To insert the month, run `healthcare-ledger rollback --to <month before>`. Then run `make load`.
+- If you do not want the month, remove the zip from `data/raw/`.
 
 ## Privacy refusal
 
-If `validate` or `export` finds a tax id, do not publish. Do not share the values. Send the log to the maintainer. `export` checks twice: the warehouse (each source's `check_problems`), then the Parquet files it wrote (`core/privacy.py`, `audit`). A failure in the second check deletes the files it wrote. `privacy_audit.csv` gives per-column counts, never values.
+WARNING: If `validate` or `export` finds a tax id, do not publish. Do not share the values. Send the log to the maintainer.
 
-A new license format (a state starts issuing numbers in a new pattern) makes those licenses NULL until it is added to `src/healthcare_ledger/core/license_formats.csv`, which is a breaking correction: the file lists the (state, format) pairs used by at least 25 NPIs and is frozen per edition (METHODOLOGY 2a).
+`export` does two checks:
+
+1. It checks the warehouse with the `check_problems` of each source.
+2. It checks the Parquet files that it wrote (`core/privacy.py`, `audit`).
+
+If the second check fails, `export` deletes the files that it wrote. `privacy_audit.csv` gives counts for each column, never values.
+
+Sometimes a state starts to issue license numbers in a new pattern, that is, a new license format. These licenses are NULL until you add the format to `src/healthcare_ledger/core/license_formats.csv`. To add a format is a breaking correction. The file lists the (state, format) pairs that at least 25 NPIs use. The file is frozen for each edition (METHODOLOGY 2a).
 
 ## Publish on Zenodo
 
-A release is published as one Zenodo record per release id, as a new version of the same concept record so the concept DOI always resolves to the newest release.
+Each release id has one Zenodo record. Each record is a new version of the same concept record. Thus the concept DOI always resolves to the newest release.
 
 ```bash
 uv run healthcare-ledger package --out export --dest deposit/<release id>     # add --no-csv to leave the CSV copies out
 ```
 
-`package` re-verifies every data file against `manifest.json`, refuses an export whose `privacy_audit.csv` is missing or has a failure, and writes one stored zip per table and format (unzipping them all next to `SHA256SUMS` restores the export's paths), the metadata files as they are, `LICENSE-DATA.txt` (CC0), `zenodo.json` (the deposition metadata) and `PACKAGE_SHA256SUMS`. A Zenodo record takes at most 100 files and 50 GB; `package` stops if the deposit would not fit.
+`package` does these things:
 
-Upload: in the Zenodo web interface choose "New version" on the existing record (or "New upload" the first time), upload every file in `deposit/<release id>/`, paste the fields of `zenodo.json`, check the preview and publish. With the REST API: create the new version, `PUT` each file to the deposition's bucket URL, `PUT` `zenodo.json` as the metadata, then publish. Publishing cannot be undone: a published file can only be superseded by a new version. Then add the DOI to `releases/<id>/` (a `DOI` file) and to the README.
+- It verifies each data file again against `manifest.json`.
+- It refuses an export if its `privacy_audit.csv` is missing or has a failure.
+- It writes one stored zip for each table and format. If you unzip all of them next to `SHA256SUMS`, you get the paths of the export again.
+- It writes the metadata files without change.
+- It writes `LICENSE-DATA.txt` (CC0), `zenodo.json` (the deposition metadata) and `PACKAGE_SHA256SUMS`.
 
-Then time the reader's path once, for edition 1's first release and again whenever the README's *Get the data* section changes: on a machine without the repository, in an empty folder, start a clock, open the README on GitHub, follow *Get the data* exactly (DOI, download, unzip, the one-provider query), and stop the clock when the 14 rows match. Record the time and every snag in the PR or release notes. Above 15 minutes, or any step that needed something the section does not say, fix the section before the next release.
+A Zenodo record holds a maximum of 100 files and 50 GB. If the deposit is too large, `package` stops.
+
+WARNING: You cannot undo a publication. You can only replace a published file with a new version.
+
+To upload with the Zenodo web interface, do these steps:
+
+1. On the existing record, choose "New version". For the first upload, choose "New upload".
+2. Upload all files in `deposit/<release id>/`.
+3. Paste the fields of `zenodo.json`.
+4. Check the preview.
+5. Publish.
+
+To upload with the REST API, do these steps:
+
+1. Create the new version.
+2. `PUT` each file to the bucket URL of the deposition.
+3. `PUT` `zenodo.json` as the metadata.
+4. Publish.
+
+After you publish, add the DOI to `releases/<id>/` as a `DOI` file. Also add the DOI to the README.
+
+Then measure the time of the reader's path. Do this for the first release of edition 1. Do it again each time the *Get the data* section of the README changes. Do these steps:
+
+1. Use a computer that does not have the repository. Use an empty folder.
+2. Start a clock.
+3. Open the README on GitHub.
+4. Do the steps of *Get the data* exactly: DOI, download, unzip, the one-provider query.
+5. Stop the clock when the 14 rows match.
+6. Record the time and each problem in the PR or in the release notes.
+
+Fix the section before the next release in these conditions:
+
+- The time is more than 15 minutes.
+- A step needed something that the section does not say.
 
 ## Breaking corrections
 
-Only the maintainer does breaking corrections. Follow these steps:
+Only the maintainer does breaking corrections. Do these steps:
 
 1. Repair the code.
-2. Rebuild the warehouse, then validate and verify it.
+2. Rebuild the warehouse. Then validate and verify it.
 3. Add a dated entry under "Change log" in [METHODOLOGY.md](METHODOLOGY.md).
 4. Run `healthcare-ledger export --csv --new-edition`.
 5. Commit `releases/EDITION` with the new record.

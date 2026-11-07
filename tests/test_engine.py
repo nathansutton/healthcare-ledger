@@ -352,20 +352,17 @@ def test_rollback_of_nppes(source, tmp_path):
 
 
 def test_each_source_loads_into_its_own_file(source, tmp_path, request):
-    """One snapshot of each versioned source and the reference sources into one warehouse directory: a file each,
-    each holding only its source's tables, and the catalog sees all of them."""
+    """One snapshot of each built-in source into one warehouse directory: a file each, each holding only its
+    source's tables, and the catalog sees all of them. (Plugin sources are tested in the packages that add them.)"""
     import duckdb
 
-    from conftest import catalog, write_ahrq, write_chow, write_hcris, write_irs, write_medicaid, write_mup, write_nhc
+    from conftest import catalog
     from healthcare_ledger import sources
     write_zip(source, "20200101", "20200112", [main_row("1000000001", entity_type="1", last_name="A")])
     dirs = {"nppes": source, "ppef": request.getfixturevalue("ppef_source"), "pos": request.getfixturevalue("pos_source"),
-            "ownership": request.getfixturevalue("ownership_source"), "doctors_clinicians": request.getfixturevalue("dac_source"),
-            "ahrq": write_ahrq(tmp_path / "ahrq"), "medicaid": write_medicaid(tmp_path / "medicaid"),
-            "medicare_utilization": write_mup(tmp_path / "mup"), "irs": write_irs(tmp_path / "irs"),
-            "hcris": write_hcris(tmp_path / "hcris"), "chow": write_chow(tmp_path / "chow"), "nhc": write_nhc(tmp_path / "nhc")}
+            "ownership": request.getfixturevalue("ownership_source"), "doctors_clinicians": request.getfixturevalue("dac_source")}
     warehouse = tmp_path / "warehouse"
-    for src in sources.SOURCES:
+    for src in sources.BUILTIN:
         if src.versioned:
             wh = src.warehouse_cls(warehouse, work_dir=tmp_path / "work")
             wh.load_snapshot(src.discover(dirs[src.name])[0])
@@ -374,9 +371,9 @@ def test_each_source_loads_into_its_own_file(source, tmp_path, request):
             src.load(dirs[src.name], warehouse, tmp_path / "work")
         if src.name == "nppes":
             assert [p.name for p in warehouse.iterdir()] == ["nppes.duckdb"]
-    assert sorted(p.name for p in warehouse.iterdir()) == sorted(f"{s.database}.duckdb" for s in sources.SOURCES)
+    assert sorted(p.name for p in warehouse.iterdir()) == sorted(f"{s.database}.duckdb" for s in sources.BUILTIN)
     tables = {}
-    for src in sources.SOURCES:
+    for src in sources.BUILTIN:
         con = duckdb.connect(str(warehouse / f"{src.database}.duckdb"), read_only=True)
         tables[src.name] = {r[0] for r in con.execute("SELECT table_name FROM duckdb_tables()").fetchall()}
         con.close()
@@ -389,5 +386,5 @@ def test_each_source_loads_into_its_own_file(source, tmp_path, request):
     names = list(tables.values())
     assert not any(a & b for i, a in enumerate(names) for b in names[i + 1:])
     con = catalog(warehouse, read_only=True)
-    assert all(src.loaded(con) for src in sources.SOURCES)
+    assert all(src.loaded(con) for src in sources.BUILTIN)
     con.close()

@@ -1,5 +1,0 @@
-name,origin,url,bytes,sha256
-hospital_chow.csv,cms,https://data.cms.gov/sites/default/files/2026-10/f94c78c7-c3b0-4935-bc54-a1f4126703c0/Hospital_CHOW_2026.09.29.csv,253613,a8cb5111dee64780f2c5bd9b10fdd304140848eeeee2e4b2c5012c7421533648
-snf_chow.csv,cms,https://data.cms.gov/sites/default/files/2026-10/89166aa5-0fb8-49d6-bef5-f970876794b5/SNF_CHOW_2026.09.29.csv,1888921,8214fe65ec7c9b291bf579bd9fcdd281fbf9bd8a593613e9db93b6f0d8bdbcb5
-hospital_chow_owner.csv,cms,https://data.cms.gov/sites/default/files/2026-10/6ef092b4-2cf8-4718-8df7-a9c13dbb7282/Hospital_CHOW_Owners_2026.09.29.csv,4214132,53d29e9a71a14f29970f06a45b74ec5a10539f860a57080fe70f6aeae9f9f4b0
-snf_chow_owner.csv,cms,https://data.cms.gov/sites/default/files/2026-10/69f567eb-9550-47c9-b8cb-4ffb346bf4b9/SNF_CHOW_Owners_2026.09.29.csv,23016069,fd7d58beb208e17f7861985f59821aa38647cf4ea0860487657dc626ce3b3849

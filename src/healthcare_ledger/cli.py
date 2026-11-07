@@ -2,13 +2,9 @@
 
 Any source:       download, load, sources, reset with --source-name nppes (default), ppef (Medicare PPEF
                   quarterly enrollment extracts), pos (quarterly Provider of Services files), ownership (CMS
-                  Enrollments and All Owners), doctors_clinicians, or the reference sources loaded wholesale: ahrq
-                  (the AHRQ Compendium), medicaid (HHS's Medicaid provider spending extract), medicare_utilization,
-                  irs (Form 990 Schedules R and H, BMF), hcris (cost-report home offices), chow (changes of
-                  ownership) and nhc (Nursing Home Compare owners); docs/MAINTAINING.md
+                  Enrollments and All Owners) or doctors_clinicians, plus any source an installed package registers
+                  under the ``healthcare_ledger.sources`` entry point; docs/MAINTAINING.md
 Build and check:  validate, status (every loaded source); discover, verify, rollback (NPPES)
-Derived:          graph-build (practitioner, organization and hospital graph by PPEF quarter, docs/METHODOLOGY.md section 8),
-                  owner-communities (owner, subsidiaries and groups by quarter, section 8f)
 Publish:          export, package, monthly (download, load, validate, verify,
                   continuity check and export in one command; see docs/MAINTAINING.md)
 Try it:           smoke (one NPPES month end to end: download, load, validate, verify, export, read back)
@@ -18,7 +14,7 @@ next step. Input checks run before any file is created, so a bad argument leaves
 behind. Tracebacks are printed only with -v.
 
 Default paths match the Makefile and the docs: zips in data/raw, the warehouse in data/warehouse
-(one DuckDB file per source: nppes.duckdb, ppef.duckdb, pos.duckdb, ahrq.duckdb, medicaid.duckdb),
+(one DuckDB file per source: nppes.duckdb, ppef.duckdb, pos.duckdb, ...),
 scratch in data/work, export in export/, release records in releases/.
 """
 
@@ -45,7 +41,6 @@ DEFAULT_WAREHOUSE = "data/warehouse"
 DEFAULT_OUT = "export"
 DEFAULT_RELEASES = "releases"
 DEFAULT_CHANGELOG = "docs/METHODOLOGY.md"
-DEFAULT_GRAPH = "graph"
 
 
 # ----------------------------------------------------------------- input checks
@@ -138,28 +133,6 @@ def cmd_sources(a: argparse.Namespace) -> int:
     finally:
         con.close()
     print(f"{Path(a.releases) / src.sources_file} written; {empty} row(s) still need a url")
-    return 0
-
-
-def cmd_graph_build(a: argparse.Namespace) -> int:
-    from .derived.graph import build_graph
-    m = build_graph(Path(a.warehouse), Path(a.out), threads=a.threads, memory_limit=a.memory, work_dir=_work(a),
-                    limit=a.limit, compendium=a.compendium, medicaid=a.medicaid,
-                    ownership=a.ownership, doctors_clinicians=a.doctors_clinicians,
-                    medicare_utilization=a.medicare_utilization)
-    print(f"{a.out}: {m['quarters']} quarters {m['first_as_of_date']} to {m['last_as_of_date']}; "
-          + ", ".join(f"{k} {v['rows']:,} rows" for k, v in m["tables"].items()))
-    return 0
-
-
-def cmd_owner_communities(a: argparse.Namespace) -> int:
-    from .derived.owner_communities import build_owner_communities
-    m = build_owner_communities(Path(a.graph), Path(a.warehouse), anchor=a.anchor, limit=a.limit, tic=Path(a.tic) if a.tic else None,
-                                threads=a.threads, memory_limit=a.memory, work_dir=_work(a))
-    oc = m["owner_communities"]
-    print(f"{a.graph}: owner communities on {oc['quarters']} quarters, calibrated on {oc['anchor']}, evidence from "
-          f"{', '.join(oc['evidence_from'])}; "
-          + ", ".join(f"{t} {m['tables'][t]['rows']:,} rows" for t in ("owner_community_member", "owner_community")))
     return 0
 
 
@@ -288,10 +261,10 @@ def build_parser() -> argparse.ArgumentParser:
     dl.set_defaults(fn=cmd_download)
 
     l = sub.add_parser("load", help="load a source's snapshots (NPPES months, PPEF or POS quarters) into the DuckDB warehouse, "
-                                    "in as-of order; a reference source (ahrq, medicaid) is rebuilt wholesale")
+                                    "in as-of order; a reference source (one a plugin registers) is rebuilt wholesale")
     _source_name_arg(l)
     l.add_argument("--source", help="directory of the source's files (default: data/raw for NPPES zips, data/ppef and data/pos "
-                                    "for one directory per quarter, data/ahrq and data/medicaid with their files in raw/)")
+                                    "for one directory per quarter)")
     _warehouse_arg(l)
     l.add_argument("--work", help="scratch directory for extracted CSVs and DuckDB temp files; NPPES needs ~12 GB free "
                                   "(default: work/ next to the warehouse directory)")
@@ -309,51 +282,11 @@ def build_parser() -> argparse.ArgumentParser:
     rs.set_defaults(fn=cmd_reset)
 
     sr = sub.add_parser("sources", help="write releases/<sources file> of a quarterly source (file, size, sha256 of every loaded "
-                                        "file; keeps recorded urls). NPPES's is written by download, AHRQ's and Medicaid's by hand")
+                                        "file; keeps recorded urls). NPPES's is written by download")
     _source_name_arg(sr, required=True)
     _warehouse_arg(sr)
     sr.add_argument("--releases", default=DEFAULT_RELEASES, help=f"release records directory (default {DEFAULT_RELEASES})")
     sr.set_defaults(fn=cmd_sources)
-
-    gb = sub.add_parser("graph-build", help="derive the provider graph (practitioners, organizations, hospitals; "
-                                           "reassignment and hospital-link edges) from the NPPES, PPEF and POS tables")
-    _warehouse_arg(gb)
-    gb.add_argument("--out", default=DEFAULT_GRAPH, help=f"output directory for the Parquet tables (default {DEFAULT_GRAPH})")
-    gb.add_argument("--work", help="scratch directory for DuckDB temp files (default: work/ next to the warehouse directory)")
-    gb.add_argument("--limit", type=int, help="build only the first N PPEF quarters (for a quick look)")
-    gb.add_argument("--compendium", action="store_true",
-                    help="also derive the annual system and system_link tables from the AHRQ Compendium source, which "
-                         "must be loaded (`load --source-name ahrq`)")
-    gb.add_argument("--ownership", action="store_true",
-                    help="also derive control, firm_member, firm and chain (firms as connected components of ownership, "
-                         "ASPE's hospital and nursing home chains) from the ownership source, which must be loaded "
-                         "(`load --source-name ownership`)")
-    gb.add_argument("--doctors-clinicians", action="store_true",
-                    help="also derive listed_reassignment and hospital_affiliation (CMS's claims-filtered group roster "
-                         "and hospital affiliations) from the doctors_clinicians source, on the quarters a vintage covers")
-    gb.add_argument("--medicare-utilization", action="store_true",
-                    help="also derive medicare_volume (each physician's Medicare billing and office visits by setting) "
-                         "from the medicare_utilization source")
-    gb.add_argument("--medicaid", action="store_true",
-                    help="also derive medicaid_volume and main_group (each physician's main group by Medicaid volume) "
-                         "from the Medicaid source, which must be loaded (`load --source-name medicaid`)")
-    _resources(gb)
-    gb.set_defaults(fn=cmd_graph_build)
-
-    oc = sub.add_parser("owner-communities", help="add owner communities (each organization with everything under the same "
-                                                  "owner: All Owners firms, AHRQ systems and NPPES keys, by Leiden) to a "
-                                                  "graph built with --ownership --compendium")
-    _warehouse_arg(oc)
-    oc.add_argument("--graph", default=DEFAULT_GRAPH, help=f"the graph directory, written in place (default {DEFAULT_GRAPH})")
-    oc.add_argument("--work", help="scratch directory for DuckDB temp files (default: work/ next to the warehouse directory)")
-    oc.add_argument("--anchor", help="the quarter (as_of_date) to calibrate the NPPES links on (default: the last quarter "
-                                     "with All Owners firms in a year with its own AHRQ group practice file)")
-    oc.add_argument("--limit", type=int, help="build only the first N quarters (for a quick look)")
-    oc.add_argument("--tic", help="directory of Transparency in Coverage heads (research/tic-spike/tic_heads.py): the EIN-to-NPI "
-                                  "roster that carries IRS Form 990 Schedule R listings to organizations; without it, or without the "
-                                  "irs source loaded, no IRS evidence. The hcris and nhc sources are used whenever they are loaded")
-    _resources(oc)
-    oc.set_defaults(fn=cmd_owner_communities)
 
     pk = sub.add_parser("package", help="turn a finished export into a Zenodo deposit: one zip per table, metadata, checksums")
     pk.add_argument("--out", default=DEFAULT_OUT, help="the export directory")
@@ -430,8 +363,9 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def main(argv: list[str] | None = None) -> int:
-    a = build_parser().parse_args(argv)
+def main(argv: list[str] | None = None, parser: argparse.ArgumentParser | None = None) -> int:
+    """Run a command; ``parser`` lets another package's CLI (with its own commands) share this error handling."""
+    a = (parser or build_parser()).parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if a.verbose else logging.INFO,
                         format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
     try:

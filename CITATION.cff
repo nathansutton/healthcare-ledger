@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software or the data it produces, please cite it, and cite CMS NPPES and the other registries you use as the underlying sources."
 type: software
-title: "healthcare-ledger: dated histories of the U.S. health care provider registries and the links between them"
+title: "healthcare-ledger: dated histories of the U.S. health care provider registries"
 version: 0.1.0
 date-released: 2026-10-13
 license: Apache-2.0
@@ -17,8 +17,6 @@ keywords:
   - Medicare
   - PECOS
   - Provider of Services
-  - health systems
-  - Medicaid
   - healthcare providers
   - panel data
   - slowly changing dimension
@@ -44,13 +42,3 @@ references:
     authors:
       - name: "Centers for Medicare & Medicaid Services"
     url: https://data.cms.gov/provider-characteristics/hospitals-and-other-facilities/provider-of-services-file-quality-improvement-and-evaluation-system
-  - type: data
-    title: "Compendium of U.S. Health Systems"
-    authors:
-      - name: "Agency for Healthcare Research and Quality"
-    url: https://www.ahrq.gov/chsp/data-resources/compendium.html
-  - type: data
-    title: "Medicaid Provider Spending"
-    authors:
-      - name: "U.S. Department of Health and Human Services"
-    url: https://opendata.hhs.gov/datasets/medicaid-provider-spending

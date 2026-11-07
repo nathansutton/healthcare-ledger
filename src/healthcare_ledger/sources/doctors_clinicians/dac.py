@@ -6,7 +6,7 @@ reassigns benefits to and practice address: NPI, the clinician's PAC id and enro
 specialties, the group's legal name, PAC id and member count, the practice address and phone, up to five hospitals
 the clinician is affiliated with (CCN and legal business name, from Medicare claims) and participation flags
 (Medicare assignment, the quality and EHR programs of the year). It is the claims-filtered clinician -> group and
-clinician -> hospital map the provider graph uses.
+clinician -> hospital map.
 
 CMS replaced the file roughly quarterly (monthly in 2021) and keeps the old ones in yearly archive folders of
 data.cms.gov, which no longer serves them; the copies come from the Internet Archive (``releases/

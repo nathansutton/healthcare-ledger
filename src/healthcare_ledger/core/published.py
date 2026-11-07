@@ -9,7 +9,7 @@ decoded (``entity_type = 'individual'``), and the interval columns ``effective_d
 ``close_reason`` only.
 
 Each is a SELECT over the version tables of its source (``Source.tables``). ``core.connect.open_catalog`` creates it
-as a view, so the warehouse, the export, the graph and a notebook use the same names and columns; ``export`` writes
+as a view, so the warehouse, the export and a notebook use the same names and columns; ``export`` writes
 the views out, one hive-partitioned Parquet directory per table, and takes the column types for
 ``data_dictionary.csv`` from them.
 """

@@ -3,12 +3,14 @@
 Everything that spans sources (``validate``, the gates and files of ``export``, the release record,
 ``status`` and the generic CLI commands) loops over ``sources.SOURCES`` and asks each ``Source`` for
 what it needs. Adding a source means writing ``sources/<name>/`` and listing its ``SOURCE`` in
-``sources/__init__.py``; nothing else changes.
+``sources/__init__.py``, or declaring it in another package under the ``healthcare_ledger.sources`` entry point;
+nothing else changes.
 
-A source is one of two kinds. A **versioned** source (NPPES, PPEF, POS) loads snapshots in as-of order
+A source is one of two kinds. A **versioned** source (every built-in one: NPPES, PPEF, POS, ownership,
+doctors_clinicians) loads snapshots in as-of order
 into SCD2 version tables, one per file, and publishes ``tables``, views over them shaped for a reader
 (``core.published``); its fingerprints, continuity and published tables make up a release. A
-**reference** source (the AHRQ Compendium, HHS's Medicaid spending extract) is published as dated editions and loaded wholesale: ``load``
+**reference** source (only from a plugin package) is published as dated editions and loaded wholesale: ``load``
 rebuilds its file from scratch, and the export, its gates and the release record leave it out. Both kinds
 pin their input files in ``releases/<sources_file>``, and ``validate`` and ``status`` cover both.
 
