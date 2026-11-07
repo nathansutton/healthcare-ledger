@@ -44,7 +44,7 @@ def study_con(study: Path, export: Path | None = None, graph: Path | None = None
     """An in-memory DuckDB that resolves a research notebook's data/ paths against its study directory, with the
     tables of an export and a graph as views when given, as the notebook opens them (``healthcare_ledger.connect``)."""
     import healthcare_ledger
-    con = healthcare_ledger.connect(export, graph)
+    con = healthcare_ledger.connect(export, graph) if export or graph else duckdb.connect()
     con.execute("SET file_search_path = ?", [str(study)])
     return con
 

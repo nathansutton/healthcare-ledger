@@ -78,6 +78,8 @@ Done in `firms_over_time.ipynb`: ownership edges and ASPE's ultimate-owner metho
 
 ## Running it
 
+These notebooks need a local build: they read the graph and the warehouse, and neither is in the Zenodo release yet ([#14](https://github.com/nathansutton/healthcare-ledger/issues/14)). The committed outputs show every result without running them.
+
 ```bash
 uv sync --group research
 uv run healthcare-ledger download --source-name ahrq   # optional, for section 6: the pinned files into data/ahrq

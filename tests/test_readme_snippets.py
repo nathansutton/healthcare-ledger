@@ -114,13 +114,18 @@ def test_export_readme_example_table_matches_data(export_dir):
 
 
 def test_repository_readme_snippets_run(export_dir, tmp_path, monkeypatch):
-    # the repository README reads from ./export/, so run it from a directory holding the fixture export
+    # "Get the data" runs inside the folder a release was unzipped into; the sections from "Build it yourself" on
+    # run from a checkout, reading ./export/. Run each part from a directory laid out that way.
     (tmp_path / "export").symlink_to(export_dir, target_is_directory=True)
     monkeypatch.chdir(tmp_path)
     text = (REPO / "README.md").read_text()
+    download, sep, build = text.partition("\n## Build it yourself")
+    assert sep, "README lost its 'Build it yourself' section"
+    assert blocks(download, "sql"), "README's 'Get the data' lost its query"
+    for sql in blocks(download, "sql"):
+        _run_sql(sql, export_dir)
     sql_blocks = blocks(text, "sql")
-    assert sql_blocks, "README lost its SQL examples"
-    for sql in sql_blocks:
+    for sql in blocks(build, "sql"):
         _run_sql(sql, tmp_path)
     for code in blocks(text, "python"):
         exec(compile(code, "<repo-readme>", "exec"), {})  # noqa: S102

@@ -116,11 +116,13 @@ def zenodo_metadata(manifest: dict) -> dict:
         f"Any monthly NPPES file in the range can be rebuilt exactly with an as-of query.</p>"
         f"<p>Tax ids and SSNs that providers typed into free-text fields are removed, the CMS 'Other Provider Identifier' "
         f"slots are not published, and privacy_audit.csv records an independent scan of the files.</p>"
-        f"<p>Release id {rid}. Each partitioned table is one zip; unzip next to SHA256SUMS and run "
-        f"<code>sha256sum -c SHA256SUMS</code>. README.md explains the tables and how to read them in DuckDB, Python, "
+        f"<p>Release id {rid}. Each table is one zip. To start, download README.md, manifest.json, SHA256SUMS, "
+        f"data_dictionary.csv, snapshots.csv and parquet_provider.zip into one empty folder, unzip there and run "
+        f"<code>sha256sum -c --ignore-missing SHA256SUMS</code>; add other tables' zips as you need them. "
+        f"Cite this release's DOI, not the concept DOI. README.md explains the tables and how to read them in DuckDB, Python, "
         f"R and Stata. Built by healthcare-ledger ({REPO_URL}).</p>")
     return {
-        "title": f"NPPES over time: monthly history of the CMS NPI registry, release {rid}",
+        "title": f"healthcare-ledger: dated history of the CMS provider registries, release {rid}",
         "upload_type": "dataset",
         "description": description,
         "creators": [{"name": "Sutton, Nathan"}],

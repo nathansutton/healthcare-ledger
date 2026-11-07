@@ -9,4 +9,4 @@ uv sync --group research
 LEDGER_EXPORT=/path/to/export LEDGER_GRAPH=/path/to/graph uv run jupyter lab getting_started.ipynb
 ```
 
-Section 9 reads `LEDGER_GRAPH`, a `graph-build --compendium` output directory (default: the repository's `graph/`).
+Section 9 reads `LEDGER_GRAPH`, a `graph-build --compendium` output directory (default: the repository's `graph/`). The graph is not in the Zenodo release yet, so with a downloaded export only, section 9 prints that it was skipped; building the graph needs a warehouse ([#14](https://github.com/nathansutton/healthcare-ledger/issues/14) tracks publishing it). Sections 1 to 8 need only the downloaded export.
