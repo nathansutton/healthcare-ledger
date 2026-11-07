@@ -16,9 +16,40 @@ What this adds to each source:
 - **CMS** publishes each registry as separate files, one date at a time. It gives no history of a record and no dated link from one registry to another.
 - **AHRQ** gives a list of health systems once a year, with the PECOS associate ids and CCNs in each. Here each edition is tied to the quarterly Medicare enrollments and the NPIs behind them.
 
-This project does not host the files and does not give you the data. It is a recipe: it records where each public copy of each file is (with its sha256), downloads the copies, and builds the tables. The build uses Python and DuckDB only. The output is Parquet, and optionally gzipped CSV.
+Each release of the tables is published on Zenodo as Parquet (and gzipped CSV): download it and query it, with nothing to build. The repository is also the recipe that makes a release: it records where each public copy of each CMS file is (with its sha256), downloads the copies, and builds the tables with Python and DuckDB. It hosts none of the CMS files itself.
 
-## Quick start
+## Get the data
+
+**Not published yet.** Edition 1 will be the first release. Its DOI goes here, and this section works as written from that day.
+
+1. Open the release's Zenodo record (DOI: *to be added with edition 1*). Download `README.md`, `manifest.json`, `SHA256SUMS`, `data_dictionary.csv`, `snapshots.csv` and `parquet_provider.zip` (about 2.2 GB) into one empty folder, and unzip there. Each other table is its own `parquet_<table>.zip` (`provider_taxonomy` is 0.4 GB; the whole release is about 3.5 GB). Add them to the same folder when you need them. To check what you downloaded: `sha256sum -c --ignore-missing SHA256SUMS` (on Windows, `certutil -hashfile <file> SHA256`).
+2. Install [DuckDB](https://duckdb.org/docs/installation/) (the CLI, or `pip install duckdb`). You do not need this package to read the data.
+3. In that folder, run:
+
+```sql
+-- every version of one home health agency since 2008: 14 rows
+SELECT effective_date, end_date, practice_city, practice_state
+FROM read_parquet('parquet/provider/*/*.parquet', hive_partitioning = true)
+WHERE npi = '1205089596' ORDER BY effective_date;
+```
+
+```
+effective_date  end_date    practice_city     practice_state
+2008-11-10      2009-03-08  Niles             IL
+2009-03-08      2010-01-11  NILES             IL
+2010-01-11      2011-04-11  ADDISON           IL
+...
+2021-11-07      2025-02-09  SOUTH BARRINGTON  IL
+2025-02-09      NULL        SOUTH BARRINGTON  IL
+```
+
+`IO Error: No files found that match the pattern "parquet/provider/*/*.parquet"` means DuckDB is not running in the folder you unzipped into. The release's own `README.md` continues from here: the registry as of any date, every table, and recipes for Python, R and Stata.
+
+From Python, `pip install git+https://github.com/nathansutton/healthcare-ledger` gives `healthcare_ledger.connect("<that folder>")`, with a view for each table (see *Output*). A table you have not downloaded yet tells you which zip to get.
+
+Cite the release id you used (it is in `manifest.json` and the record's title), not the concept DOI, which moves to each new release.
+
+## Build it yourself
 
 You need Linux or macOS, Python 3.12 or newer, [uv](https://docs.astral.sh/uv/) and `unzip`.
 
@@ -113,7 +144,7 @@ Each export has a `README.md` with a worked example and recipes for DuckDB, Pyth
 
 ## Graph and crosswalk
 
-`graph-build` derives a provider graph from the warehouse, quarter by quarter on the PPEF dates: practitioners, organizations, hospitals and facilities, the reassignments between them, the links from enrollments to POS CCNs, and, with `--compendium`, AHRQ's health systems ([METHODOLOGY.md](docs/METHODOLOGY.md) section 8). It also writes `crosswalk.parquet`, one long table of dated edges (`from_type`, `from_id`, `to_type`, `to_id`, `effective_date`, `end_date`, `source`, `method`) from NPI to enrollment, enrollment to associate id and CCN, and associate id or CCN to system (section 8b), and the group tables that studies of physician groups share (section 8c). The graph is not part of the export; it is rebuilt from the warehouse in a few minutes.
+`graph-build` derives a provider graph from the warehouse, quarter by quarter on the PPEF dates: practitioners, organizations, hospitals and facilities, the reassignments between them, the links from enrollments to POS CCNs, and, with `--compendium`, AHRQ's health systems ([METHODOLOGY.md](docs/METHODOLOGY.md) section 8). It also writes `crosswalk.parquet`, one long table of dated edges (`from_type`, `from_id`, `to_type`, `to_id`, `effective_date`, `end_date`, `source`, `method`) from NPI to enrollment, enrollment to associate id and CCN, and associate id or CCN to system (section 8b), and the group tables that studies of physician groups share (section 8c). The graph is not part of the export or the Zenodo release: it is rebuilt from a warehouse (see *Build it yourself*) in a few minutes, so for now the crosswalk needs a local build ([#14](https://github.com/nathansutton/healthcare-ledger/issues/14) tracks publishing it with each release).
 
 ## Research
 
