@@ -18,7 +18,7 @@ secondary_specialties,sec_spec_all,All secondary specialties,text,no,"Every seco
 telehealth_flag,Telehlth,,text,yes,Y when the clinician offers telehealth (only in the later vintages)
 org_name,org_nm,Organization legal name,text,no,Legal business name of the group practice the clinician reassigns benefits to; NULL for a clinician billing on their own
 org_dba_name,Organization DBA name,,text,yes,Doing-business-as name of the group (only in the 2014-12 to 2015 vintages)
-org_pac_id,org_pac_id,Group Practice PAC ID,text,no,PECOS associate id (PAC id) of the group practice; the graph's organization key
+org_pac_id,org_pac_id,Group Practice PAC ID,text,no,PECOS associate id (PAC id) of the group practice
 num_org_mem,num_org_mem,Number of Group Practice members,int,no,Number of clinicians in the group practice (CMS's count)
 address_line_1,adr_ln_1,Line 1 Street Address,text,no,Practice address
 address_line_2,adr_ln_2,Line 2 Street Address,text,no,"Practice address, second line"

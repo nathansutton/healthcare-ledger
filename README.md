@@ -1,20 +1,19 @@
 # healthcare-ledger
 
-A dated history of the public U.S. registries of health care providers, and the links between them. It covers five sources:
+A dated history of the public U.S. registries of health care providers. Each public file becomes an SCD Type 2 table. It covers five sources:
 
 - **NPPES**, the CMS registry of every NPI: 197 monthly files, 2007-11-12 to 2026-10-11.
 - **Medicare PPEF**, the fee-for-service enrollments in PECOS and the groups each clinician bills through: 43 quarterly files, 2016-02-01 to 2026-09-29.
 - **Provider of Services (POS)**, the Medicare-certified hospitals, nursing homes, home health agencies and other facilities: 38 files, 2011-12-31 to 2026-09-30 (annual at first, quarterly from 2019).
-- **AHRQ Compendium of U.S. Health Systems**: the 2016, 2018 and 2020 to 2023 editions.
-- **HHS Medicaid provider spending** (T-MSIS): billing volume by NPI and month, January 2018 to December 2024.
+- **Medicare facility Enrollments and All Owners**: the enrollments and owners of hospitals, nursing homes, home health agencies, hospices, FQHCs and RHCs, from 2022.
+- **Doctors and Clinicians** (formerly Physician Compare): the claims-filtered list of clinicians, their groups and hospital affiliations, 2014 to 2022.
 
-NPPES, PPEF and POS each become version tables: one row for each record and version, with the first and last dates the registry showed it. The AHRQ and Medicaid files are loaded as published. A crosswalk joins them with dates: NPI to Medicare enrollment, enrollment to PECOS associate id (one per person or legal entity) and to the facility's CMS Certification Number, and associate id or CCN to an AHRQ health system ([METHODOLOGY.md](docs/METHODOLOGY.md) section 8b).
+Each becomes version tables: one row for each record and version, with the first and last dates the registry showed it.
 
 What this adds to each source:
 
 - **NBER** keeps the monthly NPPES files in its [NPI/NPPES cumulative collection](https://www.nber.org/research/data/npinppes-cumulative-collection-preliminary). This project turns them into one panel, and any monthly file can be made again exactly from it. The NPPES part, "NPPES over time", is the successor to that collection.
-- **CMS** publishes each registry as separate files, one date at a time. It gives no history of a record and no dated link from one registry to another.
-- **AHRQ** gives a list of health systems once a year, with the PECOS associate ids and CCNs in each. Here each edition is tied to the quarterly Medicare enrollments and the NPIs behind them.
+- **CMS** publishes each registry as separate files, one date at a time, and keeps only the latest. It gives no history of a record.
 
 Each release of the tables is published on Zenodo as Parquet (and gzipped CSV): download it and query it, with nothing to build. The repository is also the recipe that makes a release: it records where each public copy of each CMS file is (with its sha256), downloads the copies, and builds the tables with Python and DuckDB. It hosts none of the CMS files itself.
 
@@ -72,11 +71,8 @@ uv run healthcare-ledger validate     # SCD invariants, snapshot reconstruction,
 uv run healthcare-ledger export --csv # write export/
 uv run healthcare-ledger load --source-name ppef  # optional: Medicare PPEF quarters in data/ppef -> data/warehouse/ppef.duckdb
 uv run healthcare-ledger load --source-name pos   # optional: Provider of Services quarters in data/pos -> data/warehouse/pos.duckdb
-uv run healthcare-ledger load --source-name ahrq  # optional: AHRQ Compendium editions in data/ahrq -> data/warehouse/ahrq.duckdb
-uv run healthcare-ledger load --source-name medicaid  # optional: HHS Medicaid spending in data/medicaid -> data/warehouse/medicaid.duckdb
-uv run healthcare-ledger graph-build  # optional: derive the provider graph from NPPES, PPEF and POS (METHODOLOGY section 8);
-                                    # add --compendium, with ahrq loaded, for AHRQ's health systems,
-                                    # and --medicaid, with medicaid loaded, for each physician's main group
+uv run healthcare-ledger load --source-name ownership           # optional: All Owners releases in data/ownership
+uv run healthcare-ledger load --source-name doctors_clinicians  # optional: Doctors and Clinicians archive files in data/dac
 ```
 
 The `Makefile` has one target for each command. To extend the panel by one month and make a release, use `make monthly`. [MAINTAINING.md](docs/MAINTAINING.md) is the runbook.
@@ -91,9 +87,13 @@ Each month, CMS publishes a full copy of the NPI registry, and keeps only the la
 
 The `ppef` and `pos` sources are the same history for CMS's quarterly Medicare enrollment and Provider of Services files (see *Output* below, and [METHODOLOGY.md](docs/METHODOLOGY.md) sections 6 and 7).
 
-### AHRQ Compendium, Medicaid spending, Medicare utilization, IRS, cost reports, changes of ownership, Nursing Home Compare
+### Facility ownership and Doctors and Clinicians
 
-The `ahrq`, `medicaid`, `medicare_utilization`, `irs`, `hcris`, `chow` and `nhc` sources are reference sources: dated files loaded whole, with no versions. `releases/<name>_sources.csv` pins each file by url, size and sha256. The export does not include them; `graph-build --compendium`, `--medicaid` and `--medicare-utilization` read the first three ([METHODOLOGY.md](docs/METHODOLOGY.md) sections 8a and 8c), and `owner-communities` reads the last four (sections 7d and 8f).
+The `ownership` and `doctors_clinicians` sources are the same history for CMS's Enrollments and All Owners files and the archived Doctors and Clinicians files ([METHODOLOGY.md](docs/METHODOLOGY.md) sections 7a and 7b).
+
+### Adding a source from another package
+
+Another installed package can add a source under the `healthcare_ledger.sources` entry point (`src/healthcare_ledger/sources/__init__.py`); `download`, `load`, `validate` and `status` then cover it. Such a source never becomes part of a release: the export takes only the versioned sources listed above.
 
 ## Output
 
@@ -120,7 +120,7 @@ The `medicare_*` tables are the same history for CMS's quarterly [Medicare Fee-F
 
 ```python
 import healthcare_ledger
-con = healthcare_ledger.connect("export")    # a view per table, Parquet read lazily; graph="graph" adds the graph's
+con = healthcare_ledger.connect("export")    # a view per table, Parquet read lazily
 con.sql("SELECT entity_type, count(*) FROM provider WHERE end_date IS NULL GROUP BY 1")
 # with POS loaded: SELECT facility_type, count(*) FROM facility WHERE end_date IS NULL AND active GROUP BY 1
 ```
@@ -142,13 +142,9 @@ Each export has a `README.md` with a worked example and recipes for DuckDB, Pyth
 
 `export --monthly-files` (or `make export MONTHLY_FILES=1`) also writes the data as a monthly panel: `parquet/provider_monthly/provider_YYYY-MM.parquet`, one file per snapshot with every NPI in that month's CMS file, one row each, in the wide CMS layout without the 200 other-identifier columns. Each file is the as-of query over the version table written out. The files are large (0.3 to 0.8 GB a month, about 100 GB for the full history), so they are opt-in and Parquet only.
 
-## Graph and crosswalk
+## Examples
 
-`graph-build` derives a provider graph from the warehouse, quarter by quarter on the PPEF dates: practitioners, organizations, hospitals and facilities, the reassignments between them, the links from enrollments to POS CCNs, and, with `--compendium`, AHRQ's health systems ([METHODOLOGY.md](docs/METHODOLOGY.md) section 8). It also writes `crosswalk.parquet`, one long table of dated edges (`from_type`, `from_id`, `to_type`, `to_id`, `effective_date`, `end_date`, `source`, `method`) from NPI to enrollment, enrollment to associate id and CCN, and associate id or CCN to system (section 8b), and the group tables that studies of physician groups share (section 8c). The graph is not part of the export or the Zenodo release: it is rebuilt from a warehouse (see *Build it yourself*) in a few minutes, so for now the crosswalk needs a local build ([#14](https://github.com/nathansutton/healthcare-ledger/issues/14) tracks publishing it with each release).
-
-## Research
-
-[`research/`](research/) has worked studies with committed outputs, one self-contained directory each: [`getting-started`](research/getting-started/) (reading the export, the as-of query, entry, exit, moves and version churn), [`np-full-practice-authority`](research/np-full-practice-authority/) (a staggered difference-in-differences study of state nurse practitioner scope-of-practice laws on the universe of NPs, month by month), [`dobbs-obgyn-workforce`](research/dobbs-obgyn-workforce/) (a replication of a 2025 study of OB-GYN supply in states that banned abortion after *Dobbs*, extended from two years of follow-up to four) and [`provider-networks`](research/provider-networks/) (published measures of physician consolidation and vertical integration, rebuilt on the graph). Each table a study uses is built in DuckDB SQL in the notebook, next to the reasoning for it. `uv sync --group research` installs what the notebooks need.
+[`examples/getting-started`](examples/getting-started/) is a notebook tour of the export with committed outputs: reading it with DuckDB, the as-of query, one provider's history, entry, exit, moves and version churn. `uv sync --group notebook` installs what it needs.
 
 ## Limits
 

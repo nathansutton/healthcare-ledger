@@ -84,73 +84,11 @@ Fill in the `origin` (`cms`) and `url` columns of `releases/pos_sources.csv` for
 
 A quarter loads once. There is no rollback for POS quarters: to replace a quarter's files, run `uv run healthcare-ledger reset --source-name pos --yes`, which drops the `pos_*` tables in `data/warehouse/pos.duckdb` and touches no other file, then `make load SOURCE_NAME=pos` again (about a quarter of an hour for fifteen years). A new CMS column stops the load with `unmapped columns`; add it to `src/healthcare_ledger/sources/pos/pos_columns.csv` with `hash_optional` set to `yes` (it is not in every file) and load again. A quarter in which a whole provider type leaves one file is normal (METHODOLOGY section 7); a quarter that would mark more than 5% of a type's CCNs absent while the type is still in the file is refused, like a truncated NPPES file. The 2020-Q1 file is such a file (9,566 facilities missing, back the next quarter); keep it out of the source directory (a directory name that is not `YYYY-QN`, such as `2020-Q1.incomplete`, is ignored).
 
-## Provider graph
-
-```bash
-make graph GRAPH=graph    # or: uv run healthcare-ledger graph-build --warehouse data/warehouse --out graph
-```
-
-The graph is derived from the NPPES, PPEF and POS tables (METHODOLOGY section 8) and is rebuilt from scratch each time, in about two minutes; run it after loading new PPEF or POS quarters. It needs all three sources in the warehouse and stops with a message naming the missing table otherwise; without the iQIES POS table (`pos_facility_iqies`) it still builds, but home health agencies drop out of `facility` after December 2023 and nursing homes after September 2025, when CMS moved them there. The research notebook in `research/provider-networks/` reads it from `$LEDGER_GRAPH`. It is not part of the export.
-
-The notebook's section 6 also needs the AHRQ Compendium of U.S. Health Systems (METHODOLOGY section 8a), a reference source: its editions are loaded wholesale into `data/warehouse/ahrq.duckdb`, one `ahrq_*` table per file type, with no versions, fingerprints or export tables. `releases/ahrq_sources.csv` pins each file the load reads (name, origin `ahrq` or `wayback`, url, bytes, sha256; the 2016 and 2018 files as the zips AHRQ ships them in).
-
-```bash
-make download SOURCE_NAME=ahrq     # the pinned files into data/ahrq/raw (about 150 MB), sha256-checked
-make load SOURCE_NAME=ahrq         # rebuild data/warehouse/ahrq.duckdb (under a minute)
-make graph GRAPH=graph COMPENDIUM=1
-```
-
-ahrq.gov answers scripts with an empty 202 at times; `download` then tries the Internet Archive's latest capture of the same url, and a file still missing can be fetched by running it again later (the 2023 nursing home and home health files have no capture). AHRQ publishes a new edition about once a year, usually two years after the year it describes (https://www.ahrq.gov/chsp/data-resources/compendium.html). Adding one means a row per new file in `releases/ahrq_sources.csv` and its year in `FILES` in `src/healthcare_ledger/sources/ahrq/load.py`, which takes the latest revision of each year; then `make download load SOURCE_NAME=ahrq`.
-
-The notebook's section 4b needs HHS's Medicaid Provider Spending extract, a second reference source, from which `graph-build --medicaid` writes `medicaid_volume` and `main_group` (METHODOLOGY section 8c): the one zip `releases/medicaid_sources.csv` pins (name, origin `hhs`, url, bytes, sha256) is loaded wholesale into `data/warehouse/medicaid.duckdb`, one table `medicaid_spending` (billing NPI, servicing NPI, HCPCS code, month, patients, claim lines, Medicaid paid; 238 million rows).
-
-```bash
-make download SOURCE_NAME=medicaid   # the pinned zip into data/medicaid/raw (3.8 GB), sha256-checked
-make load SOURCE_NAME=medicaid       # rebuild data/warehouse/medicaid.duckdb (about a minute, 12 GB free in data/work)
-make graph GRAPH=graph COMPENDIUM=1 MEDICAID=1
-```
-
-The load extracts the 12 GB CSV into the work directory, reads it with explicit types and deletes it; a header other than HHS's seven columns stops it. HHS's dataset page is https://opendata.hhs.gov/datasets/medicaid-provider-spending; each release has its own dated directory under the pinned url (the pinned one is `2026-02-09`). A new release means a new row in `releases/medicaid_sources.csv` in place of the old one (url, bytes, sha256), then `make download load SOURCE_NAME=medicaid`. If HHS stops serving the pinned bytes, set its origin to `archive` and empty its url, as `releases/sources.csv` does.
-
-## IRS Form 990, cost reports, changes of ownership, Nursing Home Compare owners
-
-Four reference sources feed the owner communities (`healthcare-ledger owner-communities`, METHODOLOGY sections 7d and 8f). Each is loaded wholesale from the files its `releases/<name>_sources.csv` pins (name, origin, url, bytes, sha256), has its own file in the warehouse, and is used by `owner-communities` whenever it is loaded (the IRS also needs `--tic`, below).
-
-```bash
-make download SOURCE_NAME=irs      # 82 NCCS parquet tables (tax years 2013-2025) and the four BMF regions, 1.2 GB
-make load SOURCE_NAME=irs          # data/warehouse/irs.duckdb (under a minute)
-make download SOURCE_NAME=hcris    # 40 HCRIS zips from downloads.cms.gov, 3 GB
-make load SOURCE_NAME=hcris        # data/warehouse/hcris.duckdb (about two minutes)
-make download SOURCE_NAME=chow     # four CSVs from data.cms.gov
-make load SOURCE_NAME=chow
-make download SOURCE_NAME=nhc      # 33 monthly owner files from the Internet Archive (one per quarter 2014-2022, about 1 GB; paced)
-make load SOURCE_NAME=nhc
-uv run healthcare-ledger owner-communities --graph graph --warehouse data/warehouse --tic data/tic/heads
-```
-
-**IRS** (`irs`). The NCCS tables are at `https://nccs-efile.s3.us-east-1.amazonaws.com/public/efile_v3_1/<TABLE>-<tax year>.parquet` (catalog: https://nccs.urban.org/nccs/catalogs/catalog-efile-v3_1.html); `NCCS` in `sources/irs/load.py` names the six tables read. A new tax year is a row per table in `releases/irs_sources.csv` and the year in `YEARS`. NCCS republishes the tables when it fixes its concordance, so a re-fetch can report mismatches; pin the new bytes when that happens. The BMF (https://www.irs.gov/charities-non-profits/exempt-organizations-business-master-file-extract-eo-bmf, `eo1.csv` to `eo4.csv`) is a current snapshot the IRS replaces monthly; the pinned bytes are the ones the load used. The IRS's own yearly XML zips (https://www.irs.gov/charities-non-profits/form-990-series-downloads) are the raw source behind NCCS and are not needed.
-
-**HCRIS** (`hcris`). The zips are at `https://downloads.cms.gov/FILES/HCRIS/<NAME>.ZIP` (`HOSP10FY<year>`, `SNF10FY<year>`, `HHA20FY<year>`, `HOSPC14-ALL-YEARS`; the cost-reports page is https://www.cms.gov/data-research/statistics-trends-and-reports/cost-reports/cost-reports-fiscal-year). CMS re-issues the open fiscal years as reports are settled, so the most recent years' bytes change; pin the new bytes with the year's row. A new fiscal year is one more row. The worksheet lines read are in `FORMS` in `sources/hcris/load.py`; a form change (CMS replaced the SNF 2540-10 with the 2540-24 for fiscal 2025) needs its own entry there.
-
-**CHOW** (`chow`). The files are quarterly and cumulative; `https://data.cms.gov/data-api/v1/dataset-resources/<uuid>` gives the current CSV's url (the uuids are in the sources file's urls' parent datasets: Hospital CHOW `c04031db-54ce-461c-85d1-d2613d71f167`, SNF CHOW `f557a6ed-95b3-4a22-8433-4175db2dec1c`, and their Owner Information companions). To update, replace the four rows with the new quarter's urls, sizes and hashes.
-
-**Nursing Home Compare** (`nhc`). data.cms.gov/provider-data refuses scripts (Akamai), so the sources file pins Internet Archive captures (`https://web.archive.org/web/<timestamp>id_/<archive zip url>#Ownership_Download.csv`); `download` fetches each capture's zip and keeps the member after `#`. The archive asks for a pause between requests (five seconds in `sources/nhc/fetch.py`). Nothing after April 2022 was captured; the months from then on are in CMS's All Owners files (the `ownership` source).
-
-**Transparency in Coverage heads** (`--tic`). The IRS evidence needs an EIN-to-NPI roster, which insurers' Transparency in Coverage files give: `research/tic-spike/tic_heads.py` reads the `provider_references` head of the current month's UHC, Cigna and Aetna in-network files into `data/tic/heads/<payer>/*.parquet` (`tin`, `tin_type`, `npi`, `business_name`, `payer`). Only the current month is served, so the roster is the one fetched (October 2026 here; `manifest.json` records the directory). An organization that left every network before the fetch has no EIN and no IRS evidence.
-
-## Facility ownership, Doctors and Clinicians, Medicare utilization
-
-Three more sources feed the graph's firms and weights (`research/provider-networks/firms_over_time.ipynb`).
+## Facility ownership, Doctors and Clinicians
 
 **Ownership** (`ownership`, versioned; METHODOLOGY section 7a). CMS's Enrollments and All Owners files for hospitals, SNFs, home health agencies, hospices, FQHCs and RHCs, one directory per release date under `data/ownership/YYYY-MM-DD/` with CMS's file names inside. `releases/ownership_sources.csv` pins every loaded file with its data.cms.gov url, so `make download SOURCE_NAME=ownership` rebuilds the directories. New releases are in `https://data.cms.gov/data.json` as datasets titled `Hospital All Owners : <date>`, `Skilled Nursing Facility Enrollments : <date>` and so on; put each release's files in a directory named by the extract date in their names (or the dataset's date when the name has none), then `make load SOURCE_NAME=ownership` and `make sources SOURCE_NAME=ownership`, and fill in the urls. When CMS republishes a release (`..._update.csv`), keep only the update. A release that drops more than 5% of a type's enrollments is refused; the July 2026 hospice file is one, listed in `COVERAGE_BREAKS` in `sources/ownership/ownership.py` with its own limit after checking that the drops were real (METHODOLOGY 7a); a new one needs the same check. `reset --source-name ownership --yes` drops only `ownership.duckdb`'s tables; a full reload takes about two minutes.
 
 **Doctors and Clinicians** (`doctors_clinicians`, versioned; section 7b). The archived quarterly files, 2014 to 2022, from the Internet Archive (data.cms.gov's provider-data site refuses scripts; do not work around it). `make download SOURCE_NAME=doctors_clinicians` fetches the zips `releases/doctors_clinicians_sources.csv` pins into `data/dac/raw/<year>/` and checks the CSV inside each; `make load SOURCE_NAME=doctors_clinicians` loads them in date order (about a minute a vintage). The loader reads the zips themselves. Vintages whose drop exceeds the 5% guard but was checked and found real are listed with their own limit in `COVERAGE_BREAKS` in `sources/doctors_clinicians/dac.py` (April 2018, April 2019, August 2020, September 2022: each after a gap of four months or more between archived files, each with more clinicians in all than the file before); a new archive file that trips the guard needs the same check before it is added there.
-
-**Medicare utilization** (`medicare_utilization`, reference; section 7c). One CSV per year of the Medicare Physician & Other Practitioners by Provider and Service files, pinned in `releases/medicare_utilization_sources.csv`; `make download load SOURCE_NAME=medicare_utilization` puts them in `data/mup/raw` (about 30 GB) and rebuilds `medicare_utilization.duckdb` (a few minutes, 98 million rows). CMS publishes a new year each spring and re-releases earlier years with new file names; a new year is a new row.
-
-```bash
-make graph GRAPH=graph COMPENDIUM=1 MEDICAID=1 OWNERSHIP=1 DAC=1 MEDICARE=1    # about ten minutes
-```
 
 ## Out-of-order month
 

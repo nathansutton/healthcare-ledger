@@ -1,9 +1,9 @@
 # Convenience targets. All real logic lives in `healthcare-ledger` (src/healthcare_ledger/cli.py).
 # Paths below are also the CLI defaults, so `uv run healthcare-ledger <cmd>` with no flags does the same thing.
 # The source that download, check-sources, load and sources act on: nppes, ppef (Medicare PPEF quarters), pos
-# (Provider of Services quarters) ahrq (the AHRQ Compendium) or medicaid (HHS's Medicaid spending), e.g. `make load SOURCE_NAME=ppef` (docs/MAINTAINING.md).
+# (Provider of Services quarters), ownership or doctors_clinicians, e.g. `make load SOURCE_NAME=ppef` (docs/MAINTAINING.md).
 SOURCE_NAME ?= nppes
-# Its directory. Empty = the CLI default: data/raw (NPPES_Data_Dissemination_*.zip files), data/ppef, data/pos, data/ahrq, data/medicaid.
+# Its directory. Empty = the CLI default: data/raw (NPPES_Data_Dissemination_*.zip files), data/ppef, data/pos, data/ownership, data/dac.
 SOURCE   ?=
 WAREHOUSE ?= data/warehouse
 WORK     ?= data/work
@@ -23,7 +23,7 @@ VERIFY_ALL ?=
 MONTHLY_FILES ?=
 MONTHLY_FLAG = $(if $(MONTHLY_FILES),--monthly-files)
 
-.PHONY: install test discover probe download check-sources load validate verify export package status monthly sources graph communities
+.PHONY: install test discover probe download check-sources load validate verify export package status monthly sources smoke
 
 install:
 	uv sync
@@ -48,11 +48,11 @@ download:
 	uv run healthcare-ledger download --source-name $(SOURCE_NAME) $(DEST) --releases $(RELEASES) $(if $(MIRROR),--mirror $(MIRROR))
 
 # sha256 every file in the source directory against its releases/ sources file (sources.csv, ppef_sources.csv, pos_sources.csv,
-# ahrq_sources.csv, medicaid_sources.csv).
+# ownership_sources.csv, doctors_clinicians_sources.csv).
 check-sources:
 	uv run healthcare-ledger download --source-name $(SOURCE_NAME) $(DEST) --releases $(RELEASES) --check
 
-# Load every snapshot (NPPES month, PPEF or POS quarter) not yet in the warehouse, in as-of order; AHRQ is rebuilt wholesale.
+# Load every snapshot (NPPES month, PPEF or POS quarter, ...) not yet in the warehouse, in as-of order.
 load:
 	uv run healthcare-ledger load --source-name $(SOURCE_NAME) $(SRC) --warehouse $(WAREHOUSE) --work $(WORK) $(RES)
 
@@ -63,27 +63,6 @@ sources:
 
 validate:
 	uv run healthcare-ledger validate --warehouse $(WAREHOUSE)
-
-# Derive the provider graph (docs/METHODOLOGY.md section 8) from the NPPES, PPEF and POS tables into $(GRAPH).
-# COMPENDIUM=1 also writes the AHRQ system tables (section 8a) from the ahrq source (make download load SOURCE_NAME=ahrq);
-# MEDICAID=1 the Medicaid main-group tables (section 8c) from the medicaid source (make download load SOURCE_NAME=medicaid);
-# OWNERSHIP=1 the firm and chain tables (section 8d), DAC=1 the claims-filtered membership (section 8e) and MEDICARE=1
-# medicare_volume (section 8c), each from its source.
-GRAPH ?= graph
-COMPENDIUM ?=
-MEDICAID ?=
-OWNERSHIP ?=
-DAC ?=
-MEDICARE ?=
-graph:
-	uv run healthcare-ledger graph-build --warehouse $(WAREHOUSE) --out $(GRAPH) --work $(WORK) $(RES) $(if $(COMPENDIUM),--compendium) $(if $(MEDICAID),--medicaid) \
-	  $(if $(OWNERSHIP),--ownership) $(if $(DAC),--doctors-clinicians) $(if $(MEDICARE),--medicare-utilization)
-
-# Add owner communities (section 8f) to a graph built with OWNERSHIP=1 COMPENDIUM=1; TIC=data/tic/heads adds the IRS evidence
-# (research/tic-spike/tic_heads.py); the hcris, nhc and irs sources are used whenever they are loaded.
-TIC ?=
-communities:
-	uv run healthcare-ledger owner-communities --warehouse $(WAREHOUSE) --graph $(GRAPH) --work $(WORK) $(RES) $(if $(TIC),--tic $(TIC))
 
 verify:
 	uv run healthcare-ledger verify --warehouse $(WAREHOUSE) $(SRC) --work $(WORK) $(RES) $(if $(VERIFY_ALL),--all)

@@ -5,7 +5,7 @@ fqhc,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2023-10-28,2026-1
 fqhc,enrollment,npi,NPI,,text,no,2023-10-28,2026-10-01,NPI of the enrollment
 fqhc,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2023-10-28,2026-10-01,Y when the enrollment has more than one NPI
 fqhc,enrollment,ccn,CCN,,text,no,2023-10-28,2026-10-01,CMS Certification Number of the facility
-fqhc,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-10-28,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+fqhc,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-10-28,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 fqhc,enrollment,org_name,ORGANIZATION NAME,,text,no,2023-10-28,2026-10-01,Legal business name of the enrolled entity
 fqhc,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2023-10-28,2026-10-01,Doing-business-as name
 fqhc,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2023-10-28,2026-10-01,Date of incorporation
@@ -19,7 +19,7 @@ fqhc,enrollment,city,CITY,,text,no,2023-10-28,2026-10-01,Practice city
 fqhc,enrollment,state,STATE,,text,no,2023-10-28,2026-10-01,Practice state
 fqhc,enrollment,zip,ZIP CODE,,text,no,2023-10-28,2026-10-01,Practice ZIP code
 fqhc,enrollment,phone,TELEPHONE NUMBER,,text,yes,2025-10-01,2026-10-01,Practice telephone
-fqhc,owner,pac_id,ASSOCIATE ID,,text,no,2023-10-28,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+fqhc,owner,pac_id,ASSOCIATE ID,,text,no,2023-10-28,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 fqhc,owner,org_name,ORGANIZATION NAME,,text,no,2023-10-28,2026-10-01,Legal business name of the enrolled entity
 fqhc,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2023-10-28,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
 fqhc,owner,owner_type,TYPE - OWNER,,text,no,2023-10-28,2026-10-01,I (individual) or O (organization)
@@ -62,7 +62,7 @@ hha,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2023-04-01,2026-10
 hha,enrollment,npi,NPI,,text,no,2023-04-01,2026-10-01,NPI of the enrollment
 hha,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2023-04-01,2026-10-01,Y when the enrollment has more than one NPI
 hha,enrollment,ccn,CCN,,text,no,2023-04-01,2026-10-01,CMS Certification Number of the facility
-hha,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-04-01,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hha,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-04-01,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 hha,enrollment,org_name,ORGANIZATION NAME,,text,no,2023-04-01,2026-10-01,Legal business name of the enrolled entity
 hha,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2023-04-01,2026-10-01,Doing-business-as name
 hha,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2023-04-01,2026-10-01,Date of incorporation
@@ -77,7 +77,7 @@ hha,enrollment,state,STATE,,text,no,2023-04-01,2026-10-01,Practice state
 hha,enrollment,zip,ZIP CODE,,text,no,2023-04-01,2026-10-01,Practice ZIP code
 hha,enrollment,practice_location_type,PRACTICE LOCATION TYPE,,text,no,2023-04-01,2026-10-01,Type of practice location
 hha,enrollment,location_other_type_text,LOCATION OTHER TYPE TEXT,,text,no,2023-04-01,2026-10-01,Free text when the location type is other
-hha,owner,pac_id,ASSOCIATE ID,,text,no,2023-04-01,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hha,owner,pac_id,ASSOCIATE ID,,text,no,2023-04-01,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 hha,owner,org_name,ORGANIZATION NAME,,text,no,2023-04-01,2026-10-01,Legal business name of the enrolled entity
 hha,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2023-04-01,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
 hha,owner,owner_type,TYPE - OWNER,,text,no,2023-04-01,2026-10-01,I (individual) or O (organization)
@@ -120,7 +120,7 @@ hospice,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2023-04-01,202
 hospice,enrollment,npi,NPI,,text,no,2023-04-01,2026-10-01,NPI of the enrollment
 hospice,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2023-04-01,2026-10-01,Y when the enrollment has more than one NPI
 hospice,enrollment,ccn,CCN,,text,no,2023-04-01,2026-10-01,CMS Certification Number of the facility
-hospice,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-04-01,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hospice,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-04-01,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 hospice,enrollment,org_name,ORGANIZATION NAME,,text,no,2023-04-01,2026-10-01,Legal business name of the enrolled entity
 hospice,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2023-04-01,2026-10-01,Doing-business-as name
 hospice,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2023-04-01,2026-10-01,Date of incorporation
@@ -133,7 +133,7 @@ hospice,enrollment,address_line_2,ADDRESS LINE 2,,text,no,2023-04-01,2026-10-01,
 hospice,enrollment,city,CITY,,text,no,2023-04-01,2026-10-01,Practice city
 hospice,enrollment,state,STATE,,text,no,2023-04-01,2026-10-01,Practice state
 hospice,enrollment,zip,ZIP CODE,,text,no,2023-04-01,2026-10-01,Practice ZIP code
-hospice,owner,pac_id,ASSOCIATE ID,,text,no,2023-04-02,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hospice,owner,pac_id,ASSOCIATE ID,,text,no,2023-04-02,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 hospice,owner,org_name,ORGANIZATION NAME,,text,no,2023-04-02,2026-10-01,Legal business name of the enrolled entity
 hospice,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2023-04-02,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
 hospice,owner,owner_type,TYPE - OWNER,,text,no,2023-04-02,2026-10-01,I (individual) or O (organization)
@@ -176,7 +176,7 @@ hospital,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2022-11-21,20
 hospital,enrollment,npi,NPI,,text,no,2022-11-21,2026-10-01,NPI of the enrollment
 hospital,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2022-11-21,2026-10-01,Y when the enrollment has more than one NPI
 hospital,enrollment,ccn,CCN,,text,no,2022-11-21,2026-10-01,CMS Certification Number of the facility
-hospital,enrollment,pac_id,ASSOCIATE ID,,text,no,2022-11-21,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hospital,enrollment,pac_id,ASSOCIATE ID,,text,no,2022-11-21,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 hospital,enrollment,org_name,ORGANIZATION NAME,,text,no,2022-11-21,2026-10-01,Legal business name of the enrolled entity
 hospital,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2022-11-21,2026-10-01,Doing-business-as name
 hospital,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2022-11-21,2026-10-01,Date of incorporation
@@ -208,7 +208,7 @@ hospital,enrollment,subgroup_other_text,SUBGROUP - OTHER TEXT,,text,no,2022-11-2
 hospital,enrollment,reh_conversion_flag,REH CONVERSION FLAG,,text,yes,2023-07-17,2026-10-01,Y when the hospital converted to a rural emergency hospital
 hospital,enrollment,reh_conversion_date,REH CONVERSION DATE,,date,yes,2023-07-17,2026-10-01,Date of the conversion to a rural emergency hospital
 hospital,enrollment,cah_or_hospital_ccn,CAH OR HOSPITAL CCN,,text,yes,2023-07-17,2026-10-01,CCN of the critical access hospital or hospital the REH converted from
-hospital,owner,pac_id,ASSOCIATE ID,,text,no,2022-11-14,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+hospital,owner,pac_id,ASSOCIATE ID,,text,no,2022-11-14,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 hospital,owner,org_name,ORGANIZATION NAME,,text,no,2022-11-14,2026-10-01,Legal business name of the enrolled entity
 hospital,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2022-11-14,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
 hospital,owner,owner_type,TYPE - OWNER,,text,no,2022-11-14,2026-10-01,I (individual) or O (organization)
@@ -251,7 +251,7 @@ rhc,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2023-10-29,2026-10
 rhc,enrollment,npi,NPI,,text,no,2023-10-29,2026-10-01,NPI of the enrollment
 rhc,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2023-10-29,2026-10-01,Y when the enrollment has more than one NPI
 rhc,enrollment,ccn,CCN,,text,no,2023-10-29,2026-10-01,CMS Certification Number of the facility
-rhc,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-10-29,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+rhc,enrollment,pac_id,ASSOCIATE ID,,text,no,2023-10-29,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 rhc,enrollment,org_name,ORGANIZATION NAME,,text,no,2023-10-29,2026-10-01,Legal business name of the enrolled entity
 rhc,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2023-10-29,2026-10-01,Doing-business-as name
 rhc,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2023-10-29,2026-10-01,Date of incorporation
@@ -265,7 +265,7 @@ rhc,enrollment,city,CITY,,text,no,2023-10-29,2026-10-01,Practice city
 rhc,enrollment,state,STATE,,text,no,2023-10-29,2026-10-01,Practice state
 rhc,enrollment,zip,ZIP CODE,,text,no,2023-10-29,2026-10-01,Practice ZIP code
 rhc,enrollment,phone,TELEPHONE NUMBER,,text,yes,2025-10-01,2026-10-01,Practice telephone
-rhc,owner,pac_id,ASSOCIATE ID,,text,no,2023-10-29,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+rhc,owner,pac_id,ASSOCIATE ID,,text,no,2023-10-29,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 rhc,owner,org_name,ORGANIZATION NAME,,text,no,2023-10-29,2026-10-01,Legal business name of the enrolled entity
 rhc,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2023-10-29,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
 rhc,owner,owner_type,TYPE - OWNER,,text,no,2023-10-29,2026-10-01,I (individual) or O (organization)
@@ -308,7 +308,7 @@ snf,enrollment,provider_type_text,PROVIDER TYPE TEXT,,text,no,2022-09-20,2026-10
 snf,enrollment,npi,NPI,,text,no,2022-09-20,2026-10-01,NPI of the enrollment
 snf,enrollment,multiple_npi_flag,MULTIPLE NPI FLAG,,text,no,2022-09-20,2026-10-01,Y when the enrollment has more than one NPI
 snf,enrollment,ccn,CCN,,text,no,2022-09-20,2026-10-01,CMS Certification Number of the facility
-snf,enrollment,pac_id,ASSOCIATE ID,,text,no,2022-09-20,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+snf,enrollment,pac_id,ASSOCIATE ID,,text,no,2022-09-20,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 snf,enrollment,org_name,ORGANIZATION NAME,,text,no,2022-09-20,2026-10-01,Legal business name of the enrolled entity
 snf,enrollment,dba_name,DOING BUSINESS AS NAME,,text,no,2022-09-20,2026-10-01,Doing-business-as name
 snf,enrollment,incorporation_date,INCORPORATION DATE,,date,no,2022-09-20,2026-10-01,Date of incorporation
@@ -324,7 +324,7 @@ snf,enrollment,address_line_2,ADDRESS LINE 2,,text,no,2022-09-20,2026-10-01,"Pra
 snf,enrollment,city,CITY,,text,no,2022-09-20,2026-10-01,Practice city
 snf,enrollment,state,STATE,,text,no,2022-09-20,2026-10-01,Practice state
 snf,enrollment,zip,ZIP CODE,,text,no,2022-09-20,2026-10-01,Practice ZIP code
-snf,owner,pac_id,ASSOCIATE ID,,text,no,2022-09-20,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id; the graph's organization key)
+snf,owner,pac_id,ASSOCIATE ID,,text,no,2022-09-20,2026-10-01,PECOS associate id of the enrolled legal entity (one per tax id)
 snf,owner,org_name,ORGANIZATION NAME,,text,no,2022-09-20,2026-10-01,Legal business name of the enrolled entity
 snf,owner,owner_pac_id,ASSOCIATE ID - OWNER,,text,no,2022-09-20,2026-10-01,PECOS associate id of the owner or managing party (a person or an organization)
 snf,owner,owner_type,TYPE - OWNER,,text,no,2022-09-20,2026-10-01,I (individual) or O (organization)
