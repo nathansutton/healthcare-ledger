@@ -174,6 +174,8 @@ uv run healthcare-ledger package --out export --dest deposit/<release id>     # 
 
 Upload: in the Zenodo web interface choose "New version" on the existing record (or "New upload" the first time), upload every file in `deposit/<release id>/`, paste the fields of `zenodo.json`, check the preview and publish. With the REST API: create the new version, `PUT` each file to the deposition's bucket URL, `PUT` `zenodo.json` as the metadata, then publish. Publishing cannot be undone: a published file can only be superseded by a new version. Then add the DOI to `releases/<id>/` (a `DOI` file) and to the README.
 
+Then time the reader's path once, for edition 1's first release and again whenever the README's *Get the data* section changes: on a machine without the repository, in an empty folder, start a clock, open the README on GitHub, follow *Get the data* exactly (DOI, download, unzip, the one-provider query), and stop the clock when the 14 rows match. Record the time and every snag in the PR or release notes. Above 15 minutes, or any step that needed something the section does not say, fix the section before the next release.
+
 ## Breaking corrections
 
 Only the maintainer does breaking corrections. Follow these steps:
